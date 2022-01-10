@@ -1,0 +1,178 @@
+swagger: '2.0'
+info:
+  description: >-
+    The document shows Elle's endpoints
+  version: 1.0.0
+  title: Elle
+  contact:
+    email: valerio.cogni@n-3.it
+schemes:
+  - https
+  - http
+host: brokeragesystem.it
+basePath: /core/v1
+tags:
+  - name: CORE
+    description: Core'
+
+paths:
+  /login:
+    get:
+      tags:
+        - CORE
+      summary: Person's login
+      description: ""
+      operationId: login
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: query
+          description: Email
+          required: true
+          type: string
+        - name: password
+          in: query
+          description: Plaintext password
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+             $ref: "#/definitions/ResponseLogin"
+        "401":
+          description: Unauthorized
+  /permission:
+    get:
+      tags:
+        - CORE
+      summary: Person's permits
+      description: ""
+      operationId: permission
+      produces:
+        - application/json
+      parameters:
+        - name: gui
+          in: query
+          description: Gui's Name
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ResponsePermission"
+        "401":
+          description: Unauthorized
+  /menu:
+    get:
+      tags:
+        - CORE
+      summary: Menu
+      description: ""
+      operationId: menu
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ResponseMenu"
+        "401":
+          description: Unauthorized
+  /csfr:
+    get:
+      tags:
+        - CORE
+      summary: Menu
+      description: ""
+      operationId: csfr
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ResponseMenu"
+        "401":
+          description: Unauthorized
+definitions:
+
+  #Response Object 
+  ResponsePermission:
+    type: object
+    properties:
+      result:
+        type: boolean
+      data:
+        $ref: "#/definitions/GuiPermission"
+  ResponseLogin:
+    type: object
+    properties:
+      result:
+        type: boolean
+      data:
+        $ref: "#/definitions/PersonLogin"
+  ResponseMenu:
+    type: object
+    properties:
+      result:
+        type: boolean
+      data:
+        type: array
+        items: 
+          $ref: "#/definitions/Menu"
+  
+  #Aggregate Object
+  GuiPermission:
+    type: object 
+    properties:
+      permission:
+         $ref: "#/definitions/Permission"
+  PersonLogin:
+    type: object
+    properties:
+      person:
+        $ref: "#/definitions/Person"
+  
+        
+  #Class Object
+  Menu:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      parent_id:
+        type: integer
+      sorting:
+        type: integer
+  Person:
+    type: object
+    properties:
+      oid: 
+        type: string
+      title: 
+        type: string
+      first_name: 
+        type: string
+      middle_name:
+        type: string
+      company:
+        type: string
+  Permission:
+    type: object
+    properties:
+      execute: 
+        type: boolean
+      read: 
+        type: boolean
+      write: 
+        type: boolean
+      active:
+        type: boolean
+externalDocs:
+  description: Find out more about Swagger
+  url: 'http://swagger.io'

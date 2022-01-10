@@ -1,0 +1,14 @@
+DirectoryIndex index.php
+Options +FollowSymLinks
+Options -Indexes
+RewriteEngine on
+
+RewriteCond %{REQUEST_URI}  !(service) [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule /(.*)$ index.php [L,NS]
+
+RewriteCond %{REQUEST_URI}  (service) [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule /(.*)$ service/index.php [L,NS]

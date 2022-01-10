@@ -1,0 +1,157 @@
+<?php /* @var $Freeture Freeture */ ?> 
+<div class='right_col' role='main'>
+	<div class=''>
+		<div class='page-title'>
+			<div class='title_left'>
+				<h2><?= _('Parametri Freeture') ?></h2>
+			</div>
+		</div>
+			<div class='clearfix'></div>
+				<div class='row'>
+					<div class='col-md-12 col-sm-12 col-xs-12'>
+					<div id='list' class='x_panel'>
+						<div class='x_title no-padding-lr'>
+							<div class='clearfix'>
+								<div class='col-md-6 no-padding-l'>
+									<h2><?= _('Elenco') ?></h2>
+								</div>
+									
+								</div>
+							</div>
+							<!--  <div class='x_panel filter-container'>
+								<div class='x_title filter-title-container collapse-link'>
+									<div class='filter-title'>
+										<h2 class='font-15'>Filtra per...</h2>
+										<ul class='nav navbar-right panel_toolbox'>
+											<li><a class='black'><i class='fa fa-chevron-down'></i></a>
+											</li>
+										</ul>
+									</div>
+								<div class='clearfix'></div>
+							</div>
+							<div class='x_content filter-content' hidden>
+								
+								<div class='form-group col-md-3 col-sm-6 col-xs-12 <?= md5(key) ?>'>
+									<div class='form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo (_('parametro')) ?></small>
+											<select class='form-control filter filter-text' id='F_key' multiple='multiple' title='<?php echo (_('Filtra per key')) ?>'>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class='form-group col-md-3 col-sm-6 col-xs-12 <?= md5(description) ?>'>
+									<div class='form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo (_('descrizione')) ?></small>
+											<select class='form-control filter filter-text' id='F_description' multiple='multiple' title='<?php echo (_('Filtra per description')) ?>'>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(show) ?>'>
+									<div class='form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo (_('mostra')) ?></small>
+											<select class='form-control filter filter-checkbox' id='F_show' title='<?php echo (_('Filtra per show')) ?>'>
+												<option value=''></option>
+												<option value='1'> <?php echo (_('Sì')) ?></option>
+												<option value='0'> <?php echo (_('No')) ?></option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class='form-group col-md-12 col-sm-12 col-xs-12'>
+									<div class='form-group'>
+										<div class='col-xs-12'>
+											<button class="pull-right btn btn-success applyFilter" ><?= _("Applica") ?></button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div> -->
+							<div class='x_content'>
+								<table id='FreetureList' class='table table-striped table-bordered' style='width: 100%; '>
+									<thead>
+									<tr>
+										<th><?php echo (_('parametro')) ?></th>
+										<th><?php echo (_('valore')) ?></th>
+										<th><?php echo (_('descrizione')) ?></th>
+										<th><?php echo (_('mostra')) ?></th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class='col-md-12 col-sm-12 col-xs-12'>
+					<form id='FreetureForm' name='FreetureForm' method='POST' action='/service/freeture/save/<?php echo $Freeture->id;?>' class='form-horizontal form-label-left' novalidate>
+						<div id='edit' class='x_panel'>
+							<div class='x_title no-padding-lr'>
+								<div class='clearfix'>
+									<div class='col-md-8 no-padding'>
+										<h2><?= _('Modifica') ?></h2>
+									</div>
+									<div class='col-md-4 no-padding'>
+										<button type = 'submit' style= 'display: none; margin-right: 10px;' id= 'savebtn' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
+										<button type = 'button' style= 'display: none; margin-right: 10px;' id= 'modifybtn' onclick= 'allowEditObj();' class='btn btn-success btn-blue-success pull-right' ><?= _('MODIFICA') ?></button>
+										<button type = 'button' style= 'display: none; margin-right: 10px;' id= 'undobtn' onclick= 'undoObj();' class='btn btn-warning btn-yellow-warning pull-right' ><?= _('ANNULLA') ?></button>
+									</div>
+								</div>
+							</div>
+							<div class='x_content'>
+								
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(id) ?>'>
+									<div class='item form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo ( _('id')) ?> </small>
+											<input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('id')) ?> '  title=' <?php echo ( _('id')) ?> '/>
+										</div>
+									</div>
+								</div>
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(key) ?>'>
+									<div class='item form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo ( _('parametro')) ?> </small>
+											<input type = 'text' name='key' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('key')) ?> '  title=' <?php echo ( _('key')) ?>' maxlength = '128' />
+										</div>
+									</div>
+								</div>
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(value) ?>'>
+									<div class='item form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo ( _('valore')) ?> </small>
+											<input type = 'text' name='value' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('value')) ?> '  title=' <?php echo ( _('value')) ?>' maxlength = '128' />
+										</div>
+									</div>
+								</div>
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(description) ?>'>
+									<div class='item form-group'>
+										<div class='col-xs-12'>
+											<small class='text-muted'><?php echo ( _('descrizione')) ?> </small>
+											<input type = 'text' name='description' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('description')) ?> '  title=' <?php echo ( _('description')) ?>' maxlength = '512' />
+										</div>
+									</div>
+								</div>
+								<div class='col-md-3 col-sm-6 col-xs-12 <?= md5(show) ?>'>
+									<div class='item form-group'>
+										<div class='col-xs-12'>
+											<label class='text-muted checkbox-label'><?php echo ( _('mostra')) ?></label>
+											<input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='show' class='col-md-1 col-xs-1 checkbox input-disabled' placeholder='<?php echo ( _('show')) ?>' title='<?php echo ( _('show')) ?>'>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+                                
+			</div>
+		</div>
+	</div>
+	<?php include './view/template/foot.php'; ?>
+	<script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/freeture.js<?= _VERSION_ ?>'></script>
+

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/js/docker.js</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/docker/V2/logic/api/DockerApiLogic.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/view/template/menu.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/docker/V2/model/Docker.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/js/freeture.js</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/ft/V2/logic/api/FreetureFinalApiLogic.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/js/freetureFinal.js</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/ft/V2/model/FreetureFinal.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/config/config.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/ft/V2/index.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/initialize.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/js/factory/dockerFactory.js</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/lib/docker/V2/index.php</file>
+            <file>file:/Users/lorenzobottini/framework-base-php-elle/view/freetureFinal/edit.php</file>
+        </group>
+    </open-files>
+</project-private>
