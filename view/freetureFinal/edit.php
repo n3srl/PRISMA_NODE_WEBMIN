@@ -8,6 +8,23 @@
 		</div>
 			<div class='clearfix'></div>
 				<div class='row'>
+                                    <div class='col-md-12 col-sm-12 col-xs-12'>
+					<div id='edit-buttons' class='x_panel'>
+						<div class='x_title no-padding-lr'>
+							<div class='clearfix'>
+								<div class='col-md-6 no-padding-l'>
+									<h2><?= _('File') ?></h2>
+								</div>
+                                                        </div>
+                                                        <div class='x_content'>
+                                                                <div class='col-md-4 no-padding'>
+                                                                    <button type = 'button' style= 'display: none; margin-right: 10px;' id= 'ftcfgfile' class='btn btn-success pull-right' ><?= _('CARICA CONFIGURAZIONE') ?></button>
+                                                                    <button type = 'button' style= 'display: none; margin-right: 10px;' id= 'maskfile' class='btn btn-success pull-right' ><?= _('CARICA MASCHERA') ?></button>
+                                                                </div>
+                                                        </div>
+                                                </div>
+                                    </div>
+
 					<div class='col-md-12 col-sm-12 col-xs-12'>
 					<div id='list' class='x_panel'>
 						<div class='x_title no-padding-lr'>

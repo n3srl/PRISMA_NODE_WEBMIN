@@ -355,6 +355,15 @@ class FreetureFinalApiLogic
         return true;
     }
     
+    public static function updateFile($ob){
+        $freetureConf = _FREETURE_;
+        $reply = $ob;
+        $myfile = fopen($freetureConf, "w");
+        fwrite($myfile, $reply);
+        fclose($myfile);
+        return true;
+    }
+    
     //Generates passwords
     public static function passwdGen() {
         $file = "";

@@ -16,6 +16,16 @@ class FreetureFinalController extends Controller
 		}
 		echo '<script>var ObjID = ' . $par. ';</script>';
 	}
-
+        
+        public function updateFileOperation() {
+                parent::securityCheck();
+                global $FreetureFinal;
+                global $params;
+                $par = 0;
+                if (isset($params[0]) && !empty($params[0])) {
+                    $par = $params[0];
+                }
+                echo '<script>var ObjID = ' . $par. ';</script>';
+        }
 
 }
