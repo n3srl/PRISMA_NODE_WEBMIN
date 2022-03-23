@@ -28,6 +28,7 @@ if ($PROD) {
     
     //Storage files
     define('_FREETURE_', '/usr/local/share/freeture/configuration.cfg');
+    define('_FREETURE_MASK_', '/usr/local/share/freeture/mask.bmp');
     define('_PASSWD_', '/keys/passwd.txt');
     
     //SSH access for Docker

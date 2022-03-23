@@ -12,7 +12,8 @@ class FreetureFinalLogic
 			$res = FreetureFinalFactory::Save($obj);
 			return $res;
 	}
-
+        
+        
 	public static function Update($obj){
 
 		$Person = CoreLogic::VerifyPerson();

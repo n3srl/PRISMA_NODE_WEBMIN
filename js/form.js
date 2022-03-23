@@ -13,7 +13,7 @@ $('.multi.required').on('keyup blur', 'input', function () {
     validator.checkField.apply($(this).siblings().last()[0]);
 });
 
-$('form').submit(function (e) {
+$('form').not('.file-upload').submit(function (e) {
     e.preventDefault();
     var submit = true;
 
@@ -492,7 +492,7 @@ function saveClass(objClass, ...callBack) {
                 formdata.push({name: this.name, value: '0'});
             }
         });
-
+        
         if (objClass.form_name != undefined) {
             var formdata = $("[name='" + objClass.form_name + "']").serializeArray();
         }

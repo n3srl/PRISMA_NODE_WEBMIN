@@ -20,7 +20,7 @@ class FreetureFinalFactoryBase
 
 		return true;
 	}
-
+        
 	public static function Delete( $object )
 	{
 		global $db_conn;

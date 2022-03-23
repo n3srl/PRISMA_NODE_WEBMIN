@@ -12,9 +12,6 @@ let freeturefinalLogic = {
 	},
 	remove: function(obj, id, safeDelete, ...callBack){
 		removeClass(obj,id, safeDelete, ...callBack);
-	},
-        editFile: function(obj, ...callBack){
-		editFileClass(obj, ...callBack);
 	}
 };
 

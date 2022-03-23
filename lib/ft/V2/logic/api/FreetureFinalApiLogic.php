@@ -6,8 +6,7 @@
 
 class FreetureFinalApiLogic
 {
-    
-	public static function Save($request) {
+        public static function Save($request) {
 		try {
 
 			$Person = CoreLogic::VerifyPerson();
@@ -26,6 +25,38 @@ class FreetureFinalApiLogic
 			return CoreLogic::GenerateErrorResponse($a->message);
 		}
 		return CoreLogic::GenerateResponse($res, $ob);
+	}
+        
+        public static function EditConfiguration($request) {
+		try {
+
+			$Person = CoreLogic::VerifyPerson();
+			//CoreLogic::CheckCSRF($request->get("token"));
+
+			//$tmp = $request->get("data");
+
+			$res = self::updateConfigurationFile($request);
+		} catch (ApiException $a) {
+			CoreLogic::rollbackTransaction();
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse($res);
+	}
+        
+        public static function EditMask($request) {
+		try {
+
+			$Person = CoreLogic::VerifyPerson();
+			CoreLogic::CheckCSRF($request->get("token"));
+
+			$tmp = $request->get("data");
+
+			$res = self::updateMaskFile($tmp);
+		} catch (ApiException $a) {
+			CoreLogic::rollbackTransaction();
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse($res);
 	}
 
 	public static function Update($request){
@@ -227,10 +258,11 @@ class FreetureFinalApiLogic
         $list = array();
         $i = 0;
         $descr = "no description";
-
+ 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-
+            
+         
             //Parse config file line by line
             foreach ($contents as $line) {
 
@@ -253,6 +285,7 @@ class FreetureFinalApiLogic
                 }
             }
         }
+        
         return $list;
     }
 
@@ -261,7 +294,7 @@ class FreetureFinalApiLogic
         $freetureConf = _FREETURE_;
         $i = 0;
         $descr = "no description";
-
+        
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
 
@@ -355,13 +388,22 @@ class FreetureFinalApiLogic
         return true;
     }
     
-    public static function updateFile($ob){
+    
+    public static function updateConfigurationFile($ob){
         $freetureConf = _FREETURE_;
-        $reply = $ob;
-        $myfile = fopen($freetureConf, "w");
-        fwrite($myfile, $reply);
-        fclose($myfile);
-        return true;
+        if(!empty($ob)){
+            return move_uploaded_file($ob, $freetureConf);
+        }
+        return false;
+    }
+    
+    
+    public static function updateMaskFile($ob){
+        $freetureConf = _FREETURE_MASK_;
+        if(!empty($ob)){
+            return move_uploaded_file($ob, $freetureConf);
+        }
+        return false;
     }
     
     //Generates passwords

@@ -28,6 +28,25 @@ FREETUREFINAL
 
 /**
 *
+* SAVE FILE
+*
+**/
+
+$app->POST('/freeturefinal/editconfiguration', function(Application $app, Request $request) {
+
+	$result = FreetureFinalApiLogic::EditConfiguration($request->files->get('configuration'));
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
 * INSERT
 *
 **/
