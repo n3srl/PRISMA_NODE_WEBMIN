@@ -24,12 +24,12 @@
                                     <h5><?= _('Carica nuovo file di configurazione Freeture') ?></h5>
                                 </div>
                                 <div class='clearfix'>
-                                    <form id="FtCfgFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
+                                    <form id="ftCfgFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
                                         <div class='col-md-10 no-padding'>
                                             <input class="form-control" name="configuration" type="file" accept=".cfg" id="form-ftcfg">
                                         </div>
                                         <div class='col-md-2 no-padding'>
-                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadftbtn' value='CARICA' class='btn btn-success pull-right' >
+                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadftbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
                                         </div>
                                     </form>
                                 </div>
@@ -41,12 +41,12 @@
                                     <h5><?= _('Carica nuova maschera') ?></h5>
                                 </div>
                                 <div class='clearfix'>
-                                    <form id="MaskFileForm" method='post' class='mask-upload' enctype='multipart/form-data'>
+                                    <form id="maskFileForm" method='post' class='mask-upload' enctype='multipart/form-data'>
                                         <div class='col-md-10 no-padding'>
                                             <input class="form-control" name="mask" type="file" accept=".bmp" id="form-mask">
                                         </div>
                                         <div class='col-md-2 no-padding'>
-                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadmaskbtn' value='CARICA' class='btn btn-success pull-right' >
+                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadmaskbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
                                         </div>
                                     </form>
                                 </div>

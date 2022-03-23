@@ -47,11 +47,11 @@ class FreetureFinalApiLogic
 		try {
 
 			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+			//CoreLogic::CheckCSRF($request->get("token"));
 
-			$tmp = $request->get("data");
+			//$tmp = $request->get("data");
 
-			$res = self::updateMaskFile($tmp);
+			$res = self::updateMaskFile($request);
 		} catch (ApiException $a) {
 			CoreLogic::rollbackTransaction();
 			return CoreLogic::GenerateErrorResponse($a->message);
@@ -258,7 +258,7 @@ class FreetureFinalApiLogic
         $list = array();
         $i = 0;
         $descr = "no description";
- 
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
             
@@ -405,7 +405,7 @@ class FreetureFinalApiLogic
         }
         return false;
     }
-    
+       
     //Generates passwords
     public static function passwdGen() {
         $file = "";

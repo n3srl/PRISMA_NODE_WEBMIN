@@ -38,30 +38,14 @@ function editConfigurationObj(){
 	//freeturefinalLogic.editConfiguration(inaffreeturefinal, reloadAllDatatable);
 }
 
-$(".file-upload").on("submit", function(e) {
-    e.preventDefault();
-    var file = $("#form-ftcfg")[0].files[0];
-    var formData = new FormData();
-    formData.append("configuration", file);
 
-    $.ajax({
-            url: "/lib/ft/V2/freeturefinal/editconfiguration",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-              reloadAllDatatable();
-            }
-          });
-});
 
 function uploadConfigurationFile(){
         var formdata = FormData();
         var file = $("#file")[0].files[0];
         formData.append("configuration", file);
         //postAjax(formdata, reloadAllDatatable);
-}
+            }
 
 function removeObj(){
 	var f = function(){disableForm(inaffreeturefinal);}
@@ -147,7 +131,70 @@ $(document).ready(function () {
         "info": false,
         "searching": false
     });
+    
+    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+    $("#form-ftcfg").on('change', function(event){
+        filename=$(this).val();
+        if(filename!==''){
+            $("#uploadftbtn").attr('disabled', false);
+        }
+    });
+    
+    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+    $("#form-mask").on('change', function(event){
+        filename=$(this).val();
+        if(filename!==''){
+            $("#uploadmaskbtn").attr('disabled', false);
+        }
+    });
+    
+    // Caricamento nuova configurazione freeture 
+    $("#ftCfgFileForm").on("submit", function(e) {
+        e.preventDefault();
+        var file = $("#form-ftcfg")[0].files[0];
+        var formData = new FormData();
+        formData.append("configuration", file);
+
+        $.ajax({
+            url: "/lib/ft/V2/freeturefinal/editconfiguration",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                reloadAllDatatable();
+                defaultSuccess("Configurazione caricata correttamente");
+                $("#uploadftbtn").attr('disabled', true);
+                $('#form-ftcfg').val('');
+            }
+            });
+          
+        });
+    
+    // Caricamento nuova maschera
+    $("#maskFileForm").on("submit", function(e) {
+        e.preventDefault();
+        var file = $("#form-mask")[0].files[0];
+        var formData = new FormData();
+        formData.append("mask", file);
+
+        $.ajax({
+            url: "/lib/ft/V2/freeturefinal/editmask",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                reloadAllDatatable();
+                defaultSuccess("Maschera caricata correttamente");
+                $("#uploadmaskbtn").attr('disabled', true);
+                $('#form-mask').val('');
+            }
+            });
+          
+        });
 });
+
 
  $(function() {
 initFilters();

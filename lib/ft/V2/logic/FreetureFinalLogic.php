@@ -13,7 +13,7 @@ class FreetureFinalLogic
 			return $res;
 	}
         
-        
+
 	public static function Update($obj){
 
 		$Person = CoreLogic::VerifyPerson();

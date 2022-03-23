@@ -28,13 +28,32 @@ FREETUREFINAL
 
 /**
 *
-* SAVE FILE
+* EDIT CONFIGURATION FILE
 *
 **/
 
 $app->POST('/freeturefinal/editconfiguration', function(Application $app, Request $request) {
 
 	$result = FreetureFinalApiLogic::EditConfiguration($request->files->get('configuration'));
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
+* EDIT MASK FILE
+*
+**/
+
+$app->POST('/freeturefinal/editmask', function(Application $app, Request $request) {
+
+	$result = FreetureFinalApiLogic::EditMask($request->files->get('mask'));
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
