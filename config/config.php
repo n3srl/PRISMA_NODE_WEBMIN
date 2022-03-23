@@ -31,6 +31,9 @@ if ($PROD) {
     define('_FREETURE_MASK_', '/usr/local/share/freeture/default.bmp');
     define('_PASSWD_', '/keys/passwd.txt');
     
+    //Docker commands
+    define('_FREETURE_DOCKER_RESTART_', 'docker restart freeture');
+            
     //SSH access for Docker
     define('_DOCKER_IP_', '127.0.0.1');
     define('_DOCKER_PORT_', '22');
