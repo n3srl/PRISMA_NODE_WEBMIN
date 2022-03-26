@@ -9,7 +9,7 @@
         <div class='clearfix'></div>
         <div class='row'>
             <div class='col-md-12 col-sm-12 col-xs-12'>
-                <div id='edit-buttons' class='x_panel'>
+                <div id='edit-buttons-ft' class='x_panel'>
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
                             <div class='col-md-6 no-padding-l'>

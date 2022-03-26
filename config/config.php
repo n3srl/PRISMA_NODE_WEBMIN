@@ -29,10 +29,8 @@ if ($PROD) {
     //Storage files
     define('_FREETURE_', '/usr/local/share/freeture/configuration.cfg');
     define('_FREETURE_MASK_', '/usr/local/share/freeture/default.bmp');
+    define('_OVPN_', '/etc/openvpn/client.conf');
     define('_PASSWD_', '/keys/passwd.txt');
-    
-    //Docker commands
-    define('_FREETURE_DOCKER_RESTART_', 'docker restart freeture');
             
     //SSH access for Docker
     define('_DOCKER_IP_', '127.0.0.1');

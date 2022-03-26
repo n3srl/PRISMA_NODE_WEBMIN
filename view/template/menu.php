@@ -27,7 +27,8 @@
                     
                     <li><a href="/person/edit"><i class="fa fa-user"></i> <?= _("Utenti") ?> </a></li>
                     <!-- <li><a href="/freeture/edit"><i class="fa fa-building"></i> <?= _("Parametri") ?> </a></li> -->
-                    <li><a href="/freetureFinal/edit"><i class="fa fa-building"></i> <?= _("Freeture") ?> </a></li>
+                    <li><a href="/freetureFinal/edit"><i class="fa fa-building"></i> <?= _("Configurazione Freeture") ?> </a></li>
+                    <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i> <?= _("Configurazione OpenVPN") ?> </a></li>
                     <li><a href="/docker/edit"><i class="fa fa-suitcase"></i> <?= _("Docker") ?> </a></li>
 
                 </ul>

@@ -257,7 +257,7 @@ class FreetureFinalApiLogic
         $freetureConf = _FREETURE_;
         $list = array();
         $i = 0;
-        $descr = "no description";
+        $descr = "";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -273,20 +273,32 @@ class FreetureFinalApiLogic
 
                     //Add parameter to the list
                     if (self::isVisible($line)) {
-                        $list[] = array(self::getKey($line), self::getValue($line), self::removeComment($descr), 1, 0, $i);
+                        $list[] = array(self::getKey($line), self::getValue($line), self::formatDescription($descr), 1, 0, $i);
                     } else {
-                        $list[] = array(self::getKey($line), self::getValue($line), self::removeComment($descr), 0, 0, $i);
+                        $list[] = array(self::getKey($line), self::getValue($line), self::formatDescription($descr), 0, 0, $i);
                     }
+                    $descr = "";
                     $i++;
                 } else {
                     if ($line[0] === "#") { //Comments contains the description
-                        $descr = $line;
+                        if(strlen($line) >= 2 && ($line[1] === "#" || $line[1] === "-")){
+                            $descr = "";
+                        }else{
+                            $descr .= self::removeComment($line);
+                        }
                     }
                 }
             }
         }
         
         return $list;
+    }
+    
+    public static function formatDescription($raw){
+        $raw = str_replace("\n", " ", $raw);
+        $raw = str_replace("<", "[", $raw);
+        $raw = str_replace(">", "]", $raw);
+        return $raw;
     }
 
     //Parse line by line the config file and get a single id
@@ -394,7 +406,7 @@ class FreetureFinalApiLogic
         if(!empty($ob)){
             return move_uploaded_file($ob, $freetureConf);
         }
-        system(_FREETURE_DOCKER_RESTART_);
+        system('docker restart freeture');
         return false;
     }
     
@@ -404,7 +416,7 @@ class FreetureFinalApiLogic
         if(!empty($ob)){
             return move_uploaded_file($ob, $freetureConf);
         }
-        system(_FREETURE_DOCKER_RESTART_);
+        system('docker restart freeture');
         return false;
     }
        

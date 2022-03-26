@@ -1,0 +1,52 @@
+swagger: '2.0'
+info:
+  description: >-
+    Api Document
+  version: 1.0.0
+  title: ft
+  contact:
+    email: info@n-3.it
+host: www.host.it
+basePath: /lib/ft/V2
+tags: 
+  - name: OVPN
+    description: OVPN
+schemes: 
+  - https 
+  - http
+paths:
+  /ovpn/editconfiguration:
+    post:
+      tags:
+        - FREETUREFINAL
+      summary: Insert FreetureFinal
+      description: ''
+      operationId: saveFreetureFinal
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: data
+          required: true
+          schema:
+            $ref: '#/definitions/FreetureFinalRequest'
+      responses:
+        '200':
+          description: Operazione riuscita
+          schema:
+            $ref: '#/definitions/FreetureFinalResponse'
+        '403':
+            description: Errore
+            schema:
+              $ref: '#/definitions/ErrorResponse'
+    
+definitions:
+  #Response Object 
+  GenericResponse:
+    type: object
+    properties:
+      result:
+        type: boolean
+  
