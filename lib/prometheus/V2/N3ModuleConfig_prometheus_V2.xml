@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<N3ModuleConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <host>104.199.87.84</host>
+  <port>3306</port>
+  <username>root</username>
+  <password>LOhJn6yK5J7qolav</password>
+  <module_name>inaf</module_name>
+  <moduleText>prometheus</moduleText>
+  <versionText>V2</versionText>
+  <path>.\lib\inaf\</path>
+  <prefix>inaf</prefix>
+  <sub_module_names>
+    <string>inaf_prometheus</string>
+  </sub_module_names>
+  <rdbms>MySQL</rdbms>
+  <template>Project_Elle</template>
+  <VC>VC2</VC>
+</N3ModuleConfig>

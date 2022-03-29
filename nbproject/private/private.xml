@@ -5,7 +5,10 @@
         <group>
             <file>file:/C:/xampp/htdocs/lib/ft/V2/logic/api/FreetureFinalApiLogic.php</file>
             <file>file:/C:/xampp/htdocs/config/config.php</file>
-            <file>file:/C:/xampp/htdocs/js/freetureFinal.js</file>
+            <file>file:/C:/xampp/htdocs/lib/ovpn/V2/swagger.yaml</file>
+            <file>file:/C:/xampp/htdocs/lib/ft/V2/index.php</file>
+            <file>file:/C:/xampp/htdocs/lib/docker/V2/logic/api/DockerApiLogic.php</file>
+            <file>file:/C:/xampp/htdocs/lib/ovpn/V2/logic/api/OvpnApiLogic.php</file>
         </group>
     </open-files>
 </project-private>

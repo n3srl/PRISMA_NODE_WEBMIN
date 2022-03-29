@@ -29,6 +29,7 @@
                     <!-- <li><a href="/freeture/edit"><i class="fa fa-building"></i> <?= _("Parametri") ?> </a></li> -->
                     <li><a href="/freetureFinal/edit"><i class="fa fa-building"></i> <?= _("Configurazione Freeture") ?> </a></li>
                     <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i> <?= _("Configurazione OpenVPN") ?> </a></li>
+                    <li><a href="/prometheus/edit"><i class="fa fa-fire"></i> <?= _("Configurazione Prometheus") ?> </a></li>
                     <li><a href="/docker/edit"><i class="fa fa-suitcase"></i> <?= _("Docker") ?> </a></li>
 
                 </ul>

@@ -3,25 +3,25 @@ info:
   description: >-
     Api Document
   version: 1.0.0
-  title: ft
+  title: prometheus
   contact:
     email: info@n-3.it
 host: www.host.it
-basePath: /lib/ft/V2
+basePath: /lib/prometheus/V2
 tags: 
-  - name: FREETUREFINAL
-    description: FREETUREFINAL
+  - name: PROMETHEUS
+    description: PROMETHEUS
 schemes: 
   - https 
   - http
-paths:  
-  /freeturefinal:
+paths:
+  /prometheus:
     post:
       tags:
-        - FREETUREFINAL
-      summary: Insert FreetureFinal
+        - PROMETHEUS
+      summary: Insert Prometheus
       description: ''
-      operationId: saveFreetureFinal
+      operationId: savePrometheus
       consumes:
         - application/json
       produces:
@@ -31,22 +31,22 @@ paths:
           name: data
           required: true
           schema:
-            $ref: '#/definitions/FreetureFinalRequest'
+            $ref: '#/definitions/PrometheusRequest'
       responses:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalResponse'
+            $ref: '#/definitions/PrometheusResponse'
         '403':
             description: Errore
             schema:
               $ref: '#/definitions/ErrorResponse'
     put:
       tags:
-        - FREETUREFINAL
-      summary: Update di FreetureFinal
+        - PROMETHEUS
+      summary: Update di Prometheus
       description: ''
-      operationId: updateFreetureFinal
+      operationId: updatePrometheus
       consumes:
         - application/json
       produces:
@@ -56,22 +56,22 @@ paths:
           name: data
           required: true
           schema:
-            $ref: '#/definitions/FreetureFinalRequest'
+            $ref: '#/definitions/PrometheusRequest'
       responses:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalResponse'
+            $ref: '#/definitions/PrometheusResponse'
         '403':
             description: Errore
             schema:
               $ref: '#/definitions/ErrorResponse'
     get:
       tags:
-        - FREETUREFINAL
-      summary: Estrazione della lista di FreetureFinal
+        - PROMETHEUS
+      summary: Estrazione della lista di Prometheus
       description: ''
-      operationId: getListFreetureFinal
+      operationId: getListPrometheus
       consumes:
         - application/json
       produces:
@@ -80,17 +80,17 @@ paths:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalListResponse'
+            $ref: '#/definitions/PrometheusListResponse'
         '403':
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
     delete:
       tags:
-        - FREETUREFINAL
-      summary: Delete di FreetureFinal
+        - PROMETHEUS
+      summary: Delete di Prometheus
       description: ''
-      operationId: deleteFreetureFinal
+      operationId: deletePrometheus
       consumes:
         - application/json
       produces:
@@ -100,7 +100,7 @@ paths:
           name: data
           required: true
           schema:
-            $ref: '#/definitions/FreetureFinalRequest'
+            $ref: '#/definitions/PrometheusRequest'
       responses:
         '200':
           description: Operazione riuscita
@@ -112,10 +112,10 @@ paths:
             $ref: '#/definitions/ErrorResponse'
     patch:
       tags:
-        - FREETUREFINAL
-      summary: Erase di FreetureFinal
+        - PROMETHEUS
+      summary: Erase di Prometheus
       description: ''
-      operationId: erasedFreetureFinal
+      operationId: erasedPrometheus
       consumes:
         - application/json
       produces:
@@ -125,29 +125,29 @@ paths:
           name: data
           required: true
           schema:
-            $ref: '#/definitions/FreetureFinalRequest'
+            $ref: '#/definitions/PrometheusRequest'
       responses:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalResponse'
+            $ref: '#/definitions/PrometheusResponse'
         '403':
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /freeturefinal/{freeturefinalId}:
+  /prometheus/{prometheusId}:
     get:
       tags:
-        - FREETUREFINAL
-      summary: Estrazione di FreetureFinal
+        - PROMETHEUS
+      summary: Estrazione di Prometheus
       description: ''
-      operationId: getFreetureFinal
+      operationId: getPrometheus
       produces:
         - application/json
       parameters:
-      - name: "freeturefinalId"
+      - name: "prometheusId"
         in: "path"
-        description: "ID of freeturefinal to return "
+        description: "ID of prometheus to return "
         required: true
         type: "integer"
         format: "int64"
@@ -155,18 +155,18 @@ paths:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalResponse'
+            $ref: '#/definitions/PrometheusResponse'
         '403':
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /freeturefinal/datatable/list:
+  /prometheus/datatable/list:
     get:
       tags:
-        - FREETUREFINAL
+        - PROMETHEUS
       summary: Datatable
       description: ''
-      operationId: getDatatableFreetureFinal
+      operationId: getDatatablePrometheus
       consumes:
         - application/json
       produces:
@@ -180,13 +180,13 @@ paths:
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /freeturefinal/autocomplete/{columnName}:
+  /prometheus/autocomplete/{columnName}:
     get:
       tags:
-        - FREETUREFINAL
+        - PROMETHEUS
       summary: Autocomplete
       description: ''
-      operationId: getAutocompleteValuesFreetureFinal
+      operationId: getAutocompleteValuesPrometheus
       consumes:
         - application/json
       produces:
@@ -206,13 +206,13 @@ paths:
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /freeturefinal/foreignkey/{columnName}:
+  /prometheus/foreignkey/{columnName}:
     get:
       tags:
-        - FREETUREFINAL
+        - PROMETHEUS
       summary: Autocomplete
       description: ''
-      operationId: getForeignKeyValuesFreetureFinal
+      operationId: getForeignKeyValuesPrometheus
       consumes:
         - application/json
       produces:
@@ -232,58 +232,6 @@ paths:
           description: Errore
           schema:
             $ref: '#/definitions/ErrorResponse'
-  /editconfiguration:
-    post:
-      tags:
-        - FREETUREFINAL
-      summary: Edit FreetureFinal configuration
-      description: ''
-      operationId: editFtConfiguration
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: data
-          required: true
-          schema:
-            $ref: '#/definitions/FreetureFinalRequest'
-      responses:
-        '200':
-          description: Operazione riuscita
-          schema:
-            $ref: '#/definitions/FreetureFinalResponse'
-        '403':
-            description: Errore
-            schema:
-              $ref: '#/definitions/ErrorResponse'  
-  /editmask:
-    post:
-      tags:
-        - FREETUREFINAL
-      summary: Edit FreetureFinal mask
-      description: ''
-      operationId: editFtMask
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: data
-          required: true
-          schema:
-            $ref: '#/definitions/FreetureFinalRequest'
-      responses:
-        '200':
-          description: Operazione riuscita
-          schema:
-            $ref: '#/definitions/FreetureFinalResponse'
-        '403':
-            description: Errore
-            schema:
-              $ref: '#/definitions/ErrorResponse'
 definitions:
   #Response Object 
   GenericResponse:
@@ -329,44 +277,46 @@ definitions:
         type: string
       code:
         type: string
-  FreetureFinalResponse:
+  PrometheusResponse:
     type: object
     properties:
       result:
         type: boolean
       data:
-        $ref: "#/definitions/FreetureFinal"
-  FreetureFinalListResponse:
+        $ref: "#/definitions/Prometheus"
+  PrometheusListResponse:
     type: object
     properties:
       result:
         type: boolean
       data:
-        $ref: "#/definitions/FreetureFinalList"
+        $ref: "#/definitions/PrometheusList"
 #Aggregate Object
-  FreetureFinalList:
+  PrometheusList:
     type: array 
     items:
-      $ref: "#/definitions/FreetureFinal"
-  FreetureFinalRequest:
+      $ref: "#/definitions/Prometheus"
+  PrometheusRequest:
     type: object
     properties:
       token:
         type: string
       data:
-        $ref: "#/definitions/FreetureFinal"
+        $ref: "#/definitions/Prometheus"
   #Class Object
-  FreetureFinal:
+  Prometheus:
     type: object
     properties:
       id: 
         type: number
-      key: 
+      name: 
         type: string
-      value: 
+      image: 
         type: string
-      description: 
+      command: 
         type: string
-      show: 
-        type: boolean
+      status: 
+        type: string
+      created: 
+        type: string
 

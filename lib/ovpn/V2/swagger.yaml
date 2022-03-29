@@ -3,11 +3,11 @@ info:
   description: >-
     Api Document
   version: 1.0.0
-  title: ft
+  title: ovpn
   contact:
     email: info@n-3.it
 host: www.host.it
-basePath: /lib/ft/V2
+basePath: /lib/ovpn/V2
 tags: 
   - name: OVPN
     description: OVPN
@@ -15,13 +15,13 @@ schemes:
   - https 
   - http
 paths:
-  /ovpn/editconfiguration:
+/ovpn/editconfiguration:
     post:
       tags:
-        - FREETUREFINAL
-      summary: Insert FreetureFinal
+        - OVPN
+      summary: Edit OVPN Configuration
       description: ''
-      operationId: saveFreetureFinal
+      operationId: editOvpnConfiguration
       consumes:
         - application/json
       produces:
@@ -31,17 +31,42 @@ paths:
           name: data
           required: true
           schema:
-            $ref: '#/definitions/FreetureFinalRequest'
+            $ref: '#/definitions/OvpnRequest'
       responses:
         '200':
           description: Operazione riuscita
           schema:
-            $ref: '#/definitions/FreetureFinalResponse'
+            $ref: '#/definitions/OvpnResponse'
         '403':
             description: Errore
             schema:
               $ref: '#/definitions/ErrorResponse'
-    
+/ovpn/status:
+    get:
+      tags:
+        - OVPN
+      summary: Get OVPN status
+      description: ''
+      operationId: getOvpnStatus
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: data
+          required: true
+          schema:
+            $ref: '#/definitions/OvpnRequest'
+      responses:
+        '200':
+          description: Operazione riuscita
+          schema:
+            $ref: '#/definitions/OvpnResponse'
+        '403':
+            description: Errore
+            schema:
+              $ref: '#/definitions/ErrorResponse'
 definitions:
   #Response Object 
   GenericResponse:
@@ -49,4 +74,67 @@ definitions:
     properties:
       result:
         type: boolean
-  
+  #Datatable Object 
+  DatatableResponse:
+    type: object
+    properties:
+      aaData:
+        type: array
+        items:
+          type: array
+          items:
+            type: object
+      iTotalDisplayRecords:
+        type: string
+      iTotalRecords:
+        type: string
+      sEcho:
+        type: number
+  #Autocomplete Object 
+  AutocompleteResponse:
+    type: object
+    properties:
+      results:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            text:
+              type: string
+  ErrorResponse:
+    type: object
+    properties:
+      result:
+        type: boolean
+      message:
+        type: string
+      code:
+        type: string
+  OvpnResponse:
+    type: object
+    properties:
+      result:
+        type: boolean
+      data:
+        $ref: "#/definitions/Ovpn"
+  OvpnListResponse:
+    type: object
+    properties:
+      result:
+        type: boolean
+      data:
+        $ref: "#/definitions/OvpnList"
+#Aggregate Object
+  OvpnList:
+    type: array 
+    items:
+      $ref: "#/definitions/Ovpn"
+  OvpnRequest:
+    type: object
+    properties:
+      token:
+        type: string
+      data:
+        $ref: "#/definitions/Ovpn"
