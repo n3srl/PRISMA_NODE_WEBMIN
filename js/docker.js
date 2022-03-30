@@ -70,7 +70,7 @@ $(document).ready(function () {
 			"sEmptyTable": "Nessun risultato",
 			"sLengthMenu": "Mostra _MENU_ elementi"
 			},
-		"columnDefs": [{
+		columnDefs: [{
 				"targets": [-3],
 				"orderable": false
 			},
@@ -83,8 +83,10 @@ $(document).ready(function () {
 				"className": 'dt-body-right'
 			},
                         {
-                "targets": [-3],
-                //"className": 'dt-body-right',
+                                "targets": [-3],
+                                //"className": 'dt-body-right',
+                        }
+                         ],
                 render: function (data, type, row, meta) {
                     var color;
                     if(data === "Up"){
@@ -99,9 +101,8 @@ $(document).ready(function () {
                             + color
                             + '">' + data
                             + '</span>';
-                }
-            }
-                    ],
+                },
+            
 		responsive: true,
 		dom: 'lfrt<t>ip',
 		"fnServerParams": function (aoData) {

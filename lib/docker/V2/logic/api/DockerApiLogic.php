@@ -223,7 +223,7 @@ class DockerApiLogic
             //ssh2_disconnect($session); -> This causes Segmentation fault !
             unset($session);
         }
-        
+                
         return $list;
     }
     

@@ -39,25 +39,29 @@ $(document).ready(function () {
 });
 
 function showStatus(){
-    /*
-     $.ajax({
-            url: "/lib/prometheus/V2/prometheus/status",
-            type: "GET",
-            success: function (res) {
-                var vpnStatus = JSON.parse(res).data;
-                if(vpnStatus === ''){
-                    vpnStatus = "";
-                    $('#status-prometheus').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVA, rosso
-                    $('#status-prometheus').text("Servizio non attivo");
-                } else {
-                    vpnStatus = vpnStatus.substr(vpnStatus.indexOf('tun0')); 
-                    $('#status-prometheus').css({'color': '#35b85a', 'font-weight': 'bold'}); // Stato ATTIVA, verde
-                    $('#status-prometheus').text("Servizio attivo");
-                }         
-                $('#status-prometheus-description').text(vpnStatus);
+    
+    $.getJSON('http://' + window.location.hostname + ':9090/api/v1/status/runtimeinfo', function(res){            
+            console.log(res.data);
+            var vpnStatus = "";
+            for (const [key, value] of Object.entries(res.data)) {
+                vpnStatus += `${key}: ${value}<br>`;
             }
-            });
-     */
+            if(vpnStatus === ''){
+                vpnStatus = "";
+                $('#status-prometheus').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVO, rosso
+                $('#status-prometheus').text("Servizio non attivo");
+            } else {
+                $('#status-prometheus').css({'color': '#35b85a', 'font-weight': 'bold'}); // Stato ATTIVO, verde
+                $('#status-prometheus').text("Servizio attivo");
+            } 
+            $('#status-prometheus-description').html(vpnStatus);
+      })
+      .fail(function() { 
+          $('#status-prometheus').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVO, rosso
+          $('#status-prometheus').text("Servizio non attivo");
+          $('#status-prometheus-description').html("");
+      });
+     
        
 }
 
