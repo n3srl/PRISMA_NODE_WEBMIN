@@ -1,6 +1,6 @@
 <?php
 
-class OvpnApiLogic {
+class PrometheusApiLogic {
 
     public static function EditConfiguration($request) {
         try {
@@ -15,20 +15,9 @@ class OvpnApiLogic {
         return CoreLogic::GenerateResponse($res);
     }
 
-    public static function GetStatus() {
-        try {
-            $Person = CoreLogic::VerifyPerson();
-            $ob = self::getVpnStatus();
-            $res = true;
-        } catch (ApiException $a) {
-            return CoreLogic::GenerateErrorResponse($a->message);
-        }
-        return CoreLogic::GenerateResponse($res, $ob);
-    }
-
     public static function updateConfigurationFile($ob) {
 
-        $vpnConf = _OVPN_;
+        $prometheusConf = _PROMETHEUS_;
         if (empty($ob)) {
             return false;
         }
@@ -41,16 +30,11 @@ class OvpnApiLogic {
 
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+               
+                ssh2_scp_send($session, $ob, _PROMETHEUS_);
 
-                //$text .= "move_uploaded_file: ". move_uploaded_file($ob, _FILEUPLADPATH_);
-                //$text .= ssh2_scp_send($session, $ob, _OVPN_);
-                ssh2_scp_send($session, $ob, _OVPN_);
-
-                $stream = ssh2_exec($session, "systemctl restart openvpn@client.service");
+                $stream = ssh2_exec($session, ""); //restart prometheus
                 stream_set_blocking($stream, true);
-                //$stream = ssh2_exec($session, "pwd");
-                //$stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-                //$text .= stream_get_contents($stream_out);
                 
             }
 

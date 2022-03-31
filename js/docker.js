@@ -55,6 +55,14 @@ function setIndexToShow(){
 	indexToShow = inafdocker.id;
 }
 
+function restart(value) {
+        console.log(value);
+}
+
+function stop(value) {
+        console.log(value);
+}
+
 $(document).ready(function () {
 	table = $('#DockerList').DataTable({
 		"oLanguage": {
@@ -70,41 +78,54 @@ $(document).ready(function () {
 			"sEmptyTable": "Nessun risultato",
 			"sLengthMenu": "Mostra _MENU_ elementi"
 			},
+                        
 		columnDefs: [{
-				"targets": [-3],
+                            "defaultContent": "-",
+                            "targets": "_all"
+                        },
+                        {
+				"targets": [-4],
 				"orderable": false
 			},
 			{
-				"targets": [-1, -2, -4],
+				"targets": [3, 4, 5],
 				"visible": false
 			},
-			{
-				"targets": [-2],
-				"className": 'dt-body-right'
-			},
                         {
-                                "targets": [-3],
+                                "targets": [-4],
                                 //"className": 'dt-body-right',
+                                render: function (data, type, row, meta) {
+                                    var color;
+                                    if(data === "Up"){
+                                        color = "green";
+                                    }else if(data === "Restarting"){
+                                        color = "orange";
+                                    }else{
+                                        color = "black";
+                                    }
+
+                                    return '<div style="color:'
+                                            + color
+                                            + '">' + data
+                                            + '</div>';
+                                }
+                        },
+                        {
+                                "targets": [-1],
+                                //"className": 'dt-body-right',
+                                render: function (data, type, row, meta) {                                    
+                                    //return '<b>TEST</b>';
+                                    return "<div>"+
+                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' >Restart</button>" +
+                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-stop-" + data + "' onclick= 'stop(this.value)' class='btn btn-danger' >Stop</button>" +
+                                    "</div>";
+                                }
                         }
-                         ],
-                render: function (data, type, row, meta) {
-                    var color;
-                    if(data === "Up"){
-                        color = "green";
-                    }else if(data === "Restarting"){
-                        color = "orange";
-                    }else{
-                        color = "black";
-                    }
-                        
-                    return '<span style="color:'
-                            + color
-                            + '">' + data
-                            + '</span>';
-                },
+                    ],
             
 		responsive: true,
 		dom: 'lfrt<t>ip',
+                
 		"fnServerParams": function (aoData) {
 			// Show page with passed index
 			aoData.push({"name": "searchPageById", "value": indexToShow});
@@ -120,14 +141,19 @@ $(document).ready(function () {
 				aoData.push({"name": "status", "value": $('#F_status').val()});
 			if ($("." +$.md5('created')).is(":visible"))
 				aoData.push({"name": "created", "value": $('#F_created').val()});
+                        if ($("." +$.md5('actions')).is(":visible"))
+				aoData.push({"name": "actions", "value": $('#F_actions').val()});
 		},
+                
 		"fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
 			if (aData[aData.length - 1] == lastEditId) {
 				$('td', nRow).addClass('lastEditedRow');
 			}
+                        $('td:eq(6)', nRow).html('<b>A</b>');
 		},
 		"fnDrawCallback": function (settings, json) {
 			// Show page with passed index
+                        
 			indexToShow = null;
 				setTimeout(function () {
 				if (settings.json.pageToShow !== null) {

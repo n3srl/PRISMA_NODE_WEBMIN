@@ -195,3 +195,22 @@ $app->GET('/prometheus/foreignkey/{companyColumn}', function(Application $app, R
 
 $app->run();
 
+/**
+*
+* EDIT CONFIGURATION FILE
+*
+**/
+
+$app->POST('/prometheus/editconfiguration', function(Application $app, Request $request) {
+
+	$result = PrometheusApiLogic::EditConfiguration($request->files->get('configuration'));
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+

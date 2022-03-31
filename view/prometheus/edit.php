@@ -54,7 +54,7 @@
                         </div>
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                             <h4 id="status-prometheus-description"></h4>
-                        </div>
+                        </div>  
                     </div>
                 </div>
             </div>

@@ -139,10 +139,10 @@
                         <table id='FreetureFinalList' class='table table-striped table-bordered' style='width: 100%; '>
                             <thead>
                                 <tr>
-                                    <th><?php echo (_('parametro')) ?></th>
-                                    <th><?php echo (_('valore')) ?></th>
-                                    <th><?php echo (_('descrizione')) ?></th>
-                                    <th><?php echo (_('show')) ?></th>
+                                    <th><?php echo (_('Parametro')) ?></th>
+                                    <th><?php echo (_('Valore')) ?></th>
+                                    <th><?php echo (_('Descrizione')) ?></th>
+                                    <th><?php echo (_('Show')) ?></th>
                                     <th></th>
                                 </tr>
                             </thead>

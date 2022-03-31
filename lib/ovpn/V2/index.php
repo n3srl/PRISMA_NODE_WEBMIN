@@ -28,7 +28,7 @@ OVPN
 
 /**
 *
-* EDIT MASK FILE
+* EDIT CONFIGURATION FILE
 *
 **/
 

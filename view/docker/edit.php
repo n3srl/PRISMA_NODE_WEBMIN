@@ -96,13 +96,14 @@
 							<div class='x_content'>
 								<table id='DockerList' class='table table-striped table-bordered' style='width: 100%; '>
 									<thead>
-									<tr>
-										<th><?php echo (_('nome')) ?></th>
-										<th><?php echo (_('immagine')) ?></th>
-										<th><?php echo (_('comando')) ?></th>
-										<th><?php echo (_('stato')) ?></th>
-										<th><?php echo (_('creato')) ?></th>
-										<th></th>
+									<tr>    
+										<th><?php echo (_('Nome')) ?></th>
+										<th><?php echo (_('Immagine')) ?></th>
+										<th><?php echo (_('Comando')) ?></th>
+										<th><?php echo (_('Stato')) ?></th>
+										<th><?php echo (_('Creato')) ?></th>
+                                                                                <th><?php echo (_('Azioni')) ?></th>
+										
 									</tr>
 								</thead>
 								<tbody>
