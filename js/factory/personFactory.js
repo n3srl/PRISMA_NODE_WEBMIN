@@ -6,7 +6,7 @@
 class PersonModel extends Person {
     constructor() {
         super();
-        this.group_id = 1;
+        //this.group_id = 1;
         this.new_password = null;
         this.confirm_password = null;
     }
@@ -56,6 +56,11 @@ class PersonModel extends Person {
     get parseToObj() {
         let obj = {
             id: this.id,
+            username: this.username,
+            timezone: this.timezone,
+            erased: this.erased
+            /*
+            id: this.id,
             oid: this.oid,
             username: this.username,
             title: this.title,
@@ -77,7 +82,7 @@ class PersonModel extends Person {
             country: this.country,
             timezone: this.timezone,
             new_password: this.new_password,
-            group_id: this.group_id
+            group_id: this.group_id*/
         };
         return obj;
     }
@@ -85,6 +90,7 @@ class PersonModel extends Person {
         let obj_full = JSON.parse(json);
         let obj = obj_full.data;
         let context = context_;
+        /*
         context.id = obj.id;
         context.oid = obj.oid;
         context.username = obj.username;
@@ -107,7 +113,12 @@ class PersonModel extends Person {
         context.country = obj.country;
         context.timezone = obj.timezone;
         context.new_password = obj.new_password;
-        context.group_id = obj.group_id;
+        context.group_id = obj.group_id;*/
+        context.id = obj.id;
+        context.username = obj.username;
+        context.password = obj.password;
+        context.timezone = obj.timezone;
+        context.erased = obj.erased;
         //callback
         callBack.forEach(s => s.apply());
     }
@@ -115,7 +126,8 @@ class PersonModel extends Person {
 function setPersonVisibility() {
 
     let core_person_visibility = new Person();
-
+    
+    /*
     core_person_visibility.id = true;
     core_person_visibility.oid = true;
     core_person_visibility.username = true;
@@ -145,7 +157,13 @@ function setPersonVisibility() {
     core_person_visibility.valid_from = true;
     core_person_visibility.valid_to = true;
     core_person_visibility.erased = true;
-    core_person_visibility.last_update = true;
+    core_person_visibility.last_update = true;*/
+    
+     core_person_visibility.id = true;
+    core_person_visibility.username = true;
+    core_person_visibility.password = true;
+    core_person_visibility.timezone = true;
+    core_person_visibility.erased = true;
 
 
     $.each(core_person_visibility, function (key, value) {

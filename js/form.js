@@ -1,8 +1,9 @@
-validator.defaults.alerts = false;
+validator.defaults.alerts = true;
 validator.message.empty = "Campo obbligatorio";
 validator.message.select = "Campo obbligatorio";
 validator.message.number_min = "Troppo basso";
 validator.message.number_max = "Troppo alto";
+validator.message.password_repeat = "Le password non corrispondono"
 
 $('form')
         .on('blur', 'input[required], input.optional, select.required', validator.checkField)
@@ -19,6 +20,7 @@ $('form').not('.file-upload').submit(function (e) {
 
     if (!validator.checkAll($(this))) {
         submit = false;
+        console.log(validator);
     }
     if (submit) {
 
@@ -345,6 +347,7 @@ function disableForm(objClass, editButton = false) {
         $(formSelector + "[name=" + index + "]").addClass("input-disabled");
         $(formSelector + "[name=" + index + "]").removeClass("input-enabled");
         $(formSelector + "[name=" + index + "]").prop('disabled', true);
+        validator.unmark($(formSelector + "[name=" + index + "]")); // Per rimuovere alert precedenti
     });
     $(formSelector + "#savebtn").hide();
     $(formSelector + "#cleanbtn").hide();

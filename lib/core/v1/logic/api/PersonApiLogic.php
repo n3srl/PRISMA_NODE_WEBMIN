@@ -188,7 +188,7 @@ class PersonApiLogic {
         $sIndexColumn = 'id';
         $sTable = 'core_person';
         $gaSql['link'] = $db_conn;
-        ;
+        
         /*         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          * If you just want to use the basic configuration for DataTables with PHP server-side, there is
          * no need to edit below this line
@@ -344,5 +344,140 @@ class PersonApiLogic {
         }
         return $output;
     }
+    
+    public static function GetListDatatableFromFile() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+             
+        $reply = self::parseUsersFile();
+        $output = array(
+            "sEcho" => intval($_GET['sEcho']),
+            "pageToShow" => 0,
+            "iTotalRecords" => count($reply),
+            "iTotalDisplayRecords" => count($reply),
+            "aaData" => $reply
+        );
+        
+        return $output;
+    
+    }
+    
+    public static function parseUsersFile(){
+        
+        $file = _PASSWD_;
+        
+        if (file_exists($file) && is_file($file)) {
+
+            $contents = file($file);
+
+            //Parse config file line by line
+            foreach ($contents as $line) {
+                
+                $array = explode(" ",$line);
+                $user[] = array($array[0], $array[1], $array[2], $array[3], $array[4]);
+                 
+            }
+
+        }
+        return $user;
+    }
+    
+    public static function GetFromFile($id) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getUser($id);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+    
+     public static function UpdatePassword($request) {
+         try {
+
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
+
+            $tmp = $request->get("data");
+
+            $new_password = $tmp["new_password"] ;
+            $id = $tmp["id"] ;
+            
+            $ob = new Person();
+            $ob->id = $id;
+
+            $res = self::updateFilePassword($id, $new_password);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+    
+    public static function getUser($id) {
+        $file = _PASSWD_;
+        
+        if (file_exists($file) && is_file($file)) {
+
+            $contents = file($file);
+
+            // Parse users file line by line
+            foreach ($contents as $line) {
+                
+                $array = explode(" ",$line);
+                $user = new Person();
+                $user->id = $array[0];
+                $user->username = $array[1];
+                $user->password = $array[2];
+                $user->timezone = $array[3];
+                $user->erased = "0";
+                 
+            }
+
+        }
+        return $user;
+    }
+    
+    public static function updateFilePassword($id, $new_password) {
+        $file = _PASSWD_;
+        $reply = "";
+        
+        $pwd = password_hash($new_password, PASSWORD_BCRYPT);
+        
+        if (file_exists($file) && is_file($file)) {
+
+            $contents = file($file);
+
+            // Parse password file line by line
+            foreach ($contents as $line) {
+               
+                
+                $array = explode(" ",$line);
+                $user = new Person();
+                $user->id = $array[0];
+                $user->username = $array[1];
+                $user->password = $array[2];
+                $user->timezone = $array[3];
+                $user->erased = $array[4];
+                
+                if ($id === $user->id) {
+                        $reply .= $user->id . " ". $user->username . " ". $pwd . " " . $user->timezone . " ". $user->erased;
+                    }else{
+                        $reply .= $line;
+                    }
+                 
+            }
+            $myfile = fopen($file, "w");
+            fwrite($myfile, $reply);
+            fclose($myfile);
+            return true;
+
+        }
+        return false;
+    }
+
 
 }

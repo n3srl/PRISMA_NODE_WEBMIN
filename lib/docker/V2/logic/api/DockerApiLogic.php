@@ -310,6 +310,36 @@ class DockerApiLogic
         
         return false;
     }
+    
+    //Access SSH container and get a single Container
+    public static function sshContainerStop($ob) {
+        $list = array();
+        $i = 0;
+        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+
+        if ($session) {
+            
+            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+
+                //Execute command to get containers
+                //https://www.baeldung.com/ops/docker-list-containers
+                $stream = ssh2_exec($session, "sudo docker stop ".$ob->name);
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $text = stream_get_contents($stream_out);
+                
+                return true;
+                
+            }
+
+            //ssh2_disconnect($session); -> This causes Segmentation fault !
+            unset($session);
+        }
+        
+        return false;
+    }
 
 }
 

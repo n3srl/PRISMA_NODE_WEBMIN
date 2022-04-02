@@ -43,11 +43,9 @@ function showStatus(){
             success: function (res) {
                 var vpnStatus = JSON.parse(res).data;
                 if(vpnStatus === ''){
-                    vpnStatus = "";
                     $('#status-ovpn').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVA, rosso
                     $('#status-ovpn').text("VPN non attiva");
                 } else {
-                    vpnStatus = vpnStatus.substr(vpnStatus.indexOf('tun0')); 
                     $('#status-ovpn').css({'color': '#35b85a', 'font-weight': 'bold'}); // Stato ATTIVA, verde
                     $('#status-ovpn').text("VPN Attiva");
                 }         

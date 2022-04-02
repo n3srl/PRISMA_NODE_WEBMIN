@@ -296,8 +296,8 @@ class FreetureFinalApiLogic
     
     public static function formatDescription($raw){
         $raw = str_replace("\n", " ", $raw);
-        $raw = str_replace("<", "[", $raw);
-        $raw = str_replace(">", "]", $raw);
+        $raw = str_replace("<", "&lt;", $raw);
+        $raw = str_replace(">", "&gt;", $raw);
         return $raw;
     }
 

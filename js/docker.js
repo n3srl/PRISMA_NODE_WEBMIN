@@ -87,10 +87,10 @@ $(document).ready(function () {
 				"targets": [-4],
 				"orderable": false
 			},
-			{
+			/*{
 				"targets": [3, 4, 5],
 				"visible": false
-			},
+			},*/
                         {
                                 "targets": [-4],
                                 //"className": 'dt-body-right',
@@ -149,7 +149,6 @@ $(document).ready(function () {
 			if (aData[aData.length - 1] == lastEditId) {
 				$('td', nRow).addClass('lastEditedRow');
 			}
-                        $('td:eq(6)', nRow).html('<b>A</b>');
 		},
 		"fnDrawCallback": function (settings, json) {
 			// Show page with passed index

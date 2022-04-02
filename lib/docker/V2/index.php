@@ -193,5 +193,43 @@ $app->GET('/docker/foreignkey/{companyColumn}', function(Application $app, Reque
 	return $resp;
 });
 
+/**
+*
+* RESTART CONTAINER
+*
+**/
+
+$app->POST('/docker/restart', function(Application $app, Request $request) {
+
+	$result = DockerApiLogic::sshContainerRestart($request->request);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
+* STOP CONTAINER
+*
+**/
+
+$app->POST('/docker/stop', function(Application $app, Request $request) {
+
+	$result = DockerApiLogic::sshContainerStop($request->request);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
 $app->run();
 

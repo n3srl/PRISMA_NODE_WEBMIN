@@ -18,9 +18,9 @@ function setLastEditId() {
 
 function editObj(id) {
     $("input[type=password]").each(function (key, value) {
-        $(this).removeClass("required");
+        $(this).addClass("required");
         $(this).removeClass("optional");
-        $(this).addClass("optional");
+        //$(this).addClass("optional");
     });
 
     core_person.new_password = null;
@@ -32,7 +32,8 @@ function editObj(id) {
 }
 
 function allowEditObj() {
-    enableForm(core_person, false);
+    //enableForm(core_person, false);
+    enableForm(core_person,false);
 }
 
 function saveObj() {
@@ -96,65 +97,30 @@ $(document).ready(function () {
                 "targets": [-2, -3],
                 "orderable": false
             },
-            {
-                "targets": [-1],
-                "visible": false
-            }],
+        ],
         responsive: true,
         dom: 'lfrt<t>ip',
+        
         "fnServerParams": function (aoData) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
             if ($("." + $.md5('id')).is(":visible"))
-                aoData.push({"name": "id", "value": $('#F_id').val()});
-            if ($("." + $.md5('oid')).is(":visible"))
-                aoData.push({"name": "oid", "value": $('#F_oid').val()});
+                aoData.push({"name": "id", "value": $('#F_id').val()});            
             if ($("." + $.md5('username')).is(":visible"))
                 aoData.push({"name": "username", "value": $('#F_username').val()});
             if ($("." + $.md5('password')).is(":visible"))
-                aoData.push({"name": "password", "value": $('#F_password').val()});
-            if ($("." + $.md5('title')).is(":visible"))
-                aoData.push({"name": "title", "value": $('#F_title').val()});
-            if ($("." + $.md5('first_name')).is(":visible"))
-                aoData.push({"name": "first_name", "value": $('#F_first_name').val()});
-            if ($("." + $.md5('middle_name')).is(":visible"))
-                aoData.push({"name": "middle_name", "value": $('#F_middle_name').val()});
-            if ($("." + $.md5('last_name')).is(":visible"))
-                aoData.push({"name": "last_name", "value": $('#F_last_name').val()});
-            if ($("." + $.md5('suffix')).is(":visible"))
-                aoData.push({"name": "suffix", "value": $('#F_suffix').val()});
-            if ($("." + $.md5('company')).is(":visible"))
-                aoData.push({"name": "company", "value": $('#F_company').val()});
-            if ($("." + $.md5('job_title')).is(":visible"))
-                aoData.push({"name": "job_title", "value": $('#F_job_title').val()});
-            if ($("." + $.md5('email')).is(":visible"))
-                aoData.push({"name": "email", "value": $('#F_email').val()});
-            if ($("." + $.md5('web_page_address')).is(":visible"))
-                aoData.push({"name": "web_page_address", "value": $('#F_web_page_address').val()});
-            if ($("." + $.md5('im_address')).is(":visible"))
-                aoData.push({"name": "im_address", "value": $('#F_im_address').val()});
-            if ($("." + $.md5('phone')).is(":visible"))
-                aoData.push({"name": "phone", "value": $('#F_phone').val()});
-            if ($("." + $.md5('address')).is(":visible"))
-                aoData.push({"name": "address", "value": $('#F_address').val()});
-            if ($("." + $.md5('postcode')).is(":visible"))
-                aoData.push({"name": "postcode", "value": $('#F_postcode').val()});
-            if ($("." + $.md5('number')).is(":visible"))
-                aoData.push({"name": "number", "value": $('#F_number').val()});
-            if ($("." + $.md5('city')).is(":visible"))
-                aoData.push({"name": "city", "value": $('#F_city').val()});
-            if ($("." + $.md5('province')).is(":visible"))
-                aoData.push({"name": "province", "value": $('#F_province').val()});
-            if ($("." + $.md5('country')).is(":visible"))
-                aoData.push({"name": "country", "value": $('#F_country').val()});
+                aoData.push({"name": "password", "value": $('#F_password').val()});            
             if ($("." + $.md5('timezone')).is(":visible"))
                 aoData.push({"name": "timezone", "value": $('#F_timezone').val()});
+            if ($("." + $.md5('erased')).is(":visible"))
+                aoData.push({"name": "erased", "value": $('#F_erased').val()});
         },
         "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
             if (aData[aData.length - 1] == lastEditId) {
                 $('td', nRow).addClass('lastEditedRow');
             }
         },
+        
         "fnDrawCallback": function (settings, json) {
             // Show page with passed index
             indexToShow = null;

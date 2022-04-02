@@ -635,7 +635,7 @@ $app->POST('/person', function(Application $app, Request $request) {
  * */
 $app->PUT('/person', function(Application $app, Request $request) {
 
-    $result = PersonApiLogic::Update($request->request);
+    $result = PersonApiLogic::UpdatePassword($request->request);
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
@@ -689,7 +689,7 @@ $app->PATCH('/person', function(Application $app, Request $request) {
  * */
 $app->GET('/person/{personId}', function(Application $app, Request $request, $personId) {
 
-    $result = PersonApiLogic::Get($personId);
+    $result = PersonApiLogic::GetFromFile($personId);
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
@@ -725,7 +725,7 @@ $app->GET('/person', function(Application $app, Request $request) {
  * */
 $app->GET('/person/datatable/list', function(Application $app, Request $request) {
 
-    $result = PersonApiLogic::GetListDatatable();
+    $result = PersonApiLogic::GetListDatatableFromFile();
     $resp = new Response(json_encode($result));
     $resp->setStatusCode(200);
     return $resp;
@@ -764,6 +764,25 @@ $app->GET('/person/foreignkey/{companyColumn}', function(Application $app, Reque
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(403);
     }
+    return $resp;
+});
+
+/**
+ *
+ * EDIT PASSWORD
+ *
+ * */
+$app->POST('/person/password', function(Application $app, Request $request) {
+
+    $result = PersonApiLogic::UpdatePassword($request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response();
+        $resp->setStatusCode(401);
+    }
+
     return $resp;
 });
 

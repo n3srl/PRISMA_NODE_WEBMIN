@@ -43,14 +43,18 @@ class OvpnApiLogic {
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
                 //$text .= "move_uploaded_file: ". move_uploaded_file($ob, _FILEUPLADPATH_);
-                //$text .= ssh2_scp_send($session, $ob, _OVPN_);
-                ssh2_scp_send($session, $ob, _OVPN_);
+                //$text .= ssh2_scp_send($session, $ob, "");
+                //ssh2_scp_send($session, $ob, "");
+                //ssh2_exec("");
 
                 $stream = ssh2_exec($session, "systemctl restart openvpn@client.service");
                 stream_set_blocking($stream, true);
                 //$stream = ssh2_exec($session, "pwd");
                 //$stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 //$text .= stream_get_contents($stream_out);
+                
+                unset($session);
+                return true;
                 
             }
 
@@ -59,7 +63,7 @@ class OvpnApiLogic {
         }
 
 
-        return $text;
+        return false;
     }
 
     public static function getVpnStatus() {

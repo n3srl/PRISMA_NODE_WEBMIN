@@ -33,9 +33,7 @@ function saveObj(){
 }
 
 function editConfigurationObj(){
-        //$('#')
         uploadConfigurationFile();
-	//freeturefinalLogic.editConfiguration(inaffreeturefinal, reloadAllDatatable);
 }
 
 
