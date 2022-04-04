@@ -82,6 +82,13 @@
                 <?php
                 if (CoreLogic::GetPersonLogged() != null) {
                     include "./view/template/menu.php";
+                    /*
+                    if(CoreLogic::VerifyPermission() === "admin"){
+                        include "./view/template/menu.php";
+                    } else {
+                        include "./view/template/menuAgent.php";
+                    }
+                     */
                 }
                 ?>
 

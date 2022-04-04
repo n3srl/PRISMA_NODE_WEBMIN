@@ -97,6 +97,10 @@ $(document).ready(function () {
                 "targets": [-2, -3],
                 "orderable": false
             },
+            {
+                "targets": [-2],
+                "visible": false
+            }
         ],
         responsive: true,
         dom: 'lfrt<t>ip',

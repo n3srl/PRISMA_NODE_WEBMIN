@@ -57,6 +57,8 @@ class PersonModel extends Person {
         let obj = {
             id: this.id,
             username: this.username,
+            password: this.password,
+            new_password: this.new_password,
             timezone: this.timezone,
             erased: this.erased
             /*
@@ -159,7 +161,7 @@ function setPersonVisibility() {
     core_person_visibility.erased = true;
     core_person_visibility.last_update = true;*/
     
-     core_person_visibility.id = true;
+    core_person_visibility.id = true;
     core_person_visibility.username = true;
     core_person_visibility.password = true;
     core_person_visibility.timezone = true;

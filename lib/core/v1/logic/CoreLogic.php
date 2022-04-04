@@ -23,8 +23,11 @@ class CoreLogic {
     }
 
     public static function VerifyPermission() {
-        //TODO
-        return null;
+        $person = self::GetPersonLogged();
+        if($person->username === "prisma" || $person->username === "n3tester") {
+            return "admin";
+        }
+        return "agent";
     }
 
     public static function VerifyPerson($verifyPermission = false) {

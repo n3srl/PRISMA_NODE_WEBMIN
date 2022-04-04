@@ -3,16 +3,19 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/xampp/htdocs/lib/ft/V2/logic/api/FreetureFinalApiLogic.php</file>
-            <file>file:/C:/xampp/htdocs/lib/docker/V2/model/Docker.php</file>
-            <file>file:/C:/xampp/htdocs/view/freetureFinal/edit.php</file>
-            <file>file:/C:/xampp/htdocs/config/config.php</file>
+            <file>file:/C:/xampp/htdocs/view/person/edit.php</file>
+            <file>file:/C:/xampp/htdocs/js/form.js</file>
+            <file>file:/C:/xampp/htdocs/js/logic/personLogic.js</file>
+            <file>file:/C:/xampp/htdocs/ext_lib_fe/validator/validator.js</file>
             <file>file:/C:/xampp/htdocs/js/freetureFinal.js</file>
-            <file>file:/C:/xampp/htdocs/js/docker.js</file>
-            <file>file:/C:/xampp/htdocs/view/docker/edit.php</file>
-            <file>file:/C:/xampp/htdocs/lib/ft/V2/index.php</file>
-            <file>file:/C:/xampp/htdocs/lib/docker/V2/index.php</file>
+            <file>file:/C:/xampp/htdocs/view/gui/edit.php</file>
+            <file>file:/C:/xampp/htdocs/view/user/edit.php</file>
             <file>file:/C:/xampp/htdocs/lib/docker/V2/logic/api/DockerApiLogic.php</file>
+            <file>file:/C:/xampp/htdocs/view/freetureFinal/edit.php</file>
+            <file>file:/C:/xampp/htdocs/view/template/menu.php</file>
+            <file>file:/C:/xampp/htdocs/view/user/list.php</file>
+            <file>file:/C:/xampp/htdocs/lib/ft/V2/index.php</file>
+            <file>file:/C:/xampp/htdocs/js/person.js</file>
         </group>
     </open-files>
 </project-private>

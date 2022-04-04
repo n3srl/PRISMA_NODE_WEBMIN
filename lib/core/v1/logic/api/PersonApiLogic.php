@@ -409,6 +409,7 @@ class PersonApiLogic {
             
             $ob = new Person();
             $ob->id = $id;
+            $ob->password = $new_password;
 
             $res = self::updateFilePassword($id, $new_password);
         } catch (ApiException $a) {
