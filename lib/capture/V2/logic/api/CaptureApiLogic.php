@@ -161,15 +161,19 @@ class CaptureApiLogic {
     public static function GetListDatatable($request) {
         $reply;
         $iDisplayStart;
-        $iTotal = 300;
+        $iTotal = 100;
         
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
-            for ($i = $iDisplayStart; $i <= $iDisplayStart + $iDisplayLength; $i++) {
+            for ($i = $iDisplayStart; $i < $iDisplayStart + $iDisplayLength; $i++) {
+                if($i%3==0){
                 $reply[] = array("nome" . $i, "data" . 0, "preview" . $i, "download" . $i);
+                }else if ($i%3==1){
                 $reply[] = array("nome" . $i, "data" . 1, "preview" . $i, "download" . $i);
+                }else{
                 $reply[] = array("nome" . $i, "data" . 2, "preview" . $i, "download" . $i);
+                }
             }
 
             $test = $reply[0];
@@ -204,7 +208,7 @@ class CaptureApiLogic {
             "sEcho" => intval($_GET['sEcho']),
             "pageToShow" => $pageNumber,
             "iTotalRecords" => $iTotal,
-            "iTotalDisplayRecords" => $iDisplayLength,
+            "iTotalDisplayRecords" => $iTotal,
             "aaData" => $reply
         );
         return $output;

@@ -18,11 +18,11 @@ class PrometheusApiLogic {
     public static function updateConfigurationFile($ob) {
 
         $prometheusConf = _PROMETHEUS_;
+        $result = false;
         if (empty($ob)) {
-            return false;
+            return $result;
         }
 
-        $i = 0;
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
 
@@ -33,8 +33,10 @@ class PrometheusApiLogic {
                
                 ssh2_scp_send($session, $ob, _PROMETHEUS_);
 
-                $stream = ssh2_exec($session, ""); //restart prometheus
-                stream_set_blocking($stream, true);
+                $stream = ssh2_exec($session, "sudo /bin/systemctl restart prometheus");
+                
+                unset($session);
+                $result = true;
                 
             }
 
@@ -43,7 +45,7 @@ class PrometheusApiLogic {
         }
 
 
-        return $text;
+        return $result;
     }
 
     public static function getVpnStatus() {

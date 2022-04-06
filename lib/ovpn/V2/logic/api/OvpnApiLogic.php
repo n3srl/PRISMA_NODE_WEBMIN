@@ -29,8 +29,9 @@ class OvpnApiLogic {
     public static function updateConfigurationFile($ob) {
 
         $vpnConf = _OVPN_;
+        $result = false;
         if (empty($ob)) {
-            return false;
+            return $result;
         }
 
         $i = 0;
@@ -42,19 +43,12 @@ class OvpnApiLogic {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
-                //$text .= "move_uploaded_file: ". move_uploaded_file($ob, _FILEUPLADPATH_);
-                //$text .= ssh2_scp_send($session, $ob, "");
-                //ssh2_scp_send($session, $ob, "");
-                //ssh2_exec("");
+                ssh2_scp_send($session, $ob, _OVPN_);
 
-                $stream = ssh2_exec($session, "systemctl restart openvpn@client.service");
-                stream_set_blocking($stream, true);
-                //$stream = ssh2_exec($session, "pwd");
-                //$stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-                //$text .= stream_get_contents($stream_out);
+                $stream = ssh2_exec($session, "sudo /bin/systemctl restart openvpn@client.service");
                 
                 unset($session);
-                return true;
+                $result = true;
                 
             }
 
@@ -63,7 +57,7 @@ class OvpnApiLogic {
         }
 
 
-        return false;
+        return $result;
     }
 
     public static function getVpnStatus() {

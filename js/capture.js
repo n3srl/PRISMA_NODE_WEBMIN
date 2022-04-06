@@ -163,13 +163,15 @@ $(document).ready(function () {
                 "order": [[groupColumn, 'asc']],
                 "iDisplayLength": 25,
                 "iDisplayStart": 0,
+                "pageLength": 25,
+                "lengthMenu": [10, 25, 50],
 		bProcessing: true,
 		bServerSide: true,
 		bStateSave: true,
 		sAjaxSource: '/lib/capture/V2/capture/datatable/list',
                 "paging": true,
                 "ordering": true,
-                "info": false,
+                "info": true,
                 "searching": false
 	});
         $('#CaptureList').on('click', 'tr.group', function () {
