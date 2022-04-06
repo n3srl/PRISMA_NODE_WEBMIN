@@ -22,7 +22,7 @@ $app->before(function (Request $request) {
 
 /************************************************************
 
-DOCKER
+CAPTURE
 
 ************************************************************/
 
@@ -32,9 +32,9 @@ DOCKER
 *
 **/
 
-$app->POST('/docker', function(Application $app, Request $request) {
+$app->POST('/capture', function(Application $app, Request $request) {
 
-	$result = DockerApiLogic::Save($request->request);
+	$result = CaptureApiLogic::Save($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -51,9 +51,9 @@ $app->POST('/docker', function(Application $app, Request $request) {
 *
 **/
 
-$app->PUT('/docker', function(Application $app, Request $request) {
+$app->PUT('/capture', function(Application $app, Request $request) {
 
-	$result = DockerApiLogic::Update($request->request);
+	$result = CaptureApiLogic::Update($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -70,9 +70,9 @@ $app->PUT('/docker', function(Application $app, Request $request) {
 *
 **/
 
-$app->DELETE('/docker', function(Application $app, Request $request) {
+$app->DELETE('/capture', function(Application $app, Request $request) {
 
-	$result = DockerApiLogic::Delete($request->request);
+	$result = CaptureApiLogic::Delete($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -89,9 +89,9 @@ $app->DELETE('/docker', function(Application $app, Request $request) {
 *
 **/
 
-$app->PATCH('/docker', function(Application $app, Request $request) {
+$app->PATCH('/capture', function(Application $app, Request $request) {
 
-	$result = DockerApiLogic::Erase($request->request);
+	$result = CaptureApiLogic::Erase($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -108,9 +108,9 @@ $app->PATCH('/docker', function(Application $app, Request $request) {
 *
 **/
 
-$app->GET('/docker/{dockerId}', function(Application $app, Request $request, $dockerId) {
+$app->GET('/capture/{captureId}', function(Application $app, Request $request, $captureId) {
 
-	$result = DockerApiLogic::Get($dockerId);
+	$result = CaptureApiLogic::Get($captureId);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -127,9 +127,9 @@ $app->GET('/docker/{dockerId}', function(Application $app, Request $request, $do
 *
 **/
 
-$app->GET('/docker', function(Application $app, Request $request) {
+$app->GET('/capture', function(Application $app, Request $request) {
 
-	$result = DockerApiLogic::GetList();
+	$result = CaptureApiLogic::GetList();
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -146,9 +146,9 @@ $app->GET('/docker', function(Application $app, Request $request) {
 *
 **/
 
-$app->GET('/docker/datatable/list', function (Application $app, Request $request) {
+$app->GET('/capture/datatable/list', function (Application $app, Request $request) {
 
-    $result = DockerApiLogic::GetListDatatable();
+    $result = CaptureApiLogic::GetListDatatable($request);
     $encode = json_encode($result);
     $resp = new Response($encode);
     $resp->setStatusCode(200);
@@ -161,9 +161,9 @@ $app->GET('/docker/datatable/list', function (Application $app, Request $request
 *
 **/
 
-$app->GET('/docker/autocomplete/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
+$app->GET('/capture/autocomplete/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
 
-	$result = DockerApiLogic::GetListFilterAjax($companyColumn);
+	$result = CaptureApiLogic::GetListFilterAjax($companyColumn);
 	if ($result->results) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -180,48 +180,10 @@ $app->GET('/docker/autocomplete/{companyColumn}', function(Application $app, Req
 *
 **/
 
-$app->GET('/docker/foreignkey/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
+$app->GET('/capture/foreignkey/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
 
-	$result = DockerApiLogic::GetListFKAjax($companyColumn);
+	$result = CaptureApiLogic::GetListFKAjax($companyColumn);
 	if ($result->results) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
-});
-
-/**
-*
-* RESTART CONTAINER
-*
-**/
-
-$app->POST('/docker/restart/{dockerName}', function(Application $app, Request $request, $dockerName) {
-
-	$result = DockerApiLogic::sshContainerRestart($dockerName);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
-});
-
-/**
-*
-* STOP CONTAINER
-*
-**/
-
-$app->POST('/docker/stop/{dockerName}', function(Application $app, Request $request, $dockerName) {
-
-	$result = DockerApiLogic::sshContainerStop($dockerName);
-	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
 	} else {

@@ -56,11 +56,41 @@ function setIndexToShow(){
 }
 
 function restart(value) {
-        console.log(value);
+        $.ajax({
+               url: "/lib/docker/V2/docker/restart/" + value,
+               type: "POST",
+               success: function (res) {
+                   if(JSON.parse(res).result){
+                       defaultSuccess("Container riavviato correttamente");
+                       reloadAllDatatable();
+                   }else{
+                       defaultError();
+                   }
+               },
+               error: function (XMLHttpRequest, textStatus, errorThrown) {
+                   defaultError();
+               }
+
+           });
 }
 
 function stop(value) {
-        console.log(value);
+         $.ajax({
+               url: "/lib/docker/V2/docker/stop/" + value,
+               type: "POST",
+               success: function (res) {
+                   if(JSON.parse(res).result){
+                       defaultSuccess("Container fermato correttamente");
+                       reloadAllDatatable();
+                   }else{
+                       defaultError();
+                   }
+               },
+               error: function (XMLHttpRequest, textStatus, errorThrown) {
+                   defaultError();
+               }
+
+           });
 }
 
 $(document).ready(function () {
@@ -92,7 +122,7 @@ $(document).ready(function () {
 				"visible": false
 			},*/
                         {
-                                "targets": [-4],
+                                "targets": [-3],
                                 //"className": 'dt-body-right',
                                 render: function (data, type, row, meta) {
                                     var color;
@@ -113,8 +143,7 @@ $(document).ready(function () {
                         {
                                 "targets": [-1],
                                 //"className": 'dt-body-right',
-                                render: function (data, type, row, meta) {                                    
-                                    //return '<b>TEST</b>';
+                                render: function (data, type, row, meta) {  
                                     return "<div>"+
                                     "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' >Restart</button>" +
                                     "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-stop-" + data + "' onclick= 'stop(this.value)' class='btn btn-danger' >Stop</button>" +

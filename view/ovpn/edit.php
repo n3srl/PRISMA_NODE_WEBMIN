@@ -21,7 +21,7 @@
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                             <div class="mb-3">
                                 <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                    <h5><?= _('Carica nuovo file di configurazione OpenVPN') ?></h5>
+                                    <h5><?= _('Carica nuovo file di configurazione OpenVPN (esempio: client.ovpn)') ?></h5>
                                 </div>
                                 <div class='clearfix'>
                                     <form id="ovpnCfgFileForm" method='post' class='file-upload' enctype='multipart/form-data'>

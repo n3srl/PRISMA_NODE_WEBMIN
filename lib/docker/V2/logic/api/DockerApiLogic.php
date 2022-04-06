@@ -199,7 +199,7 @@ class DockerApiLogic
 
                 //Execute command to get containers
                 //https://www.baeldung.com/ops/docker-list-containers
-                $stream = ssh2_exec($session, "sudo docker container ls -a --format \"{{.Names}} {{.Image}} {{.Status}}\"");
+                $stream = ssh2_exec($session, "docker container ls -a --format \"{{.Names}} {{.Image}} {{.Status}}\"");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
@@ -213,7 +213,7 @@ class DockerApiLogic
                         
                         $conta = explode(" ", $container);
                         
-                        $list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", 0, $i);
+                        $list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", $conta[0], $i);
                         
                         $i++;
                     }
@@ -224,10 +224,10 @@ class DockerApiLogic
             unset($session);
         }
                 
-        //return $list;
-        $tmp[] = array("nome1", "immagine1", "Up", "stato1", "no date", "nome1", 0, 1);
+        return $list;
+        /*$tmp[] = array("nome1", "immagine1", "Up", "stato1", "no date", "nome1", 0, 1);
         $tmp[] = array("nome2", "immagine2", "Restarting", "stato2", "no date", "nome2", 0, 2);
-        return $tmp;
+        return $tmp;*/
     }
     
     //Access SSH container and get a single Container
@@ -295,12 +295,12 @@ class DockerApiLogic
 
                 //Execute command to get containers
                 //https://www.baeldung.com/ops/docker-list-containers
-                $stream = ssh2_exec($session, "sudo docker restart ".$ob->name);
+                $stream = ssh2_exec($session, "sudo docker restart ".$ob);
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
                 
-                return true;
+                return CoreLogic::GenerateResponse(true, $ob);
                 
             }
 
@@ -308,7 +308,7 @@ class DockerApiLogic
             unset($session);
         }
         
-        return false;
+        return CoreLogic::GenerateResponse(false, $ob);
     }
     
     //Access SSH container and get a single Container
@@ -325,12 +325,12 @@ class DockerApiLogic
 
                 //Execute command to get containers
                 //https://www.baeldung.com/ops/docker-list-containers
-                $stream = ssh2_exec($session, "sudo docker stop ".$ob->name);
+                $stream = ssh2_exec($session, "sudo docker stop ". $ob);
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
                 
-                return true;
+                return CoreLogic::GenerateResponse(true, $ob);
                 
             }
 
@@ -338,7 +338,7 @@ class DockerApiLogic
             unset($session);
         }
         
-        return false;
+        return CoreLogic::GenerateResponse(false, $ob);
     }
 
 }
