@@ -66,6 +66,7 @@
                                 <tr>
                                     <th><?php echo (_('Nome')) ?></th>
                                     <th><?php echo (_('Data')) ?></th>
+                                    <th><?php echo (_('Ora')) ?></th>
                                     <th><?php echo (_('Anteprima')) ?></th>
                                     <th><?php echo (_('Download')) ?></th>
                                 </tr>

@@ -87,7 +87,7 @@ $(document).ready(function () {
 				"orderable": true
 			},
                         {
-				"targets": [-1, -2],
+				"targets": [-1, -2, -3, -4, -5],
 				"orderable": false
 			},
 			{       "width": "5%",
@@ -110,7 +110,8 @@ $(document).ready(function () {
                                     "</center>";
                                 }
                         },
-                        {       "visible": false, 
+                        {       
+                                "visible": false, 
                                 "targets": groupColumn 
                         }
                     ],
@@ -126,15 +127,22 @@ $(document).ready(function () {
 			if ($("." +$.md5('name')).is(":visible"))
 				aoData.push({"name": "name", "value": $('#F_name').val()});
 			if ($("." +$.md5('date')).is(":visible"))
-				aoData.push({"name": "image", "value": $('#F_image').val()});
+				aoData.push({"name": "date", "value": $('#F_date').val()});
+                        if ($("." +$.md5('hour')).is(":visible"))
+                            aoData.push({"name": "hour", "value": $('#F_hour').val()});
 		},
+                rowGroup: {
+                    startRender: function (rows, group) {
+                        
+                        return $('<tr class="group" style="background-color:#C6CAD4;">')
+                            .append( '<td colspan="3">'+group+'</td>' )
+                            .append( '<td><center>'+rows.count()+'</center></td>' )
+                    },
+                    endRender: null,
+                    dataSrc: groupColumn
+                },
                 /*
-		"fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-			if (aData[aData.length - 1] == lastEditId) {
-				$('td', nRow).addClass('lastEditedRow');
-			}
-		},
-		"fnDrawCallback": function (settings, json) {
+                 * "fnDrawCallback": function (settings, json) {
 			// Show page with passed index
                         
 			indexToShow = null;
@@ -145,22 +153,15 @@ $(document).ready(function () {
 					}
 				}
 			}, 100);
-		},*/
-                "drawCallback": function (settings) {
-                    var api = this.api();
-                    var rows = api.rows({page:'current'}).nodes();
-                    var last=null;
-
-                    api.column(groupColumn, {page:'current'}).data().each(function (group, i) {
-                        if (last !== group) {
-                            $(rows).eq(i).before(
-                                '<tr class="group" style="background-color:#C6CAD4;"><td colspan="4">'+group+'</td></tr>'
-                            );
-                            last = group;
-                        }
-                    } );
-                },
-                "order": [[groupColumn, 'asc']],
+		},
+		"fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+			if (aData[aData.length - 1] == lastEditId) {
+				$('td', nRow).addClass('lastEditedRow');
+			}
+		},
+                */
+                
+                "order": [[groupColumn, 'desc']],
                 "iDisplayLength": 25,
                 "iDisplayStart": 0,
                 "pageLength": 25,

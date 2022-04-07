@@ -31,10 +31,14 @@ class OvpnApiLogic {
         $vpnConf = _OVPN_;
         $result = false;
         if (empty($ob)) {
-            return $result;
+            return false;
         }
-
-        $i = 0;
+        
+         
+        if(!move_uploaded_file($ob, $vpnConf)){
+            return false;
+        }
+       
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
 
@@ -43,7 +47,7 @@ class OvpnApiLogic {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
-                ssh2_scp_send($session, $ob, _OVPN_);
+                //ssh2_scp_send($session, $ob, _OVPN_);
 
                 $stream = ssh2_exec($session, "sudo /bin/systemctl restart openvpn@client.service");
                 

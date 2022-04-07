@@ -406,7 +406,6 @@ class FreetureFinalApiLogic
         if(!empty($ob)){
             return move_uploaded_file($ob, $freetureConf);
         }
-        //system('docker restart freeture');
         return false;
     }
     
@@ -416,7 +415,6 @@ class FreetureFinalApiLogic
         if(!empty($ob)){
             return move_uploaded_file($ob, $freetureConf);
         }
-        //system('docker restart freeture');
         return false;
     }
        

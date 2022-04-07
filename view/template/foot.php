@@ -34,6 +34,7 @@
 <script src="/ext_lib_fe/datatables.net-responsive/js/dataTables.responsive.min.js<?= _VERSION_ ?>"></script>
 <script src="/ext_lib_fe/datatables.net-responsive-bs/js/responsive.bootstrap.js<?= _VERSION_ ?>"></script>
 <script src="/ext_lib_fe/datatables.net-scroller/js/dataTables.scroller.min.js<?= _VERSION_ ?>"></script>
+<script src="/ext_lib_fe/datatables.net-rowgroup/js/dataTables.rowGroup.min.js<?= _VERSION_ ?>"></script>
 <!--script src="/ext_lib_fe/jszip/dist/jszip.min.js<?= _VERSION_ ?>"></script>
 <script src="/ext_lib_fe/pdfmake/build/pdfmake.min.js<?= _VERSION_ ?>"></script>
 <script src="/ext_lib_fe/pdfmake/build/vfs_fonts.js<?= _VERSION_ ?>"></script-->

@@ -26,6 +26,7 @@
         <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css<?= _VERSION_ ?>" rel="stylesheet">
         <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-responsive-bs/css/responsive.bootstrap.min.css<?= _VERSION_ ?>" rel="stylesheet">
         <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-scroller-bs/css/scroller.bootstrap.min.css<?= _VERSION_ ?>" rel="stylesheet">
+        <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-rowgroup/css/rowGroup.dataTables.min.css<?= _VERSION_ ?>" rel="stylesheet">
 
         <!-- Dropzone.js -->
         <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/dropzone/dist/min/dropzone.min.css<?= _VERSION_ ?>" rel="stylesheet">

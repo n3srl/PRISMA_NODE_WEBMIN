@@ -29,8 +29,11 @@ if ($PROD) {
     //Storage files
     define('_FREETURE_', '/usr/local/share/freeture/configuration.cfg');
     define('_FREETURE_MASK_', '/usr/local/share/freeture/default.bmp');
-    define('_OVPN_', '/etc/openvpn/client.conf');
-    define('_PROMETHEUS_', '/etc/prometheus/prometheus.yml');
+    define('_FREETURE_DATA_', '/freeture/');
+    //define('_OVPN_', '/etc/openvpn/client.conf');
+    //define('_PROMETHEUS_', '/etc/prometheus/prometheus.yml');
+    define('_OVPN_', '/usr/local/share/openvpn/client.conf');
+    define('_PROMETHEUS_', '/usr/local/share/prometheus/prometheus.yml');
     define('_PASSWD_', '/keys/passwd.txt');
             
     //SSH access for Docker
