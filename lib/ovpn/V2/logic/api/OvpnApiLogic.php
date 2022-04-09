@@ -34,7 +34,6 @@ class OvpnApiLogic {
             return false;
         }
         
-         
         if(!move_uploaded_file($ob, $vpnConf)){
             return false;
         }
@@ -56,7 +55,6 @@ class OvpnApiLogic {
                 
             }
 
-            //ssh2_disconnect($session); -> This causes Segmentation fault !
             unset($session);
         }
 

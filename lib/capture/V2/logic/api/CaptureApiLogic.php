@@ -212,20 +212,22 @@ class CaptureApiLogic {
 
     public static function getCapturesFiles($start, $end) {
         $i = 0;
-        $dir_name = _FREETURE_DATA_ . "/" . self::getStationName() . "/";
-        $reply = null;       
+        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $reply = null;     
+        $tmp_png_dir = _FREETURE_DATA_;
+        shell_exec("rm " . $tmp_png_dir . "*.png");
+        $files_paths;
 
-        $dirs = scandir($dir_name, SCANDIR_SORT_DESCENDING);
-        foreach ($dirs as $dir) {
-            if ('.' === $dir) {
+        $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
+        foreach ($dirs as $day_dir) {
+            if ('.' === $day_dir) {
                 continue;
             }
-            if ('..' === $dir) {
+            if ('..' === $day_dir) {
                 continue;
             }
-            $files = scandir($dir_name . "/" . $dir . "/captures", SCANDIR_SORT_DESCENDING);
+            $files = scandir($data_dir . "/" . $day_dir . "/captures", SCANDIR_SORT_DESCENDING);
             foreach ($files as $file) {
-
                 if ($i < $start) {
                     $i++;
                     continue;
@@ -244,14 +246,19 @@ class CaptureApiLogic {
                     $datetime = date_create($name[1]);
                     $day = $datetime->format('Y-m-d');
                     $hour = $datetime->format('H:i:s');
-                    $reply[] = array($file, $day, $hour, $file, $file);
+                    $png_name = str_replace("fit", "png", $file);
+                    $fit_path = $data_dir . $day_dir . "/captures/" . $file;
+                    $png_path = $tmp_png_dir . $png_name;
+                    shell_exec("fitspng -o " . $png_path . " " . $fit_path);
+                    $reply[] = array($file, $day, $hour, $png_path, $file);
                     $i++;
                 }
             }
         }
+        
         return $reply;
     }
-
+  
     public static function getFilesCount($dir_name) {
 
         $iTotal = 0;

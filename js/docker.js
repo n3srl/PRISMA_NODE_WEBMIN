@@ -123,7 +123,6 @@ $(document).ready(function () {
 			},*/
                         {
                                 "targets": [-3],
-                                //"className": 'dt-body-right',
                                 render: function (data, type, row, meta) {
                                     var color;
                                     if(data === "Up"){
@@ -142,7 +141,6 @@ $(document).ready(function () {
                         },
                         {
                                 "targets": [-1],
-                                //"className": 'dt-body-right',
                                 render: function (data, type, row, meta) {  
                                     return "<div>"+
                                     "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' >Restart</button>" +

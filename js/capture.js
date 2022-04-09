@@ -55,11 +55,11 @@ function setIndexToShow(){
 	indexToShow = inafcapture.id;
 }
 
-function restart(value) {
+function download(value) {
         console.log(value);
 }
 
-function stop(value) {
+function preview(value) {
         console.log(value);
 }
 
@@ -98,7 +98,7 @@ $(document).ready(function () {
                                 "targets": [-2],
                                 render: function (data, type, row, meta) {
                                     return "<center>" +
-                                    "<i class='fa fa-file'></i>" +
+                                    "<button class='btn btn-success' id='capture-preview-" + data + "' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
                                     "</center>";
                                 }
                         },
@@ -106,7 +106,7 @@ $(document).ready(function () {
                                 "targets": [-1],
                                 render: function (data, type, row, meta) {                                                                      
                                     return "<center>" +
-                                    "<i class='fa fa-download'></i>" +
+                                    "<button class='btn btn-success' id='capture-download-" + data + "' value='" + data + "' onclick= 'download(this.value)'><i class='fa fa-download'></i></button>" +
                                     "</center>";
                                 }
                         },
