@@ -207,12 +207,14 @@ class CaptureApiLogic {
         return $stationName;
     }
 
-    public static function getCapturesFiles($start, $end) {
+    public static function getCapturesFiles($start, $end, $clean = true) {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
         $reply = null;
         $tmp_png_dir = _FREETURE_DATA_;
-        shell_exec("rm " . $tmp_png_dir . "*.png");
+        if ($clean) {
+            shell_exec("rm " . $tmp_png_dir . "*.png");
+        }
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
@@ -246,8 +248,8 @@ class CaptureApiLogic {
                     $png_name = str_replace("fit", "png", $file);
                     $fit_path = $data_dir . $day_dir . "/captures/" . $file;
                     $png_path = $tmp_png_dir . $png_name;
-                    shell_exec("fitspng -o " . $png_path . " " . $fit_path);
-                    $reply[] = array($file, $day . ":" . $n_day_files , $hour, $png_name, $day_dir . "_" . $file);
+                    shell_exec("fitspng -o $png_path $fit_path");
+                    $reply[] = array($file, $day . ":" . $n_day_files, $hour, $png_name, $day_dir . "_" . $file);
                     $i++;
                 }
             }
@@ -261,7 +263,7 @@ class CaptureApiLogic {
         $n_files = 0;
         if ($handle = opendir($path)) {
             while (false !== ($day = readdir($handle))) {
-                $n_files += self::getDirectoryFilesCount($path . $day. "/captures/" . "*.fit");
+                $n_files += self::getDirectoryFilesCount($path . $day . "/captures/*.fit");
             }
             closedir($handle);
         }
@@ -280,7 +282,7 @@ class CaptureApiLogic {
 
     public static function GetListDatatable($request) {
         $reply = null;
-        $iDisplayStart = 0;
+        $iDisplayStart = 1;
         $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/";
         $iTotal = self::getAllDaysFilesCount($directory);
 
@@ -333,8 +335,19 @@ class CaptureApiLogic {
     }
 
     public static function GetPngFile($file) {
-        $path = _FREETURE_DATA_ . $file;
+        $path = "";
+        if ($file === "last-capture") {
+            $path = self::GetLastCapture();
+        } else {
+            $path = _FREETURE_DATA_ . $file;
+        }
         return $path;
+    }
+
+    public static function GetLastCapture() {
+        $files = self::getCapturesFiles(0, 0, false);
+        $lastfile = "/freeture/" . $files[0][3];
+        return $lastfile;
     }
 
 }

@@ -161,7 +161,15 @@ $(document).ready(function () {
             else {
                 table.order([groupColumn, 'asc']).draw();
             }
-        } );
+        });
+        
+        $.ajax({
+            url: "/lib/capture/V2/capture/preview/last-capture",
+            type: "GET",
+            success: function (res) {
+                
+            }
+            });
 });
 
  $(function() {

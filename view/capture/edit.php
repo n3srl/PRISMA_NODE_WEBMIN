@@ -93,6 +93,20 @@
                     </div>
                 </div>
             </div>
+            <div class='col-md-12 col-sm-12 col-xs-12'>
+                <div id='list' class='x_panel'>
+                    <div class='x_title no-padding-lr'>
+                        <div class='clearfix'>
+                            <div class='col-md-6 no-padding-l'>
+                                <h2><?= _('Ultima Calibrazione') ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='x_content'>
+                        <img class="img-responsive" src="/lib/capture/V2/capture/preview/last-capture"/>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

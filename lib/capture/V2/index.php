@@ -201,7 +201,7 @@ $app->GET('/capture/foreignkey/{companyColumn}', function(Application $app, Requ
 **/
 
 $app->GET('/capture/preview/{fileName}', function(Application $app, Request $request, $fileName) {
-
+        
 	$result = CaptureApiLogic::GetPngFile($fileName);
 	$resp = new BinaryFileResponse($result);
         $resp->headers->set('Content-Type', 'image/png');
@@ -214,7 +214,6 @@ $app->GET('/capture/download/{fileName}', function(Application $app, Request $re
 
 	$result = CaptureApiLogic::GetFitFile($fileName);
 	$resp = new BinaryFileResponse($result);
-        //$resp->headers->set('Content-Type', '');
         $resp->setStatusCode(200);
 	return $resp;
 });
