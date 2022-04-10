@@ -210,13 +210,13 @@ class CaptureApiLogic {
     public static function getCapturesFiles($start, $end) {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
-        $reply = null;     
+        $reply = null;
         $tmp_png_dir = _FREETURE_DATA_;
         shell_exec("rm " . $tmp_png_dir . "*.png");
-        $files_paths;
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
+            $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/captures/*.fit");
             if ('.' === $day_dir) {
                 continue;
             }
@@ -247,35 +247,42 @@ class CaptureApiLogic {
                     $fit_path = $data_dir . $day_dir . "/captures/" . $file;
                     $png_path = $tmp_png_dir . $png_name;
                     shell_exec("fitspng -o " . $png_path . " " . $fit_path);
-                    $reply[] = array($file, $day, $hour, $png_name, $day_dir . "_" . $file);
+                    $reply[] = array($file, $day . ":" . $n_day_files , $hour, $png_name, $day_dir . "_" . $file);
                     $i++;
                 }
             }
         }
-        
+
         return $reply;
     }
-  
-    public static function getFilesCount($dir_name) {
 
-        $iTotal = 0;
-        if ($handle = opendir($dir_name)) {
-            while (false !== ($dir = readdir($handle))) {
-                $files = glob($dir_name . $dir . "/captures/" . "*.fit");
-                if ($files) {
-                    $iTotal = count($files);
-                }
+    public static function getAllDaysFilesCount($path) {
+
+        $n_files = 0;
+        if ($handle = opendir($path)) {
+            while (false !== ($day = readdir($handle))) {
+                $n_files += self::getDirectoryFilesCount($path . $day. "/captures/" . "*.fit");
             }
             closedir($handle);
         }
-        return $iTotal;
+        return $n_files;
+    }
+
+    public static function getDirectoryFilesCount($path) {
+
+        $n_files = 0;
+        $files = glob($path);
+        if ($files) {
+            $n_files = count($files);
+        }
+        return $n_files;
     }
 
     public static function GetListDatatable($request) {
         $reply = null;
         $iDisplayStart = 0;
         $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/";
-        $iTotal = self::getFilesCount($directory);
+        $iTotal = self::getAllDaysFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
@@ -315,8 +322,7 @@ class CaptureApiLogic {
         );
         return $output;
     }
-    
-    
+
     public static function GetFitFile($file) {
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
         $file_info = explode("_", $file);
@@ -325,7 +331,7 @@ class CaptureApiLogic {
         $path = $data_dir . $day . "/captures/" . $fit_name;
         return $path;
     }
-    
+
     public static function GetPngFile($file) {
         $path = _FREETURE_DATA_ . $file;
         return $path;

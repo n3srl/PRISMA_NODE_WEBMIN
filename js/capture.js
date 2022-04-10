@@ -55,10 +55,6 @@ function setIndexToShow(){
 	indexToShow = inafcapture.id;
 }
 
-function download(value) {
-        console.log(value);
-}
-
 function preview(value) {
         $('#capture-preview-modal').modal('show');
         $('#capture-preview-modal-label').html(value.replace(".png", ""));
@@ -86,10 +82,6 @@ $(document).ready(function () {
                         
 		columnDefs: [
                         {
-				"targets": [-3, -4],
-				"orderable": true
-			},
-                        {
 				"targets": [-1, -2, -3, -4, -5],
 				"orderable": false
 			},
@@ -110,7 +102,7 @@ $(document).ready(function () {
                                 render: function (data, type, row, meta) {                                                                      
                                     return "<center>" + 
                                     "<a href='/lib/capture/V2/capture/download/" + data + "'>"+
-                                    "<button class='btn btn-success' id='capture-download-" + data + "' value='" + data + "' onclick= 'download(this.value)'><i class='fa fa-download'></i></button>" +
+                                    "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
                                     "</a>" +
                                     "</center>";
                                 }
@@ -138,33 +130,14 @@ $(document).ready(function () {
 		},
                 rowGroup: {
                     startRender: function (rows, group) {
-                        
+                        var info = group.split(":");
                         return $('<tr class="group" style="background-color:#C6CAD4;">')
-                            .append( '<td colspan="3">'+group+'</td>' )
-                            .append( '<td><center>'+rows.count()+'</center></td>' )
+                            .append( '<td colspan="3">'+ info[0] +'</td>' )
+                            .append( '<td><center>'+ info[1] +'</center></td>' )
                     },
                     endRender: null,
                     dataSrc: groupColumn
                 },
-                /*
-                 * "fnDrawCallback": function (settings, json) {
-			// Show page with passed index
-                        
-			indexToShow = null;
-				setTimeout(function () {
-				if (settings.json.pageToShow !== null) {
-					if ($('.dataTable').DataTable().page.info().page !== settings.json.pageToShow) {
-						$('.dataTable').DataTable().page(settings.json.pageToShow).draw('page');
-					}
-				}
-			}, 100);
-		},
-		"fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-			if (aData[aData.length - 1] == lastEditId) {
-				$('td', nRow).addClass('lastEditedRow');
-			}
-		},
-                */
                 
                 "order": [[groupColumn, 'desc']],
                 "iDisplayLength": 10,
