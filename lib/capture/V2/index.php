@@ -9,6 +9,7 @@ require_once _EXTLIB_ . 'sylex/vendor/autoload.php';
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Silex\Application;
 
 $app = new Silex\Application();
@@ -190,6 +191,31 @@ $app->GET('/capture/foreignkey/{companyColumn}', function(Application $app, Requ
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(403);
 	}
+	return $resp;
+});
+
+/**
+*
+* GET PREVIEW
+*
+**/
+
+$app->GET('/capture/preview/{fileName}', function(Application $app, Request $request, $fileName) {
+
+	$result = CaptureApiLogic::GetPngFile($fileName);
+	$resp = new BinaryFileResponse($result);
+        $resp->headers->set('Content-Type', 'image/png');
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
+
+$app->GET('/capture/download/{fileName}', function(Application $app, Request $request, $fileName) {
+
+	$result = CaptureApiLogic::GetFitFile($fileName);
+	$resp = new BinaryFileResponse($result);
+        //$resp->headers->set('Content-Type', '');
+        $resp->setStatusCode(200);
 	return $resp;
 });
 

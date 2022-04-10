@@ -49,9 +49,7 @@ class BinaryFileResponse extends Response
     public function __construct($file, $status = 200, $headers = array(), $public = true, $contentDisposition = null, $autoEtag = false, $autoLastModified = true)
     {
         parent::__construct(null, $status, $headers);
-
         $this->setFile($file, $contentDisposition, $autoEtag, $autoLastModified);
-
         if ($public) {
             $this->setPublic();
         }
@@ -94,11 +92,9 @@ class BinaryFileResponse extends Response
                 $file = new File((string) $file);
             }
         }
-
         if (!$file->isReadable()) {
             throw new FileException('File must be readable.');
         }
-
         $this->file = $file;
 
         if ($autoEtag) {

@@ -60,7 +60,10 @@ function download(value) {
 }
 
 function preview(value) {
-        console.log(value);
+        $('#capture-preview-modal').modal('show');
+        $('#capture-preview-modal-label').html(value.replace(".png", ""));
+        var body = '<img class="img-responsive" src="/lib/capture/V2/capture/preview/' + value + '"/>';
+        $('#capture-preview-modal-body').html(body);
 }
 
 $(document).ready(function () {
@@ -105,8 +108,10 @@ $(document).ready(function () {
                         {
                                 "targets": [-1],
                                 render: function (data, type, row, meta) {                                                                      
-                                    return "<center>" +
+                                    return "<center>" + 
+                                    "<a href='/lib/capture/V2/capture/download/" + data + "'>"+
                                     "<button class='btn btn-success' id='capture-download-" + data + "' value='" + data + "' onclick= 'download(this.value)'><i class='fa fa-download'></i></button>" +
+                                    "</a>" +
                                     "</center>";
                                 }
                         },
@@ -162,9 +167,9 @@ $(document).ready(function () {
                 */
                 
                 "order": [[groupColumn, 'desc']],
-                "iDisplayLength": 25,
+                "iDisplayLength": 10,
                 "iDisplayStart": 0,
-                "pageLength": 25,
+                "pageLength": 10,
                 "lengthMenu": [10, 25, 50],
 		bProcessing: true,
 		bServerSide: true,

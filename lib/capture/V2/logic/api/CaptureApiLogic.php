@@ -203,9 +203,6 @@ class CaptureApiLogic {
                     }
                 }
             }
-            $myfile = fopen($freetureConf, "w");
-            fwrite($myfile, $reply);
-            fclose($myfile);
         }
         return $stationName;
     }
@@ -250,7 +247,7 @@ class CaptureApiLogic {
                     $fit_path = $data_dir . $day_dir . "/captures/" . $file;
                     $png_path = $tmp_png_dir . $png_name;
                     shell_exec("fitspng -o " . $png_path . " " . $fit_path);
-                    $reply[] = array($file, $day, $hour, $png_path, $file);
+                    $reply[] = array($file, $day, $hour, $png_name, $day_dir . "_" . $file);
                     $i++;
                 }
             }
@@ -317,6 +314,21 @@ class CaptureApiLogic {
             "aaData" => $reply
         );
         return $output;
+    }
+    
+    
+    public static function GetFitFile($file) {
+        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $file_info = explode("_", $file);
+        $day = $file_info[0] . "_" . $file_info[1];
+        $fit_name = $file_info[2] . "_" . $file_info[3] . "_" . $file_info[4];
+        $path = $data_dir . $day . "/captures/" . $fit_name;
+        return $path;
+    }
+    
+    public static function GetPngFile($file) {
+        $path = _FREETURE_DATA_ . $file;
+        return $path;
     }
 
 }

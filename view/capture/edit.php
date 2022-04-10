@@ -1,4 +1,20 @@
 <?php /* @var $Capture Capture */ ?> 
+<!-- Modal -->
+<div class="modal fade" id="capture-preview-modal" tabindex="-1" role="dialog" aria-labelledby="capture-preview-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="capture-preview-modal-label"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="capture-preview-modal-body">
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class='right_col' role='main'>
     <div class=''>
         <div class='page-title'>
