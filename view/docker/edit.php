@@ -102,8 +102,8 @@
 										<th><?php echo (_('Comando')) ?></th>
 										<th><?php echo (_('Stato')) ?></th>
 										<th><?php echo (_('Creato')) ?></th>
-                                                                                <th><?php echo (_('Azioni')) ?></th>
-										
+                                                                                <th><?php echo (_('Restart')) ?></th>
+										<th><?php echo (_('Stop')) ?></th>
 									</tr>
 								</thead>
 								<tbody>

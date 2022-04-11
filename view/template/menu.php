@@ -35,7 +35,8 @@
                                   <li><a href="/prometheus/edit"><i class="fa fa-fire"></i>Configurazione Prometheus</a></li>
                                   <li><a href="/docker/edit"><i class="fa fa-suitcase"></i>Stato Containers</a></li>';
                         }
-                        echo '<li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>';
+                        echo '<li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>
+                              <li><a href="/stack/edit"><i class="fa fa-cubes"></i>Stack</a></li>';
                          
                     }
                     ?>

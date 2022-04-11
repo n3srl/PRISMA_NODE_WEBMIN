@@ -121,6 +121,10 @@ $(document).ready(function () {
 				"targets": [3, 4, 5],
 				"visible": false
 			},*/
+                        {       "width": "5%",
+                                "className": "dt-center",
+                                "targets":  [-1, -2]
+                        },
                         {
                                 "targets": [-3],
                                 render: function (data, type, row, meta) {
@@ -143,8 +147,15 @@ $(document).ready(function () {
                                 "targets": [-1],
                                 render: function (data, type, row, meta) {  
                                     return "<div>"+
-                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' >Restart</button>" +
-                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-stop-" + data + "' onclick= 'stop(this.value)' class='btn btn-danger' >Stop</button>" +
+                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-stop-" + data + "' onclick= 'stop(this.value)' class='btn btn-danger'><i class='fa fa-stop'></i></button>" +
+                                    "</div>";
+                                }
+                        },
+                        {
+                                "targets": [-2],
+                                render: function (data, type, row, meta) {  
+                                    return "<div>"+
+                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' ><i class='fa fa-play'></i></button>" +
                                     "</div>";
                                 }
                         }

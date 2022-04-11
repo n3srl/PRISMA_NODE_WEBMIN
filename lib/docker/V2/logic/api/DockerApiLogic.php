@@ -213,7 +213,7 @@ class DockerApiLogic
                         
                         $conta = explode(" ", $container);
                         
-                        $list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", $conta[0], $i);
+                        $list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", $conta[0], $conta[0], $i);
                         
                         $i++;
                     }
@@ -225,9 +225,6 @@ class DockerApiLogic
         }
                 
         return $list;
-        /*$tmp[] = array("nome1", "immagine1", "Up", "stato1", "no date", "nome1", 0, 1);
-        $tmp[] = array("nome2", "immagine2", "Restarting", "stato2", "no date", "nome2", 0, 2);
-        return $tmp;*/
     }
     
     //Access SSH container and get a single Container

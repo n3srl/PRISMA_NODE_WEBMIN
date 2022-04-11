@@ -3,68 +3,68 @@
 * @author: N3 S.r.l.
 */
 
-$(setCaptureVisibility());
-var inafcapture = new CaptureModel('V2');
+$(setStackVisibility());
+var inafstack = new StackModel('V2');
 var lastEditId = '';
 var indexToShow = null;
 $(function(){
-	disableForm(inafcapture);
+	disableForm(inafstack);
 
 });
 
 function setLastEditId(){
-	lastEditId = inafcapture.id;
+	lastEditId = inafstack.id;
 }
 
 function editObj(id){
-	disableForm(inafcapture,true);
-	captureLogic.get(inafcapture,id);
+	disableForm(inafstack,true);
+	stackLogic.get(inafstack,id);
 	$('td').removeClass('lastEditedRow');
 	lastEditId = '';
 }
 
 function allowEditObj(){
-	enableForm(inafcapture,false);
+	enableForm(inafstack,false);
 }
 
 function saveObj(){
-	var f = function(){disableForm(inafcapture);}
-	captureLogic.save(inafcapture,setIndexToShow,setLastEditId, f, reloadAllDatatable);
+	var f = function(){disableForm(inafstack);}
+	stackLogic.save(inafstack,setIndexToShow,setLastEditId, f, reloadAllDatatable);
 }
 
 function removeObj(){
-	var f = function(){disableForm(inafcapture);}
-	captureLogic.remove(inafcapture,inafcapture.id, safeDelete, f, reloadAllDatatable);
+	var f = function(){disableForm(inafstack);}
+	stackLogic.remove(inafstack,inafstack.id, safeDelete, f, reloadAllDatatable);
 }
 
 function newObj(){
-	newForm(inafcapture);
-	captureLogic.get(inafcapture, null);
+	newForm(inafstack);
+	stackLogic.get(inafstack, null);
 	$('td').removeClass('lastEditedRow');
 	lastEditId = '';
 }
 
 function undoObj(){
 	var f = function(){
-		editObj(inafcapture.id);
+		editObj(inafstack.id);
 	};
 	alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
 }
 
 function setIndexToShow(){
-	indexToShow = inafcapture.id;
+	indexToShow = inafstack.id;
 }
 
 function preview(value) {
-        $('#capture-preview-modal').modal('show');
-        $('#capture-preview-modal-label').html(value.replace(".png", ""));
-        var body = '<img class="img-responsive" src="/lib/capture/V2/capture/preview/' + value + '"/>';
-        $('#capture-preview-modal-body').html(body);
+        $('#stack-preview-modal').modal('show');
+        $('#stack-preview-modal-label').html(value.replace(".png", ""));
+        var body = '<img class="img-responsive" src="/lib/stack/V2/stack/preview/' + value + '"/>';
+        $('#stack-preview-modal-body').html(body);
 }
 
 $(document).ready(function () {
         var groupColumn = 1;
-	table = $('#CaptureList').DataTable({
+	table = $('#StackList').DataTable({
 		"oLanguage": {
 			"sZeroRecords": "Nessun risultato",
 			"sSearch": "Cerca:",
@@ -93,7 +93,7 @@ $(document).ready(function () {
                                 "targets": [-2],
                                 render: function (data, type, row, meta) {
                                     return "<center>" +
-                                    "<button class='btn btn-success' id='capture-preview-" + data + "' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
+                                    "<button class='btn btn-success' id='stack-preview-" + data + "' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
                                     "</center>";
                                 }
                         },
@@ -101,7 +101,7 @@ $(document).ready(function () {
                                 "targets": [-1],
                                 render: function (data, type, row, meta) {                                                                      
                                     return "<center>" + 
-                                    "<a href='/lib/capture/V2/capture/download/" + data + "'>"+
+                                    "<a href='/lib/stack/V2/stack/download/" + data + "'>"+
                                     "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
                                     "</a>" +
                                     "</center>";
@@ -147,13 +147,13 @@ $(document).ready(function () {
 		bProcessing: true,
 		bServerSide: true,
 		bStateSave: true,
-		sAjaxSource: '/lib/capture/V2/capture/datatable/list',
+		sAjaxSource: '/lib/stack/V2/stack/datatable/list',
                 "paging": true,
                 "ordering": true,
                 "info": true,
                 "searching": false
 	});
-        $('#CaptureList').on('click', 'tr.group', function () {
+        $('#StackList').on('click', 'tr.group', function () {
             var currentOrder = table.order()[0];
             if ( currentOrder[0] === groupColumn && currentOrder[1] === 'asc' ) {
                 table.order([groupColumn, 'desc']).draw();
@@ -163,6 +163,13 @@ $(document).ready(function () {
             }
         });
         
+        $.ajax({
+            url: "/lib/stack/V2/stack/datatable/list",
+            type: "GET",
+            success: function (res) {
+                
+            }
+            });
 });
 
  $(function() {
@@ -180,7 +187,7 @@ function initFilters() {
 			maximumSelectionLength: 1,
 			multiple: true,
 			ajax: {
-				url: '/lib/capture/V2/capture/autocomplete/' + $(this).attr('id').replace('F_',''),
+				url: '/lib/stack/V2/stack/autocomplete/' + $(this).attr('id').replace('F_',''),
 				dataType: 'json'
 			},
 			minimumInputLength: 1
@@ -195,7 +202,7 @@ function initFilters() {
 			maximumSelectionLength: 0,
 			multiple: false,
 			ajax: {
-				url: '/lib/capture/V2/capture/foreignkey/' + $(this).attr('id').replace('F_',''),
+				url: '/lib/stack/V2/stack/foreignkey/' + $(this).attr('id').replace('F_',''),
 				dataType: 'json'
 			},
 			minimumInputLength: 0
