@@ -10,7 +10,7 @@ $(document).ready(function () {
         }
     });   
     
-    // Caricamento nuova configurazione freeture 
+    // Caricamento nuova configurazione prometheus 
     $("#prometheusCfgFileForm").on("submit", function(e) {
         e.preventDefault();
         var file = $("#form-prometheuscfg")[0].files[0];
@@ -41,7 +41,6 @@ $(document).ready(function () {
 function showStatus(){
     
     $.getJSON('http://' + window.location.hostname + ':9090/api/v1/status/runtimeinfo', function(res){            
-            console.log(res.data);
             var vpnStatus = "";
             for (const [key, value] of Object.entries(res.data)) {
                 vpnStatus += `${key}: ${value}<br>`;

@@ -23,7 +23,7 @@ $app->before(function (Request $request) {
 
 /************************************************************
 
-CAPTURE
+DETECTION
 
 ************************************************************/
 
@@ -33,9 +33,9 @@ CAPTURE
 *
 **/
 
-$app->POST('/capture', function(Application $app, Request $request) {
+$app->POST('/detection', function(Application $app, Request $request) {
 
-	$result = CaptureApiLogic::Save($request->request);
+	$result = DetectionApiLogic::Save($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -52,9 +52,9 @@ $app->POST('/capture', function(Application $app, Request $request) {
 *
 **/
 
-$app->PUT('/capture', function(Application $app, Request $request) {
+$app->PUT('/detection', function(Application $app, Request $request) {
 
-	$result = CaptureApiLogic::Update($request->request);
+	$result = DetectionApiLogic::Update($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -71,9 +71,9 @@ $app->PUT('/capture', function(Application $app, Request $request) {
 *
 **/
 
-$app->DELETE('/capture', function(Application $app, Request $request) {
+$app->DELETE('/detection', function(Application $app, Request $request) {
 
-	$result = CaptureApiLogic::Delete($request->request);
+	$result = DetectionApiLogic::Delete($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -90,9 +90,9 @@ $app->DELETE('/capture', function(Application $app, Request $request) {
 *
 **/
 
-$app->PATCH('/capture', function(Application $app, Request $request) {
+$app->PATCH('/detection', function(Application $app, Request $request) {
 
-	$result = CaptureApiLogic::Erase($request->request);
+	$result = DetectionApiLogic::Erase($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -109,9 +109,9 @@ $app->PATCH('/capture', function(Application $app, Request $request) {
 *
 **/
 
-$app->GET('/capture/{captureId}', function(Application $app, Request $request, $captureId) {
+$app->GET('/detection/{detectionId}', function(Application $app, Request $request, $detectionId) {
 
-	$result = CaptureApiLogic::Get($captureId);
+	$result = DetectionApiLogic::Get($detectionId);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -128,9 +128,9 @@ $app->GET('/capture/{captureId}', function(Application $app, Request $request, $
 *
 **/
 
-$app->GET('/capture', function(Application $app, Request $request) {
+$app->GET('/detection', function(Application $app, Request $request) {
 
-	$result = CaptureApiLogic::GetList();
+	$result = DetectionApiLogic::GetList();
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -147,9 +147,9 @@ $app->GET('/capture', function(Application $app, Request $request) {
 *
 **/
 
-$app->GET('/capture/datatable/list', function (Application $app, Request $request) {
+$app->GET('/detection/datatable/list', function (Application $app, Request $request) {
 
-    $result = CaptureApiLogic::GetListDatatable($request);
+    $result = DetectionApiLogic::GetListDatatable($request);
     $encode = json_encode($result);
     $resp = new Response($encode);
     $resp->setStatusCode(200);
@@ -162,9 +162,9 @@ $app->GET('/capture/datatable/list', function (Application $app, Request $reques
 *
 **/
 
-$app->GET('/capture/autocomplete/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
+$app->GET('/detection/autocomplete/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
 
-	$result = CaptureApiLogic::GetListFilterAjax($companyColumn);
+	$result = DetectionApiLogic::GetListFilterAjax($companyColumn);
 	if ($result->results) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -181,9 +181,9 @@ $app->GET('/capture/autocomplete/{companyColumn}', function(Application $app, Re
 *
 **/
 
-$app->GET('/capture/foreignkey/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
+$app->GET('/detection/foreignkey/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
 
-	$result = CaptureApiLogic::GetListFKAjax($companyColumn);
+	$result = DetectionApiLogic::GetListFKAjax($companyColumn);
 	if ($result->results) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -196,13 +196,43 @@ $app->GET('/capture/foreignkey/{companyColumn}', function(Application $app, Requ
 
 /**
 *
-* GET PREVIEW
+* GET GEMAP
 *
 **/
 
-$app->GET('/capture/preview/{fileName}', function(Application $app, Request $request, $fileName) {
+$app->GET('/detection/gemap/{detection}', function(Application $app, Request $request, $detection) {
+
+	$result = DetectionApiLogic::GetGeMap($detection);
+	$resp = new BinaryFileResponse($result);
+        $resp->headers->set('Content-Type', 'image/bmp');
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
+/**
+*
+* GET DIRMAP
+*
+**/
+
+$app->GET('/detection/dirmap/{detection}', function(Application $app, Request $request, $detection) {
         
-	$result = CaptureApiLogic::GetPngFile($fileName);
+	$result = DetectionApiLogic::GetDirMap($detection);
+	$resp = new BinaryFileResponse($result);
+        $resp->headers->set('Content-Type', 'image/bmp');
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
+/**
+*
+* GET JPG
+*
+**/
+
+$app->GET('/detection/preview/{detection}', function(Application $app, Request $request, $detection) {
+        
+	$result = DetectionApiLogic::GetPng($detection);
 	$resp = new BinaryFileResponse($result);
         $resp->headers->set('Content-Type', 'image/png');
         $resp->setStatusCode(200);
@@ -211,13 +241,27 @@ $app->GET('/capture/preview/{fileName}', function(Application $app, Request $req
 
 /**
 *
-* GET DOWNLOAD
+* GET ZIP
 *
 **/
 
-$app->GET('/capture/download/{fileName}', function(Application $app, Request $request, $fileName) {
+$app->GET('/detection/createzip/{detection}', function(Application $app, Request $request, $detection) {
+        
+	$result = DetectionApiLogic::CreateZip($detection);
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
 
-	$result = CaptureApiLogic::GetFitFile($fileName);
+/**
+*
+* CREATE ZIP
+*
+**/
+
+$app->GET('/detection/download/{detection}', function(Application $app, Request $request, $detection) {
+        
+	$result = DetectionApiLogic::GetZip($detection);
 	$resp = new BinaryFileResponse($result);
         $resp->setStatusCode(200);
 	return $resp;

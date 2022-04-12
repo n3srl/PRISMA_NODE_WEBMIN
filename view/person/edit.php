@@ -1,4 +1,13 @@
 <?php /* @var $Person Person */ ?> 
+<?php
+/*
+if (CoreLogic::GetPersonLogged() != null) {
+    if(CoreLogic::VerifyPermission() !== "admin"){
+        header("Location: " . $_SERVER['HTTP_HOST'] . "/view/capture/edit.php");
+        exit;
+    }
+}*/
+?>
 <div class='right_col' role='main'>
     <div class=''>
         <div class='page-title'>
