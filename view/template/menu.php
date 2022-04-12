@@ -28,7 +28,7 @@
                     <?php
                     if (CoreLogic::GetPersonLogged() != null) {
                         
-                        if(CoreLogic::VerifyPermission() === "admin"){
+                        if(CoreLogic::VerifyPermission() == 1){
                             echo '<li><a href="/person/edit"><i class="fa fa-user"></i>Utenti</a></li>
                                   <li><a href="/freetureFinal/edit"><i class="fa fa-building"></i>Configurazione Freeture</a></li>
                                   <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i>Configurazione OpenVPN</a></li>

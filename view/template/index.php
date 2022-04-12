@@ -1,4 +1,3 @@
-
 <?php ?>
 <html>
     <head>
@@ -97,7 +96,10 @@
                 $class = lcfirst($class);
 
                 if (CoreLogic::GetPersonLogged() != null) {
-                    @include "./view/$class/$operazione.php";
+                    if (CoreLogic::GetPersonLogged() != null) {
+                        @include "./view/$class/$operazione.php";
+                     
+                    }
                 } else {
                     @include "./view/user/login.php";
                 }

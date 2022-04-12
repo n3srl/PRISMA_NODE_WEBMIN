@@ -45,13 +45,20 @@ class Controller {
         }
     
     public function securityCheck($level_required = 0) {
-       
-        /*$current_user = UserFactory::getCurrent();
+        /*
+        $current_user = UserFactory::getCurrent();
         if ($level_required != UserLevel::ALL) {
             if (!isset($current_user) || $current_user->level < $level_required) {
                 throw new SecurityException();
             }
         }*/
+        if (CoreLogic::GetPersonLogged() != null) {
+            if(CoreLogic::VerifyPermission() < $level_required){
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
     
     public function checkLoginOperatore(){

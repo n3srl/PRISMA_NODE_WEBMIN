@@ -25,9 +25,9 @@ class CoreLogic {
     public static function VerifyPermission() {
         $person = self::GetPersonLogged();
         if($person->username === "prisma" || $person->username === "n3tester") {
-            return "admin";
+            return 1;
         }
-        return "agent";
+        return 0;
     }
 
     public static function VerifyPerson($verifyPermission = false) {

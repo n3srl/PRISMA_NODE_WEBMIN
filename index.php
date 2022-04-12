@@ -10,7 +10,6 @@ include './initialize.php';
 @$uri = $_SERVER['REDIRECT_URL'];
 @list($null, $class, $operazione, $params ) = explode('/', $uri, 4);
 
-
 if (!isset($class))
     $class = "Home";
 if (!isset($operazione))
