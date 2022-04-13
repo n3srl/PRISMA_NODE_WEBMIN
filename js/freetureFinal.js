@@ -42,8 +42,7 @@ function uploadConfigurationFile(){
         var formdata = FormData();
         var file = $("#file")[0].files[0];
         formData.append("configuration", file);
-        //postAjax(formdata, reloadAllDatatable);
-            }
+}
 
 function removeObj(){
 	var f = function(){disableForm(inaffreeturefinal);}

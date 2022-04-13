@@ -377,7 +377,7 @@ class PersonApiLogic {
             foreach ($contents as $line) {
                 
                 $array = explode(" ",$line);
-                $user[] = array($array[0], $array[1], $array[2], $array[3], $array[4]);
+                $user[] = array($array[0], $array[1], $array[2], $array[3], $array[4], str_replace("\n", "", $array[5]));
                  
             }
 
@@ -434,7 +434,8 @@ class PersonApiLogic {
                 $user->username = $array[1];
                 $user->password = $array[2];
                 $user->timezone = $array[3];
-                $user->erased = "0";
+                $user->erased = $array[4];
+                $user->level = $array[5];
                  
             }
 
@@ -463,9 +464,10 @@ class PersonApiLogic {
                 $user->password = $array[2];
                 $user->timezone = $array[3];
                 $user->erased = $array[4];
+                $user->level = $array[5];
                 
                 if ($id === $user->id) {
-                        $reply .= $user->id . " ". $user->username . " ". $pwd . " " . $user->timezone . " ". $user->erased;
+                        $reply .= $user->id . " ". $user->username . " ". $pwd . " " . $user->timezone . " " . $user->erased . " " . $user->level;
                     }else{
                         $reply .= $line;
                     }

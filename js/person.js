@@ -98,7 +98,17 @@ $(document).ready(function () {
                 "orderable": false
             },
             {
-                "targets": [-2],
+                "targets": [-1],
+                render: function (data, type, row, meta) { 
+                    if(data === "1"){
+                        return "Admin";
+                    } else {
+                        return "Agent";
+                    }
+                }
+            },
+            {
+                "targets": [-2, -4],
                 "visible": false
             }
         ],
@@ -118,6 +128,8 @@ $(document).ready(function () {
                 aoData.push({"name": "timezone", "value": $('#F_timezone').val()});
             if ($("." + $.md5('erased')).is(":visible"))
                 aoData.push({"name": "erased", "value": $('#F_erased').val()});
+            if ($("." + $.md5('level')).is(":visible"))
+                aoData.push({"name": "level", "value": $('#F_level').val()});
         },
         "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
             if (aData[aData.length - 1] == lastEditId) {

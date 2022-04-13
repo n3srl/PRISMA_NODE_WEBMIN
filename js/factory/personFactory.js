@@ -60,7 +60,8 @@ class PersonModel extends Person {
             password: this.password,
             new_password: this.new_password,
             timezone: this.timezone,
-            erased: this.erased
+            erased: this.erased,
+            level: this.level
             /*
             id: this.id,
             oid: this.oid,
@@ -121,6 +122,7 @@ class PersonModel extends Person {
         context.password = obj.password;
         context.timezone = obj.timezone;
         context.erased = obj.erased;
+        context.level = obj.level;
         //callback
         callBack.forEach(s => s.apply());
     }
@@ -166,6 +168,7 @@ function setPersonVisibility() {
     core_person_visibility.password = true;
     core_person_visibility.timezone = true;
     core_person_visibility.erased = true;
+    core_person_visibility.level = true;
 
 
     $.each(core_person_visibility, function (key, value) {

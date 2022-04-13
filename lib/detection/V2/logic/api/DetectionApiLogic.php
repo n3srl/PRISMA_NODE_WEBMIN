@@ -183,7 +183,8 @@ class DetectionApiLogic {
             return $raw;
         }
     }
-
+    
+    // Get the station name parsing freeture configuration file
     public static function getStationName() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
@@ -206,10 +207,11 @@ class DetectionApiLogic {
         }
         return $stationName;
     }
-
+    
+    // Scan filesystem to get events folder
     public static function getDetectionsFiles($start, $end, $clean = true) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/"; // /freeture/STATION_NAME/
         $reply = null;
         $tmp_png_dir = _FREETURE_DATA_;
         if ($clean) {
@@ -218,7 +220,8 @@ class DetectionApiLogic {
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
-            $n_day_detections = self::getDirectoryFilesCount($data_dir . $day_dir . "/events/*");
+            // /freeture/STATION_NAME/STATION_NAME_DAY/events/
+            $n_day_detections = self::getDirectoryFilesCount($data_dir . $day_dir . "/events/*"); 
             if ('.' === $day_dir) {
                 continue;
             }
@@ -241,19 +244,20 @@ class DetectionApiLogic {
                     continue;
                 }
                 $name = explode("_", $detection_dir);
+                // /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR
                 if (isset($name[1])) {
                     $datetime = date_create($name[1]);
                     $day = $datetime->format('Y-m-d');
                     $hour = $datetime->format('H:i:s');
+                    // /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR/*.fit
                     $fits = glob($data_dir . $day_dir . "/events/" . $detection_dir . "/*.fit");
                     $exp_fit = explode("/", $fits[0]);
-                    $png_name =   str_replace(".fit", ".png", $exp_fit[4]) . ".png";
+                    $png_name =  str_replace(".fit", ".png", $exp_fit[6]);
                     $fit_path = $fits[0];
                     $png_path = $tmp_png_dir . $png_name;
                     shell_exec("fitspng -o $png_path $fit_path");
-                    $reply[] = array($detection_dir, $day . ":" . $n_day_detections, $hour,
-                                     $png_name,
-                                     $day_dir . "_" . $detection_dir, 
+                    $reply[] = array($detection_dir, $day . ":" . $n_day_detections, $hour, $png_name,
+                                     $day_dir . "_" . $detection_dir, // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
                                      $day_dir . "_" . $detection_dir,
                                      $day_dir . "_" . $detection_dir);
                     $i++;
@@ -291,7 +295,7 @@ class DetectionApiLogic {
         $iDisplayStart = 1;
         $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/";
         $iTotal = self::getAllDaysFilesCount($directory);
-
+        
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
@@ -332,21 +336,19 @@ class DetectionApiLogic {
     }
     
     public static function GetPng($detection) {
-        /*
-        $base_path = self::getDetectionBasePath($detection);
-        $detection_info = explode("_", $detection);
-        $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        $path = $base_path . $detection_name . ".jpg";
-        return $path;*/
-        /*
         $path = "";
-        if ($file === "last-capture") {
-            $path = self::GetLastCapture();
+        if ($detection === "last-detection") {
+            $path = self::GetLastDetection();
         } else {
-            $path = _FREETURE_DATA_ . $file;
-        }*/
-        $path = _FREETURE_DATA_ . $detection;
+            $path = _FREETURE_DATA_ . $detection;
+        }
         return $path;
+    }
+    
+    public static function GetLastDetection() {
+        $files = self::getDetectionsFiles(0, 0, false);
+        $lastfile = _FREETURE_DATA_ . $files[0][3];
+        return $lastfile;
     }
 
     public static function GetGeMap($detection) {
@@ -377,6 +379,7 @@ class DetectionApiLogic {
         return $zipcreated;
     }
     
+    // Create the zip of the passed folder and put it in /freeture/
     public static function zipFolder($pathdir, $zipname) {
         $zipcreated = _FREETURE_DATA_ . $zipname . ".zip";
         /*

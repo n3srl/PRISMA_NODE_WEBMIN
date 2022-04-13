@@ -11,6 +11,7 @@ class Person extends N3Obj {
         this.password = null;
         this.timezone = null;
         this.erased = null;
+        this.level = null;
         /*
         this.username = null;
         this.password = null;

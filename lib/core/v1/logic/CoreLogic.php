@@ -24,10 +24,7 @@ class CoreLogic {
 
     public static function VerifyPermission() {
         $person = self::GetPersonLogged();
-        if($person->username === "prisma" || $person->username === "n3tester") {
-            return 1;
-        }
-        return 0;
+        return $person->level; // 1 se Admin, 0 se Agent
     }
 
     public static function VerifyPerson($verifyPermission = false) {
@@ -295,7 +292,8 @@ class CoreLogic {
                     $user->username = $array[1];
                     $user->password = $array[2];
                     $user->timezone = $array[3];
-                    $user->erased = "0";
+                    $user->erased = $array[4];
+                    $user->level = $array[5];
                 } 
 
                 $i++;
@@ -324,7 +322,8 @@ class CoreLogic {
                     $user->username = $array[1];
                     $user->password = $array[2];
                     $user->timezone = $array[3];
-                    $user->erased = "0";
+                     $user->erased = $array[4];
+                    $user->level = $array[5];
                 } 
 
                 $i++;

@@ -12,6 +12,7 @@ class Person extends N3Object {
     public $new_password = null;
     public $timezone = null;
     public $erased = null;
+    public $level = null;
     
     /*
     public $username = null;

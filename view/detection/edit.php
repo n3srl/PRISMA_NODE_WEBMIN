@@ -86,10 +86,10 @@
                                     <th><?php echo (_('Nome')) ?></th>
                                     <th><?php echo (_('Data')) ?></th>
                                     <th><?php echo (_('Ora')) ?></th>
-                                    <th><?php echo (_('Anteprima')) ?></th>
-                                    <th><?php echo (_('DirMap')) ?></th>
-                                    <th><?php echo (_('GeMap')) ?></th>
-                                    <th><?php echo (_('Zip')) ?></th>
+                                    <th><center><?php echo (_('Anteprima')) ?></center></th>
+                                    <th><center><?php echo (_('DirMap')) ?></center></th>
+                                    <th><center><?php echo (_('GeMap')) ?></center></th>
+                                    <th><center><?php echo (_('Zip')) ?></center></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -108,7 +108,7 @@
                         </div>
                     </div>
                     <div class='x_content'>
-                        
+                        <img class="img-responsive" src="/lib/detection/V2/detection/preview/last-detection"/>
                     </div> 
                 </div>
             </div>

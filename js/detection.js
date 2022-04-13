@@ -111,7 +111,7 @@ $(document).ready(function () {
 				"targets": "_all",
 				"orderable": false
 			},
-			{       "width": "5%",
+			{       "width": "10%",
                                 "className": "dt-center",
                                 "targets":  [-1, -2, -3, -4]
                         },
