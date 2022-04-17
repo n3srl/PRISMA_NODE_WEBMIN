@@ -37,7 +37,7 @@
                         }
                         echo '<li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>
                               <li><a href="/stack/edit"><i class="fa fa-cubes"></i>Stack</a></li>
-                              <li><a href="/detection/edit"><i class="fa fa-star"></i>Eventi</a></li>';
+                              <li><a href="/detection/edit"><i class="fa fa-star"></i>Detections</a></li>';
                          
                     }
                     ?>

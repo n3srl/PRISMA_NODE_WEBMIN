@@ -22,7 +22,7 @@
     <div class=''>
         <div class='page-title'>
             <div class='title_left'>
-                <h2><?= _('Eventi') ?></h2>
+                <h2><?= _('Detections') ?></h2>
             </div>
         </div>
         <div class='clearfix'></div>
@@ -103,12 +103,17 @@
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
                             <div class='col-md-6 no-padding-l'>
-                                <h2><?= _('Ultimo Evento') ?></h2>
+                                <h2><?= _('Ultima Detection') ?></h2>
                             </div>
                         </div>
                     </div>
                     <div class='x_content'>
-                        <img class="img-responsive" src="/lib/detection/V2/detection/preview/last-detection"/>
+                        <div class='col-md-12 col-sm-12 col-xs-12'>
+                            <h5 id="last-detection-description"></h5>
+                        </div>
+                        <div class='col-md-12 col-sm-12 col-xs-12'>
+                            <img class="img-responsive" src="/lib/detection/V2/detection/preview/last-detection"/>
+                        </div>
                     </div> 
                 </div>
             </div>

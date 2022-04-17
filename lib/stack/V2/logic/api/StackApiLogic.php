@@ -211,7 +211,7 @@ class StackApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
         $reply = null;
-        $tmp_png_dir = _FREETURE_DATA_;
+        $tmp_png_dir = _WEBROOTDIR_ . "tmp-png/";
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
@@ -339,14 +339,20 @@ class StackApiLogic {
         if ($file === "last-stack") {
             $path = self::GetLastStack();
         } else {
-            $path = _FREETURE_DATA_ . $file;
+            $path = _WEBROOTDIR_ . "tmp-png/" . $file;
         }
         return $path;
     }
 
     public static function GetLastStack() {
         $files = self::getStacksFiles(0, 0, false);
-        $lastfile = "/freeture/" . $files[0][3];
+        $lastfile = _WEBROOTDIR_ . "tmp-png/" . $files[0][3];
+        return $lastfile;
+    }
+    
+    public static function GetLastStackInfo() {
+        $files = self::getStacksFiles(0, 0, false);
+        $lastfile = $files[0][3];
         return $lastfile;
     }
 

@@ -57,9 +57,20 @@ function setIndexToShow(){
 
 function preview(value) {
         $('#stack-preview-modal').modal('show');
-        $('#stack-preview-modal-label').html(value.replace(".png", ""));
+        $('#stack-preview-modal-label').html("Stack del " + getFileDate(value) + " (" + getFileHour(value) + ")");
         var body = '<img class="img-responsive" src="/lib/stack/V2/stack/preview/' + value + '"/>';
         $('#stack-preview-modal-body').html(body);
+}
+
+function getFileDate(file) {
+    var info = file.split("_");
+    return info[1].substring(0, 4) + "-" + info[1].substring(4, 6)  + "-" + info[1].substring(6, 8);
+  
+}
+
+function getFileHour(file) {
+    var info = file.split("_");
+    return info[1].substring(9, 11) + ":" + info[1].substring(11, 13) + ":" + info[1].substring(13);
 }
 
 $(document).ready(function () {
@@ -163,13 +174,9 @@ $(document).ready(function () {
             }
         });
         
-        $.ajax({
-            url: "/lib/stack/V2/stack/datatable/list",
-            type: "GET",
-            success: function (res) {
-                
-            }
-            });
+        $.get("/lib/stack/V2/stack/info/laststack", function(data) {
+            $('#last-stack-description').html("Stack del " + getFileDate(data) + " (" + getFileHour(data) + ")");
+        });
 });
 
  $(function() {

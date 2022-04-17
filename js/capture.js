@@ -57,13 +57,25 @@ function setIndexToShow(){
 
 function preview(value) {
         $('#capture-preview-modal').modal('show');
-        $('#capture-preview-modal-label').html(value.replace(".png", ""));
+        $('#capture-preview-modal-label').html("Calibrazione del " + getFileDate(value) + " (" + getFileHour(value) + ")");
         var body = '<img class="img-responsive" src="/lib/capture/V2/capture/preview/' + value + '"/>';
         $('#capture-preview-modal-body').html(body);
 }
 
+function getFileDate(file) {
+    var info = file.split("_");
+    return info[1].substring(0, 4) + "-" + info[1].substring(4, 6)  + "-" + info[1].substring(6, 8);
+  
+}
+
+function getFileHour(file) {
+    var info = file.split("_");
+    return info[1].substring(9, 11) + ":" + info[1].substring(11, 13) + ":" + info[1].substring(13);
+}
+
 $(document).ready(function () {
         var groupColumn = 1;
+        var collapsedGroups = {};
 	table = $('#CaptureList').DataTable({
 		"oLanguage": {
 			"sZeroRecords": "Nessun risultato",
@@ -92,8 +104,9 @@ $(document).ready(function () {
                         {
                                 "targets": [-2],
                                 render: function (data, type, row, meta) {
+                                    var info = row[1].split(":");
                                     return "<center>" +
-                                    "<button class='btn btn-success' id='capture-preview-" + data + "' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
+                                    "<button class='btn btn-success' value='" + data +"' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
                                     "</center>";
                                 }
                         },
@@ -131,9 +144,15 @@ $(document).ready(function () {
                 rowGroup: {
                     startRender: function (rows, group) {
                         var info = group.split(":");
+                        var collapsed = !!collapsedGroups[group];
+                        rows.nodes().each(function (r) {
+                            r.style.display = collapsed ? 'none' : '';
+                        });  
                         return $('<tr class="group" style="background-color:#C6CAD4;">')
-                            .append( '<td colspan="3">'+ info[0] +'</td>' )
-                            .append( '<td><center>'+ info[1] +'</center></td>' )
+                            .append('<td colspan="3">'+ info[0] +'</td>')
+                            .append('<td><center>'+ info[1] +'</center></td>')
+                            .attr('data-name', group)
+                            .toggleClass('collapsed', collapsed);
                     },
                     endRender: null,
                     dataSrc: groupColumn
@@ -162,6 +181,15 @@ $(document).ready(function () {
                 table.order([groupColumn, 'asc']).draw();
             }
         });
+        $.get("/lib/capture/V2/capture/info/lastcapture", function(data) {
+            $('#last-capture-description').html("Calibrazione del " + getFileDate(data) + " (" + getFileHour(data) + ")");
+        });
+        /*
+        $('#CaptureList tbody').on('click', 'tr.group-start', function () {
+        var name = $(this).data('name');
+        collapsedGroups[name] = !collapsedGroups[name];
+        table.draw(false);
+    });  */
         
 });
 

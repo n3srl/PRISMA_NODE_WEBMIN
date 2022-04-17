@@ -267,5 +267,19 @@ $app->GET('/detection/download/{detection}', function(Application $app, Request 
 	return $resp;
 });
 
+/**
+*
+* GET LAST DETECTION INFO
+*
+**/
+
+$app->GET('/detection/info/lastdetection', function(Application $app, Request $request) {
+
+	$result = DetectionApiLogic::GetLastDetectionInfo();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
 $app->run();
 

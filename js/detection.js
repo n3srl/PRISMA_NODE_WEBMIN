@@ -57,9 +57,20 @@ function setIndexToShow(){
 
 function preview(value) {
         $('#detection-preview-modal').modal('show');
-        $('#detection-preview-modal-label').html(value);
+        $('#detection-preview-modal-label').html("Detection del " + getFileDate(value) + " (" + getFileHour(value) + ")");
         var body = '<img class="img-responsive" src="/lib/detection/V2/detection/preview/' + value + '"/>';
         $('#detection-preview-modal-body').html(body);
+}
+
+function getFileDate(file) {
+    var info = file.split("_");
+    return info[1].substring(0, 4) + "-" + info[1].substring(4, 6)  + "-" + info[1].substring(6, 8);
+  
+}
+
+function getFileHour(file) {
+    var info = file.split("_");
+    return info[1].substring(9, 11) + ":" + info[1].substring(11, 13) + ":" + info[1].substring(13);
 }
 
 function geMap(value) {
@@ -204,6 +215,9 @@ $(document).ready(function () {
                 table.order([groupColumn, 'asc']).draw();
             }
         }); 
+         $.get("/lib/detection/V2/detection/info/lastdetection", function(data) {
+            $('#last-detection-description').html("Detection del " + getFileDate(data) + " (" + getFileHour(data) + ")");
+        });
 });
 
  $(function() {

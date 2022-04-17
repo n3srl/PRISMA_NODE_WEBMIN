@@ -213,7 +213,7 @@ class DetectionApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/"; // /freeture/STATION_NAME/
         $reply = null;
-        $tmp_png_dir = _FREETURE_DATA_;
+        $tmp_png_dir = _WEBROOTDIR_ . "tmp-png/";;
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
@@ -340,14 +340,20 @@ class DetectionApiLogic {
         if ($detection === "last-detection") {
             $path = self::GetLastDetection();
         } else {
-            $path = _FREETURE_DATA_ . $detection;
+            $path = _WEBROOTDIR_ . "tmp-png/" . $detection;
         }
         return $path;
     }
     
     public static function GetLastDetection() {
         $files = self::getDetectionsFiles(0, 0, false);
-        $lastfile = _FREETURE_DATA_ . $files[0][3];
+        $lastfile = _WEBROOTDIR_ . "tmp-png/" . $files[0][3];
+        return $lastfile;
+    }
+    
+    public static function GetLastDetectionInfo() {
+        $files = self::getDetectionsFiles(0, 0, false);
+        $lastfile = $files[0][3];
         return $lastfile;
     }
 
@@ -371,17 +377,17 @@ class DetectionApiLogic {
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        if(file_exists(_FREETURE_DATA_ . $detection_name . ".zip")) {
+        if(file_exists(_WEBROOTDIR_ . "tmp-png/" . $detection_name . ".zip")) {
             return $detection_name . ".zip";
         }
-        shell_exec("rm " .  _FREETURE_DATA_ . "*.zip");
+        shell_exec("rm " .  _WEBROOTDIR_ . "tmp-png/" . "*.zip");
         $zipcreated = self::zipFolder($detection_folder, $detection_name);
         return $zipcreated;
     }
     
     // Create the zip of the passed folder and put it in /freeture/
     public static function zipFolder($pathdir, $zipname) {
-        $zipcreated = _FREETURE_DATA_ . $zipname . ".zip";
+        $zipcreated = _WEBROOTDIR_ . "tmp-png/" . $zipname . ".zip";
         /*
         $zip = new ZipArchive;
         if($zip -> open($zipcreated, ZipArchive::CREATE ) === true) {

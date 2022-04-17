@@ -223,5 +223,19 @@ $app->GET('/capture/download/{fileName}', function(Application $app, Request $re
 	return $resp;
 });
 
+/**
+*
+* GET LAST CAPTURE INFO
+*
+**/
+
+$app->GET('/capture/info/lastcapture', function(Application $app, Request $request) {
+
+	$result = CaptureApiLogic::GetLastCaptureInfo();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
 $app->run();
 

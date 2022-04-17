@@ -223,5 +223,19 @@ $app->GET('/stack/download/{fileName}', function(Application $app, Request $requ
 	return $resp;
 });
 
+/**
+*
+* GET LAST STACK INFO
+*
+**/
+
+$app->GET('/stack/info/laststack', function(Application $app, Request $request) {
+
+	$result = StackApiLogic::GetLastStackInfo();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
 $app->run();
 

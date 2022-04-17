@@ -1,18 +1,18 @@
 <?php /* @var $Capture Capture */ ?> 
 <!-- Modal -->
 <div class="modal fade" id="capture-preview-modal" tabindex="-1" role="dialog" aria-labelledby="capture-preview-modal-label" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="capture-preview-modal-label"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body" id="capture-preview-modal-body">
-      </div>
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="capture-preview-modal-label"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="capture-preview-modal-body">
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <div class='right_col' role='main'>
@@ -103,7 +103,12 @@
                         </div>
                     </div>
                     <div class='x_content'>
-                        <img class="img-responsive" src="/lib/capture/V2/capture/preview/last-capture"/>
+                        <div class='col-md-12 col-sm-12 col-xs-12'>
+                            <h5 id="last-capture-description"></h5>
+                        </div>
+                        <div class='col-md-12 col-sm-12 col-xs-12'>
+                            <img class="img-responsive" src="/lib/capture/V2/capture/preview/last-capture"/>
+                        </div>
                     </div>
                 </div>
             </div>
