@@ -156,6 +156,37 @@ $app->GET('/detection/datatable/list', function (Application $app, Request $requ
     return $resp;
 });
 
+
+/**
+*
+* GET DATATABLE FILES
+*
+**/
+
+$app->GET('/detection/datatable/filelist', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::GetFilesListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+*
+* GET DATATABLE DAYS
+*
+**/
+
+$app->GET('/detection/datatable/daylist', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::GetDaysListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
 /**
 *
 * GET AUTOCOMPLETE

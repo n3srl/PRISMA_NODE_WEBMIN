@@ -80,21 +80,36 @@
                         </div>
                     </div>-->
                     <div class='x_content'>
-                        <table id='DetectionList' class='table table-striped table-bordered noclick' style='width: 100%; '>
-                            <thead>
-                                <tr>
-                                    <th><?php echo (_('Nome')) ?></th>
-                                    <th><?php echo (_('Data')) ?></th>
-                                    <th><?php echo (_('Ora')) ?></th>
-                                    <th><center><?php echo (_('Anteprima')) ?></center></th>
-                                    <th><center><?php echo (_('DirMap')) ?></center></th>
-                                    <th><center><?php echo (_('GeMap')) ?></center></th>
-                                    <th><center><?php echo (_('Zip')) ?></center></th>
+                        <div class='col-md-3 col-sm-3 col-xs-12'>
+                            <table id='DetectionDayList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('#')) ?></th>
+                                        <th><?php echo (_('Folder')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class='col-md-9 col-sm-9 col-xs-12'>
+                            <table id='DetectionList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Nome')) ?></th>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('Ora')) ?></th>
+                                        <th><center><?php echo (_('Anteprima')) ?></center></th>
+                                <th><center><?php echo (_('DirMap')) ?></center></th>
+                                <th><center><?php echo (_('GeMap')) ?></center></th>
+                                <th><center><?php echo (_('Zip')) ?></center></th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

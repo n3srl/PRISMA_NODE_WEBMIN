@@ -1,4 +1,4 @@
-<?php /* @var $Capture Capture */ ?> 
+<?php // /* @var $Capture Capture */ ?> 
 <!-- Modal -->
 <div class="modal fade" id="capture-preview-modal" tabindex="-1" role="dialog" aria-labelledby="capture-preview-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -77,19 +77,34 @@
                         </div>
                     </div>-->
                     <div class='x_content'>
-                        <table id='CaptureList' class='table table-striped table-bordered noclick' style='width: 100%; '>
-                            <thead>
-                                <tr>
-                                    <th><?php echo (_('Nome')) ?></th>
-                                    <th><?php echo (_('Data')) ?></th>
-                                    <th><?php echo (_('Ora')) ?></th>
-                                    <th><?php echo (_('Anteprima')) ?></th>
-                                    <th><?php echo (_('Download')) ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div class='col-md-3 col-sm-3 col-xs-12'>
+                            <table id='CaptureDayList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('#')) ?></th>
+                                        <th><?php echo (_('Folder')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class='col-md-9 col-sm-9 col-xs-12'>
+                            <table id='CaptureList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Calibrazioni')) ?></th>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('Ora')) ?></th>
+                                        <th><?php echo (_('Anteprima')) ?></th>
+                                        <th><?php echo (_('Download')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

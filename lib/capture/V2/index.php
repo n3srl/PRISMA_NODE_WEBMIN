@@ -158,6 +158,36 @@ $app->GET('/capture/datatable/list', function (Application $app, Request $reques
 
 /**
 *
+* GET DATATABLE FILES
+*
+**/
+
+$app->GET('/capture/datatable/filelist', function (Application $app, Request $request) {
+
+    $result = CaptureApiLogic::GetFilesListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+*
+* GET DATATABLE DAYS
+*
+**/
+
+$app->GET('/capture/datatable/daylist', function (Application $app, Request $request) {
+
+    $result = CaptureApiLogic::GetDaysListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+*
 * GET AUTOCOMPLETE
 *
 **/
@@ -230,7 +260,7 @@ $app->GET('/capture/download/{fileName}', function(Application $app, Request $re
 **/
 
 $app->GET('/capture/info/lastcapture', function(Application $app, Request $request) {
-
+        
 	$result = CaptureApiLogic::GetLastCaptureInfo();
 	$resp = new Response($result);
         $resp->setStatusCode(200);

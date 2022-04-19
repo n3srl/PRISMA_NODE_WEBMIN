@@ -207,51 +207,75 @@ class StackApiLogic {
         return $stationName;
     }
 
-    public static function getStacksFiles($start, $end, $clean = true) {
+    public static function getStacksFiles($start, $end, $date_dir, $clean = true) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
-        $reply = null;
+        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/stacks";
+        $reply = array();
         $tmp_png_dir = _WEBROOTDIR_ . "tmp-png/";
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
 
+        $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
+        $files = scandir($data_dir, SCANDIR_SORT_DESCENDING);
+        foreach ($files as $file) {
+            if ($i < $start) {
+                $i++;
+                continue;
+            }
+            if ($i > $end) {
+                return $reply;
+            }
+            if ('.' === $file) {
+                continue;
+            }
+            if ('..' === $file) {
+                continue;
+            }
+            $name = explode("_", $file);
+            if (isset($name[1])) {
+                $datetime = date_create($name[1]);
+                $day = $datetime->format('Y-m-d');
+                $hour = $datetime->format('H:i:s');
+                $png_name = str_replace("fit", "png", $file);
+                $fit_path = $data_dir . "/" . $file;
+                $png_path = $tmp_png_dir . $png_name;
+                shell_exec("fitspng -o $png_path $fit_path");
+                $reply[] = array($file, $day . ":" . $n_day_files, $hour, $png_name, $date_dir . "_" . $file);
+                $i++;
+            }
+        }
+
+        return $reply;
+    }
+
+    public static function getStacksDays($start, $end) {
+        $i = 0;
+        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $reply = array();
+
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/stacks/*.fit");
+            if ($i < $start) {
+                $i++;
+                continue;
+            }
+            if ($i > $end) {
+                return $reply;
+            }
             if ('.' === $day_dir) {
                 continue;
             }
             if ('..' === $day_dir) {
                 continue;
             }
-            $files = scandir($data_dir . "/" . $day_dir . "/stacks", SCANDIR_SORT_DESCENDING);
-            foreach ($files as $file) {
-                if ($i < $start) {
-                    $i++;
-                    continue;
-                }
-                if ($i > $end) {
-                    return $reply;
-                }
-                if ('.' === $file) {
-                    continue;
-                }
-                if ('..' === $file) {
-                    continue;
-                }
-                $name = explode("_", $file);
-                if (isset($name[1])) {
-                    $datetime = date_create($name[1]);
-                    $day = $datetime->format('Y-m-d');
-                    $hour = $datetime->format('H:i:s');
-                    $png_name = str_replace("fit", "png", $file);
-                    $fit_path = $data_dir . $day_dir . "/stacks/" . $file;
-                    $png_path = $tmp_png_dir . $png_name;
-                    shell_exec("fitspng -o $png_path $fit_path");
-                    $reply[] = array($file, $day . ":" . $n_day_files, $hour, $png_name, $day_dir . "_" . $file);
-                    $i++;
-                }
+            $name = explode("_", $day_dir);
+            if (isset($name[1])) {
+                $datetime = date_create($name[1]);
+                $day = $datetime->format('Y-m-d');
+                $reply[] = array($day, $n_day_files, $day_dir);
+                $i++;
             }
         }
 
@@ -280,16 +304,62 @@ class StackApiLogic {
         return $n_files;
     }
 
-    public static function GetListDatatable($request) {
+    public static function GetFilesListDatatable($request) {
+        $reply = array();
+        $iDisplayStart = 1;
+        
+        if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
+            $iDisplayStart = intval($_GET['iDisplayStart']);
+            $iDisplayLength = intval($_GET['iDisplayLength']);
+            $day_dir = $_GET['dayDir'];
+            $directory = _FREETURE_DATA_ . self::getStationName() . "/" . $day_dir . "/stacks/*";
+            $iTotal = self::getDirectoryFilesCount($directory);
+            $reply = self::getStacksFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir);
+
+            $test = $reply[0];
+            if (empty($test)) {
+                $iDisplayStart = 0;
+            }
+            if ($iDisplayStart < $iDisplayLength) {
+                $pageNumber = 0;
+            } else {
+                $pageNumber = ($iDisplayStart / $iDisplayLength);
+            }
+        }
+
+        /* Ordering */
+        if (isset($_GET['iSortCol_0'])) {
+            if ($_GET['bSortable_' . intval($_GET['iSortCol_0'])] == 'true') {
+                $i = $_GET['iSortCol_0'];
+                $sort = array_column($reply, $i);
+                if ($_GET['sSortDir_' . $i] === 'asc') {
+                    array_multisort($sort, SORT_ASC, $reply);
+                } else {
+                    array_multisort($sort, SORT_DESC, $reply);
+                }
+            }
+        }
+
+        $output = array(
+            "sEcho" => intval($_GET['sEcho']),
+            "pageToShow" => $pageNumber,
+            "iTotalRecords" => $iTotal,
+            "iTotalDisplayRecords" => $iTotal,
+            "aaData" => $reply
+        );
+        return $output;
+    }
+
+    public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/";
-        $iTotal = self::getAllDaysFilesCount($directory);
+        $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/*";
+        $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
-            $reply = self::getStacksFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
+            $reply = self::getStacksDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
 
             $test = $reply[0];
             if (empty($test)) {
@@ -345,13 +415,17 @@ class StackApiLogic {
     }
 
     public static function GetLastStack() {
-        $files = self::getStacksFiles(0, 0, false);
+        //$files = self::getStacksFiles(0, 0, false);
+        $days = self::getStacksDays(0, 0, false);
+        $files = self::getStacksFiles(0, 0, $days[0][2], false);
         $lastfile = _WEBROOTDIR_ . "tmp-png/" . $files[0][3];
         return $lastfile;
     }
-    
+
     public static function GetLastStackInfo() {
-        $files = self::getStacksFiles(0, 0, false);
+        //$files = self::getStacksFiles(0, 0, false);
+        $days = self::getStacksDays(0, 0, false);
+        $files = self::getStacksFiles(0, 0, $days[0][2], false);
         $lastfile = $files[0][3];
         return $lastfile;
     }

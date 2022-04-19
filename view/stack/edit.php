@@ -1,18 +1,18 @@
 <?php /* @var $Stack Stack */ ?> 
 <!-- Modal -->
 <div class="modal fade" id="stack-preview-modal" tabindex="-1" role="dialog" aria-labelledby="stack-preview-modal-label" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="stack-preview-modal-label"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body" id="stack-preview-modal-body">
-      </div>
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stack-preview-modal-label"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="stack-preview-modal-body">
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <div class='right_col' role='main'>
@@ -77,19 +77,34 @@
                         </div>
                     </div>-->
                     <div class='x_content'>
-                        <table id='StackList' class='table table-striped table-bordered noclick' style='width: 100%; '>
-                            <thead>
-                                <tr>
-                                    <th><?php echo (_('Nome')) ?></th>
-                                    <th><?php echo (_('Data')) ?></th>
-                                    <th><?php echo (_('Ora')) ?></th>
-                                    <th><?php echo (_('Anteprima')) ?></th>
-                                    <th><?php echo (_('Download')) ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                        <div class='col-md-3 col-sm-3 col-xs-12'>
+                            <table id='StackDayList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('#')) ?></th>
+                                        <th><?php echo (_('Folder')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class='col-md-9 col-sm-9 col-xs-12'>
+                            <table id='StackList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                <thead>
+                                    <tr>
+                                        <th><?php echo (_('Stack')) ?></th>
+                                        <th><?php echo (_('Data')) ?></th>
+                                        <th><?php echo (_('Ora')) ?></th>
+                                        <th><?php echo (_('Anteprima')) ?></th>
+                                        <th><?php echo (_('Download')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -98,7 +113,7 @@
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
                             <div class='col-md-6 no-padding-l'>
-                                <h2><?= _('Ultimo Stack') ?></h2>
+                                <h2><?= _('Ultima Calibrazione') ?></h2>
                             </div>
                         </div>
                     </div>

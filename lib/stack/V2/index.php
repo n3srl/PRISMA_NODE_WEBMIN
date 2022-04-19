@@ -158,6 +158,36 @@ $app->GET('/stack/datatable/list', function (Application $app, Request $request)
 
 /**
 *
+* GET DATATABLE FILES
+*
+**/
+
+$app->GET('/stack/datatable/filelist', function (Application $app, Request $request) {
+
+    $result = StackApiLogic::GetFilesListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+*
+* GET DATATABLE DAYS
+*
+**/
+
+$app->GET('/stack/datatable/daylist', function (Application $app, Request $request) {
+
+    $result = StackApiLogic::GetDaysListDatatable($request);
+    $encode = json_encode($result);
+    $resp = new Response($encode);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+*
 * GET AUTOCOMPLETE
 *
 **/
@@ -230,7 +260,7 @@ $app->GET('/stack/download/{fileName}', function(Application $app, Request $requ
 **/
 
 $app->GET('/stack/info/laststack', function(Application $app, Request $request) {
-
+        
 	$result = StackApiLogic::GetLastStackInfo();
 	$resp = new Response($result);
         $resp->setStatusCode(200);
