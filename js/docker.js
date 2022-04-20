@@ -74,6 +74,25 @@ function restart(value) {
            });
 }
 
+function start(value) {
+        $.ajax({
+               url: "/lib/docker/V2/docker/start/" + value,
+               type: "POST",
+               success: function (res) {
+                   if(JSON.parse(res).result){
+                       defaultSuccess("Container avviato correttamente");
+                       reloadAllDatatable();
+                   }else{
+                       defaultError();
+                   }
+               },
+               error: function (XMLHttpRequest, textStatus, errorThrown) {
+                   defaultError();
+               }
+
+           });
+}
+
 function stop(value) {
          $.ajax({
                url: "/lib/docker/V2/docker/stop/" + value,
@@ -114,19 +133,19 @@ $(document).ready(function () {
                             "targets": "_all"
                         },
                         {
-				"targets": [-4],
+				"targets": [-5],
 				"orderable": false
 			},
-			/*{
-				"targets": [3, 4, 5],
+			{
+				"targets": [-4, -6],
 				"visible": false
-			},*/
+			},
                         {       "width": "5%",
                                 "className": "dt-center",
-                                "targets":  [-1, -2]
+                                "targets":  [-1, -2, -3]
                         },
                         {
-                                "targets": [-3],
+                                "targets": [-5],
                                 render: function (data, type, row, meta) {
                                     var color;
                                     if(data === "Up"){
@@ -144,18 +163,38 @@ $(document).ready(function () {
                                 }
                         },
                         {
-                                "targets": [-1],
+                                "targets": [-3],
                                 render: function (data, type, row, meta) {  
+                                    var disabled = "";
+                                    if(row[3] === "Restarting" || row[3] === "Up"){
+                                        disabled = "disabled";
+                                    }
                                     return "<div>"+
-                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-stop-" + data + "' onclick= 'stop(this.value)' class='btn btn-danger'><i class='fa fa-stop'></i></button>" +
+                                    "<button type = 'button' " + disabled + " value='" + data + "' onclick= 'start(this.value)' class='btn btn-primary'><i class='fa fa-play'></i></button>" +
                                     "</div>";
                                 }
                         },
                         {
                                 "targets": [-2],
                                 render: function (data, type, row, meta) {  
+                                    var disabled = "";
+                                    if(row[3] === "Exited"){
+                                        disabled = "disabled";
+                                    }
                                     return "<div>"+
-                                    "<button type = 'button' style= 'margin-right: 10px;' value='" + data + "' id= 'btn-restart-" + data + "' onclick= 'restart(this.value)' class='btn btn-success' ><i class='fa fa-play'></i></button>" +
+                                    "<button type = 'button' " + disabled + " value='" + data + "' onclick= 'stop(this.value)' class='btn btn-warning'><i class='fa fa-stop'></i></button>" +
+                                    "</div>";
+                                }
+                        },
+                        {
+                                "targets": [-1],
+                                render: function (data, type, row, meta) {  
+                                    var disabled = "";
+                                    if(row[3] === "Exited"){
+                                        disabled = "disabled";
+                                    }
+                                    return "<div>"+
+                                    "<button type = 'button' " + disabled + " value='" + data + "' onclick= 'restart(this.value)' class='btn btn-info' ><i class='fa fa-repeat'></i></button>" +
                                     "</div>";
                                 }
                         }

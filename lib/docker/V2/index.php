@@ -195,6 +195,25 @@ $app->GET('/docker/foreignkey/{companyColumn}', function(Application $app, Reque
 
 /**
 *
+* START CONTAINER
+*
+**/
+
+$app->POST('/docker/start/{dockerName}', function(Application $app, Request $request, $dockerName) {
+
+	$result = DockerApiLogic::sshContainerStart($dockerName);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
 * RESTART CONTAINER
 *
 **/

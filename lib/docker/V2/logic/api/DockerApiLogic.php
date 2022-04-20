@@ -279,29 +279,34 @@ class DockerApiLogic
     }
     
     //Access SSH container and get a single Container
+    public static function sshContainerStart($ob) {
+        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+        $result = false;
+        if ($session) {
+            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+                $stream = ssh2_exec($session, "sudo docker start " . $ob);             
+                $result = true;
+            }
+            unset($session);
+        }
+        return CoreLogic::GenerateResponse($result, $ob);
+    }
+    
+    //Access SSH container and get a single Container
     public static function sshContainerRestart($ob) {
         $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $result = false;
-        
         if ($session) {
-            
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-
-                $stream = ssh2_exec($session, "sudo docker restart " . $ob);
-                /*
-                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-                $text = stream_get_contents($stream_out);
-                */
-                
+                $stream = ssh2_exec($session, "sudo docker restart " . $ob);             
                 $result = true;
-                
             }
-
             unset($session);
         }
-        
         return CoreLogic::GenerateResponse($result, $ob);
     }
     
@@ -310,21 +315,15 @@ class DockerApiLogic
         $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $result = false;
-
         if ($session) {
-            
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-
                $stream = ssh2_exec($session, "sudo docker stop " . $ob);
                $result = true;
             }
-
             unset($session);
         }
-        
         return CoreLogic::GenerateResponse($result, $ob);
     }
-
 }
 
