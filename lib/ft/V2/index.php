@@ -161,6 +161,25 @@ $app->GET('/freeturefinal/{freeturefinalId}', function(Application $app, Request
 
 /**
 *
+* GET ID BY KEY
+*
+**/
+
+$app->GET('/freeturefinal/id/{freeturefinalKey}', function(Application $app, Request $request, $freeturefinalKey) {
+
+	$result = FreetureFinalApiLogic::GetIdByKey($freeturefinalKey);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
 * GET LIST
 *
 **/

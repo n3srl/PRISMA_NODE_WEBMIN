@@ -11,15 +11,16 @@ class FreetureFinalApiLogic
 
 			$Person = CoreLogic::VerifyPerson();
 			CoreLogic::CheckCSRF($request->get("token"));
-
+                            
 			$ob = new FreetureFinal();
 			$tmp = $request->get("data");
-
-			$ob->id = $tmp["id"] ;
+                        
+			$ob->id  = $tmp["id"] ;
                         $ob->key = $tmp["key"] ;
                         $ob->value = $tmp["value"] ;
 
 			$res = self::updateValue($ob);
+                        self::restartFreeture();
 		} catch (ApiException $a) {
 			CoreLogic::rollbackTransaction();
 			return CoreLogic::GenerateErrorResponse($a->message);
@@ -129,6 +130,18 @@ class FreetureFinalApiLogic
 			$res = false;
 			$Person = CoreLogic::VerifyPerson();
 			$ob = self::getCfg($id);
+			$res = true;
+		} catch (ApiException $a) {
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse($res, $ob);
+	}
+        
+        public static function GetIdByKey($key) {
+		try {
+			$res = false;
+			$Person = CoreLogic::VerifyPerson();
+			$ob = self::getId($key);
 			$res = true;
 		} catch (ApiException $a) {
 			return CoreLogic::GenerateErrorResponse($a->message);
@@ -321,7 +334,7 @@ class FreetureFinalApiLogic
                     //Return requested data
                     if ("$i" === $id) {
                         $ft = new FreetureFinal();
-                        $ft->id = $id;
+                        $ft->id = $i;
                         $ft->key = self::getKey($line);
                         $ft->value = self::getValue($line);
                         $ft->description = self::removeComment($descr);
@@ -334,6 +347,24 @@ class FreetureFinalApiLogic
                         $descr = $line;
                     }
                 }
+            }
+        }
+        return false;
+    }
+    
+    public static function getId($key) {
+        $freetureConf = _FREETURE_;
+        $i = 0;
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+            foreach ($contents as $line) {
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === $key) {
+                        return $i;
+                    }
+                    $i++;
+                } 
             }
         }
         return false;
@@ -378,10 +409,10 @@ class FreetureFinalApiLogic
                 //or contains only new line or whitespaces
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-
                     //Update the requested param
-                    if ("$i" === $ob->id) {
+                    if ($i === $ob->id) {
                         $reply .= $ob->key." = ".$ob->value."\n";
+                        
                     }else{
                         $reply .= $line;
                     }

@@ -20,7 +20,6 @@ $('form').not('.file-upload').submit(function (e) {
 
     if (!validator.checkAll($(this))) {
         submit = false;
-        console.log(validator);
     }
     if (submit) {
 
@@ -29,12 +28,7 @@ $('form').not('.file-upload').submit(function (e) {
         } else {
             saveObj();
         }
-
-
     }
-
-
-
     return false;
 });
 /*******************************/
@@ -101,8 +95,8 @@ $('table:not(.noclick) tbody ').on('click', 'tr', function (e) {
 /*******************************/
 /*        SMOOTH SCROLL        */
 /*******************************/
-function checkGoToTarget(this_){
-    if(!$(this_).prop('a, a *') && !(this_.tagName != undefined && this_.tagName.toLowerCase() == "a") && !$(this_).parent("a").length >= 1 )
+function checkGoToTarget(this_) {
+    if (!$(this_).prop('a, a *') && !(this_.tagName != undefined && this_.tagName.toLowerCase() == "a") && !$(this_).parent("a").length >= 1)
         return;
     if (
             location.pathname.replace(/^\//, '') == this_.pathname.replace(/^\//, '')
@@ -115,7 +109,7 @@ function checkGoToTarget(this_){
         goToTarget(target);
 
     }
-    
+
 }
 $(document).on("click", 'a[href*="#"]', function (event) {
     checkGoToTarget(this);
@@ -320,7 +314,7 @@ function enableForm(objClass, editButton = false, exeptions = []) {
     }
     hideAllForm(formSelector);
     $.each(objClass, function (index, value) {
-        if(!exeptions.includes(index)){
+        if (!exeptions.includes(index)) {
             $(formSelector + "[name=" + index + "]").addClass("input-enabled");
             $(formSelector + "[name=" + index + "]").removeClass("input-disabled");
             $(formSelector + "[name=" + index + "]").prop('disabled', false);
@@ -495,7 +489,7 @@ function saveClass(objClass, ...callBack) {
                 formdata.push({name: this.name, value: '0'});
             }
         });
-        
+
         if (objClass.form_name != undefined) {
             var formdata = $("[name='" + objClass.form_name + "']").serializeArray();
         }
@@ -750,39 +744,39 @@ $(".filter-date, .date, .document_date").each(function (index) {
 });
 
 
-function downloadExport(endpointBase){
+function downloadExport(endpointBase) {
     var obj = {};
-    $('.filter').each(function(index) {
+    $('.filter').each(function (index) {
         obj[$(this).prop("id").replace('F_', '')] = $(this).val();
     });
-    json =  JSON.stringify(obj);
+    json = JSON.stringify(obj);
     postExportData(endpointBase, json);
 }
 
-function setMeasure(){
+function setMeasure() {
     $("[name=width_unit_measure]").prop("disabled", true);
     $("[name=height_unit_measure]").prop("disabled", true);
     let old_width = $("[name=width_unit_measure]").val();
     let old_height = $("[name=height_unit_measure]").val();
     $("[name=width_unit_measure]").val("");
     $("[name=height_unit_measure]").val("");
-    
-    if($("[name=measure_unit]").val() == "USM"){
+
+    if ($("[name=measure_unit]").val() == "USM") {
         $("[name=width_unit_measure]").prop("disabled", false);
         $("[name=height_unit_measure]").prop("disabled", false);
         $("[name=width_unit_measure]").val(old_width);
         $("[name=height_unit_measure]").val(old_height);
     }
-    
-    if($("[name=measure_unit]").val() == "ULM"){
+
+    if ($("[name=measure_unit]").val() == "ULM") {
         $("[name=width_unit_measure]").prop("disabled", false);
         $("[name=width_unit_measure]").val(old_width);
     }
 }
-function manageUnitMeasure(parent_id){
-    if(parent_id != null && parent_id.length > 0){
+function manageUnitMeasure(parent_id) {
+    if (parent_id != null && parent_id.length > 0) {
         $("[name=measure_unit]").prop('disabled', true);
-    }else{
+    } else {
         $("[name=measure_unit]").prop('disabled', false);
     }
 }
