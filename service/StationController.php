@@ -14,9 +14,6 @@ class StationController extends Controller
 		if (isset($params[0]) && !empty($params[0])) {
 			$par = $params[0];
 		}
-                if(!$permission){
-                    header("Location: /capture/edit");
-                }
 		echo '<script>var ObjID = ' . $par. ';</script>';
 	}
         

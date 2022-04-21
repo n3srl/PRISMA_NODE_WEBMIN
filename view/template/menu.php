@@ -30,13 +30,14 @@
                         
                         if(CoreLogic::VerifyPermission() == 1){
                             echo '<li><a href="/person/edit"><i class="fa fa-user"></i>Utenti</a></li>
-                                  <li><a href="/station/edit"><i class="fa fa-gear"></i>Configurazione Stazione</a></li>
+                                  
                                   <li><a href="/freetureFinal/edit"><i class="fa fa-building"></i>Configurazione Freeture</a></li>
                                   <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i>Configurazione OpenVPN</a></li>
                                   <li><a href="/prometheus/edit"><i class="fa fa-fire"></i>Configurazione Prometheus</a></li>
                                   <li><a href="/docker/edit"><i class="fa fa-suitcase"></i>Stato Containers</a></li>';
                         }
-                        echo '<li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>
+                        echo '<li><a href="/station/edit"><i class="fa fa-gear"></i>Configurazione Stazione</a></li>
+                              <li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>
                               <li><a href="/stack/edit"><i class="fa fa-cubes"></i>Stack</a></li>
                               <li><a href="/detection/edit"><i class="fa fa-star"></i>Detections</a></li>';                        
                     }

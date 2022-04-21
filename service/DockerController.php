@@ -15,7 +15,8 @@ class DockerController extends Controller
 			$par = $params[0];
 		}
                 if(!$permission){
-                    header("Location: /capture/edit");
+                    @include "./view/user/login.php";
+                    exit;
                 }
 		echo '<script>var ObjID = ' . $par. ';</script>';
 	}

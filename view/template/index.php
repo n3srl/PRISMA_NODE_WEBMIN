@@ -82,13 +82,6 @@
                 <?php
                 if (CoreLogic::GetPersonLogged() != null) {
                     include "./view/template/menu.php";
-                    /*
-                    if(CoreLogic::VerifyPermission() === "admin"){
-                        include "./view/template/menu.php";
-                    } else {
-                        include "./view/template/menuAgent.php";
-                    }
-                     */
                 }
                 ?>
 
@@ -96,10 +89,7 @@
                 $class = lcfirst($class);
 
                 if (CoreLogic::GetPersonLogged() != null) {
-                    if (CoreLogic::GetPersonLogged() != null) {
-                        @include "./view/$class/$operazione.php";
-                     
-                    }
+                    @include "./view/$class/$operazione.php";
                 } else {
                     @include "./view/user/login.php";
                 }
