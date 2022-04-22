@@ -215,7 +215,9 @@ class CaptureApiLogic {
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
-
+        if(!is_dir($data_dir)){
+            return $reply;
+        }
         $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
         $files = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($files as $file) {
@@ -406,7 +408,7 @@ class CaptureApiLogic {
 
     public static function GetPngFile($file) {
         $path = "";
-        if ($file === "last-capture") {
+        if ($file === "lastcapture") {
             $path = self::GetLastCapture();
         } else {
             $path = _WEBROOTDIR_ . "tmp-png/" . $file;

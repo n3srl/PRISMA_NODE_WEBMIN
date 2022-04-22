@@ -183,18 +183,18 @@ function initCapturesDatatable(folder, table1) {
                 render: function (data, type, row, meta) {
                     var info = row[1].split(":");
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
-                            "</center>";
+                           "<button class='btn btn-success' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
+                           "</center>";
                 }
             },
             {
                 "targets": [-1],
                 render: function (data, type, row, meta) {
                     return "<center>" +
-                            "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
-                            "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
-                            "</a>" +
-                            "</center>";
+                           "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
+                           "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
+                           "</a>" +
+                           "</center>";
                 }
             },
             {

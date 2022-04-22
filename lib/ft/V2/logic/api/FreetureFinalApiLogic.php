@@ -442,6 +442,9 @@ class FreetureFinalApiLogic
         return false;
     }
     
+    public static function GetMaskFile(){
+        return _FREETURE_MASK_;
+    }
     
     public static function updateMaskFile($ob){
         $freetureConf = _FREETURE_MASK_;

@@ -115,4 +115,6 @@
 </div>
 <?php include './view/template/foot.php'; ?>
 <script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/station.js<?= _VERSION_ ?>'></script>
+<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4'></script>
+<script src="https://unpkg.com/location-picker/dist/location-picker.min.js"></script>
 

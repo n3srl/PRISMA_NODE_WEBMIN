@@ -16,23 +16,6 @@ $(document).ready(function () {
         var file = $("#form-prometheuscfg")[0].files[0];
         var formData = new FormData();
         formData.append("configuration", file);
-        
-        /*
-        $.ajax({
-            url: "/lib/prometheus/V2/prometheus/editconfiguration",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                defaultSuccess("Configurazione caricata correttamente");
-                $("#uploadprometheusbtn").attr('disabled', true);
-                $('#form-prometheuscfg').val('');
-                showStatus();
-                console.log(res);
-            }
-            });
-          */
         });
         
     

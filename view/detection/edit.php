@@ -127,7 +127,7 @@
                             <h5 id="last-detection-description"></h5>
                         </div>
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <img class="img-responsive" src="/lib/detection/V2/detection/preview/last-detection"/>
+                            <img class="img-responsive" src="/lib/detection/V2/detection/preview/lastdetection"/>
                         </div>
                     </div> 
                 </div>

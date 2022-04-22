@@ -1,70 +1,74 @@
 /**
-*
-* @author: N3 S.r.l.
-*/
+ *
+ * @author: N3 S.r.l.
+ */
 
 $(setFreetureFinalVisibility());
 var inaffreeturefinal = new FreetureFinalModel('V2');
 var lastEditId = '';
 var indexToShow = null;
-$(function(){
-	disableForm(inaffreeturefinal);
+$(function () {
+    disableForm(inaffreeturefinal);
 
 });
 
-function setLastEditId(){
-	lastEditId = inaffreeturefinal.id;
+function setLastEditId() {
+    lastEditId = inaffreeturefinal.id;
 }
 
-function editObj(id){
-	disableForm(inaffreeturefinal,true);
-	freeturefinalLogic.get(inaffreeturefinal,id);
-	$('td').removeClass('lastEditedRow');
-	lastEditId = '';
+function editObj(id) {
+    disableForm(inaffreeturefinal, true);
+    freeturefinalLogic.get(inaffreeturefinal, id);
+    $('td').removeClass('lastEditedRow');
+    lastEditId = '';
 }
 
-function allowEditObj(){
-	enableForm(inaffreeturefinal,false,["key","description"]);
+function allowEditObj() {
+    enableForm(inaffreeturefinal, false, ["key", "description"]);
 }
 
-function saveObj(){
-	var f = function(){disableForm(inaffreeturefinal);}
-	freeturefinalLogic.save(inaffreeturefinal,setIndexToShow,setLastEditId, f, reloadAllDatatable);
+function saveObj() {
+    var f = function () {
+        disableForm(inaffreeturefinal);
+    }
+    freeturefinalLogic.save(inaffreeturefinal, setIndexToShow, setLastEditId, f, reloadAllDatatable);
 }
 
-function editConfigurationObj(){
-        uploadConfigurationFile();
+function editConfigurationObj() {
+    uploadConfigurationFile();
 }
 
 
 
-function uploadConfigurationFile(){
-        var formdata = FormData();
-        var file = $("#file")[0].files[0];
-        formData.append("configuration", file);
+function uploadConfigurationFile() {
+    var formdata = FormData();
+    var file = $("#file")[0].files[0];
+    formData.append("configuration", file);
 }
 
-function removeObj(){
-	var f = function(){disableForm(inaffreeturefinal);}
-	freeturefinalLogic.remove(inaffreeturefinal,inaffreeturefinal.id, safeDelete, f, reloadAllDatatable);
+function removeObj() {
+    var f = function () {
+        disableForm(inaffreeturefinal);
+    }
+    freeturefinalLogic.remove(inaffreeturefinal, inaffreeturefinal.id, safeDelete, f, reloadAllDatatable);
 }
 
-function newObj(){
-	newForm(inaffreeturefinal);
-	freeturefinalLogic.get(inaffreeturefinal, null);
-	$('td').removeClass('lastEditedRow');
-	lastEditId = '';
+function newObj() {
+    newForm(inaffreeturefinal);
+    freeturefinalLogic.get(inaffreeturefinal, null);
+    $('td').removeClass('lastEditedRow');
+    lastEditId = '';
 }
 
-function undoObj(){
-	var f = function(){
-		editObj(inaffreeturefinal.id);
-	};
-	alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+function undoObj() {
+    var f = function () {
+        editObj(inaffreeturefinal.id);
+    };
+    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
 }
 
-function setIndexToShow(){
-	indexToShow = inaffreeturefinal.id;
+function setIndexToShow() {
+    indexToShow = inaffreeturefinal.id;
 }
 
 $(document).ready(function () {
@@ -128,106 +132,110 @@ $(document).ready(function () {
         "info": false,
         "searching": false
     });
-    
-    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
-    $("#form-ftcfg").on('change', function(event){
-        filename=$(this).val();
-        if(filename!==''){
-            $("#uploadftbtn").attr('disabled', false);
+
+
+});
+
+// Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+$("#form-ftcfg").on('change', function (event) {
+    filename = $(this).val();
+    if (filename !== '') {
+        $("#uploadftbtn").attr('disabled', false);
+    }
+});
+
+// Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+$("#form-mask").on('change', function (event) {
+    filename = $(this).val();
+    if (filename !== '') {
+        $("#uploadmaskbtn").attr('disabled', false);
+    }
+});
+
+// Caricamento nuova configurazione freeture 
+$("#ftCfgFileForm").on("submit", function (e) {
+    e.preventDefault();
+    var file = $("#form-ftcfg")[0].files[0];
+    var formData = new FormData();
+    formData.append("configuration", file);
+
+    $.ajax({
+        url: "/lib/ft/V2/freeturefinal/editconfiguration",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+            reloadAllDatatable();
+            defaultSuccess("Configurazione caricata correttamente");
+            $("#uploadftbtn").attr('disabled', true);
+            $('#form-ftcfg').val('');
         }
     });
-    
-    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
-    $("#form-mask").on('change', function(event){
-        filename=$(this).val();
-        if(filename!==''){
-            $("#uploadmaskbtn").attr('disabled', false);
+
+});
+
+// Caricamento nuova maschera
+$("#maskFileForm").on("submit", function (e) {
+    e.preventDefault();
+    var file = $("#form-mask")[0].files[0];
+    var formData = new FormData();
+    formData.append("mask", file);
+
+    $.ajax({
+        url: "/lib/ft/V2/freeturefinal/editmask",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+            reloadAllDatatable();
+            defaultSuccess("Maschera caricata correttamente");
+            $("#uploadmaskbtn").attr('disabled', true);
+            $('#form-mask').val('');
         }
     });
-    
-    // Caricamento nuova configurazione freeture 
-    $("#ftCfgFileForm").on("submit", function(e) {
-        e.preventDefault();
-        var file = $("#form-ftcfg")[0].files[0];
-        var formData = new FormData();
-        formData.append("configuration", file);
 
-        $.ajax({
-            url: "/lib/ft/V2/freeturefinal/editconfiguration",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                reloadAllDatatable();
-                defaultSuccess("Configurazione caricata correttamente");
-                $("#uploadftbtn").attr('disabled', true);
-                $('#form-ftcfg').val('');
-            }
-            });
-          
-        });
-    
-    // Caricamento nuova maschera
-    $("#maskFileForm").on("submit", function(e) {
-        e.preventDefault();
-        var file = $("#form-mask")[0].files[0];
-        var formData = new FormData();
-        formData.append("mask", file);
-
-        $.ajax({
-            url: "/lib/ft/V2/freeturefinal/editmask",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                reloadAllDatatable();
-                defaultSuccess("Maschera caricata correttamente");
-                $("#uploadmaskbtn").attr('disabled', true);
-                $('#form-mask').val('');
-            }
-            });
-          
-        });
 });
 
 
- $(function() {
-initFilters();
+$(function () {
+    initFilters();
 });
-	var setData = {
-		singleDatePicker: true, opens: 'right',
-		calender_style: "picker_2",
-		format: 'DD/MM/YYYY'
-	};
+var setData = {
+    singleDatePicker: true, opens: 'right',
+    calender_style: "picker_2",
+    format: 'DD/MM/YYYY'
+};
 function initFilters() {
-	$(".filter-text").each(function (index) {
-		$(this).select2({
-			language: 'it',
-			maximumSelectionLength: 1,
-			multiple: true,
-			ajax: {
-				url: '/lib/ft/V2/freeturefinal/autocomplete/' + $(this).attr('id').replace('F_',''),
-				dataType: 'json'
-			},
-			minimumInputLength: 1
-		});
-	});
-	$(".filter-date, .date").each(function (index) {
-		$(this).daterangepicker(setData, function(){reloadAllDatatable();});
-	});
-	$(".foreign_key").each(function (index) {
-		$(this).select2({
-			language: 'it',
-			maximumSelectionLength: 0,
-			multiple: false,
-			ajax: {
-				url: '/lib/ft/V2/freeturefinal/foreignkey/' + $(this).attr('id').replace('F_',''),
-				dataType: 'json'
-			},
-			minimumInputLength: 0
-		});
-	});
+    $(".filter-text").each(function (index) {
+        $(this).select2({
+            language: 'it',
+            maximumSelectionLength: 1,
+            multiple: true,
+            ajax: {
+                url: '/lib/ft/V2/freeturefinal/autocomplete/' + $(this).attr('id').replace('F_', ''),
+                dataType: 'json'
+            },
+            minimumInputLength: 1
+        });
+    });
+    $(".filter-date, .date").each(function (index) {
+        $(this).daterangepicker(setData, function () {
+            reloadAllDatatable();
+        });
+    });
+    $(".foreign_key").each(function (index) {
+        $(this).select2({
+            language: 'it',
+            maximumSelectionLength: 0,
+            multiple: false,
+            ajax: {
+                url: '/lib/ft/V2/freeturefinal/foreignkey/' + $(this).attr('id').replace('F_', ''),
+                dataType: 'json'
+            },
+            minimumInputLength: 0
+        });
+    });
 }
 

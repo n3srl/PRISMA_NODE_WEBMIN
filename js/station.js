@@ -5,7 +5,7 @@
 
 $(setFreetureFinalVisibility());
 var freetureObjects = [];
-var keys = ["ACQ_REGULAR_PRFX", "DATA_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITELONG", "SITELAT", "SITEELEV"];
+var keys = ["ACQ_REGULAR_PRFX", "DATA_PATH", "STATION_NAME", "STATION_CODE", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
 
 $(function () {
     disableStationForm();
@@ -14,7 +14,6 @@ $(function () {
 
 function editObj() {
     disableStationForm();
-    //freeturefinalLogic.get(inaffreeturefinal, id);
 }
 
 function allowEditObj() {
@@ -29,7 +28,10 @@ function saveObj() {
     freetureObjects.forEach(ft => {
         switch (ft.key) {
             case "STATION_NAME":
-                ft.value = $('#station-name').val();
+                ft.value = $('#station-name').val().toUpperCase();
+                break;
+            case "STATION_CODE":
+                ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "OBSERVER":
                 ft.value = $('#observer').val();
@@ -44,13 +46,13 @@ function saveObj() {
                 ft.value = $('#elevation-observatory').val();
                 break;
             case "TELESCOP":
-                ft.value = $('#station-name').val();
+                ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "ACQ_REGULAR_PRFX":
-                ft.value = $('#station-name').val();
+                ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "DATA_PATH":
-                ft.value = "/freeture/" + $('#station-name').val(); + "/";
+                ft.value = "/freeture/" + $('#station-name').val().toUpperCase(); + "/";
                 break;
         }
         ft.insert();
@@ -142,6 +144,9 @@ function loadValues() {
                     case "STATION_NAME":
                         $('#station-name').val(obj.value);
                         break;
+                    case "STATION_CODE":
+                        $('#station-code').val(obj.value);
+                        break;
                     case "OBSERVER":
                         $('#observer').val(obj.value);
                         break;
@@ -161,11 +166,7 @@ function loadValues() {
     });
 }
 
-$(document).ready(function () {
-
-    loadValues();
-
-    $('#StationForm').submit(function (e) {
+$('#StationForm').submit(function (e) {
         e.preventDefault();
         var submit = true;
 
@@ -182,6 +183,16 @@ $(document).ready(function () {
         }
         return false;
     });
+
+$(document).ready(function () {
+
+    loadValues();
+    /*
+    var locationPicker = new locationPicker('map', {
+        setCurrentPosition: true, // You can omit this, defaults to true
+    }, {
+        zoom: 15 // You can set any google map options here, zoom defaults to 15
+    });*/
 });
 
 

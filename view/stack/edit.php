@@ -122,7 +122,7 @@
                             <h5 id="last-stack-description"></h5>
                         </div>
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <img class="img-responsive" src="/lib/stack/V2/stack/preview/last-stack"/>
+                            <img class="img-responsive" src="/lib/stack/V2/stack/preview/laststack"/>
                         </div>
                     </div>
                 </div>

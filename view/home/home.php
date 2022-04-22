@@ -1,3 +1,46 @@
+<!-- Detection Modal -->
+<div class="modal fade" id="detection-preview-modal" tabindex="-1" role="dialog" aria-labelledby="detection-preview-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detection-preview-modal-label"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detection-preview-modal-body">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Mask Modal -->
+<div class="modal fade" id="mask-preview-modal" tabindex="-1" role="dialog" aria-labelledby="detection-preview-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-lr">
+                    <div class="col-md-8 col-sm-8 col-xs-8">
+                        <h5 class="modal-title" id="mask-preview-modal-label">Mask</h5>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
+                        <a href='/lib/ft/V2/freeturefinal/preview/mask'>
+                            <button type="button" class="btn btn-success pull-right" >Download</button>
+                        </a>
+                    </div>
+                    <div class="col-md-1 col-sm-1 col-xs-1 no-padding-r">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body" id="mask-preview-modal-body">
+                <img class="img-responsive" src="/lib/ft/V2/freeturefinal/preview/mask"/>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="right_col" role="main">
     <div class="">
         <div class="page-title">
@@ -8,87 +51,138 @@
         <div class="clearfix"></div>
         <!-- Calcolo Iva -->
         <div class="row">
-            <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+            <div class="animated flipInY col-lg-4 col-md-4 col-sm-6 col-xs-12">
                 <div class="tile-stats">
                     <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
-                    <div class="count" id="visiteSettimana">0</div>
-                    <h3>Visite in settimana</h3>
-                    <p><a class="settimanaDesc" href="/appuntamento/list"  style="color: black"></a></p>
+                    <div class="count" id="all-detections-number">0</div>
+                    <h3>Detection rilevate dalla stazione</h3>
+
                 </div>
             </div>
-            <div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+            <div class="animated flipInY col-lg-4 col-md-4 col-sm-6 col-xs-12">
                 <div class="tile-stats">
                     <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
-                    <div class="count" id="visiteDaEffettuare">0</div>
-                    <h3>Visite da effettuare</h3>
-                    <p><a href="/appuntamento/list"  style="color: black" id="bottone_effettuare">Visualiza elenco.</a></p>
+                    <div class="count" id="month-detections-number">0</div>
+                    <h3>Detection rilevate nel mese corrente</h3>
+
                 </div>
             </div>
-            <!--div class="animated flipInY col-lg-3 col-md-3 col-sm-6 col-xs-12">
+            <div class="animated flipInY col-lg-4 col-md-4 col-sm-6 col-xs-12">
                 <div class="tile-stats">
-                    <div class="icon"><i class="fa fa-edit"></i>
+                    <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
-                    <div class="count" id="visiteScadute">0</div>
-                    <h3>Visite scadute</h3>
-                    <p><a href="/appuntamento/list"  style="color: black" id="bottone_scadute">Visualiza elenco.</a></p>
+                    <div class="count" id="day-detections-number">0</div>
+                    <h3>Detection rilevate oggi</h3>
+
                 </div>
-            </div-->
-            <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12 col-md-offset-3 col-lg-offset-3">
-                <div class="col-xs-12"><button type='button' class='btn pull-right btn-add-1 col-xs-12' onclick="window.location.href = '/cliente/edit'" >+ <i class="fa fa-user" style="margin-right: 10px "></i> Aggiungi cliente</button></div>
-                <div class="col-xs-12"><button type='button' class='btn pull-right btn-add-2 col-xs-12' onclick="window.location.href = '/appuntamento/edit'" >+ <i class="fa fa-calendar-o"  style="margin-right: 10px "></i> Aggiungi visita</button></div>
-                <div class="col-xs-12"><button type='button' class='btn pull-right btn-add-3 col-xs-12' onclick="window.location.href = '/prodotto/edit'" >+ <i class="fa fa-cube"  style="margin-right: 10px "></i> Aggiungi prodotto</button></div>
             </div>
+
         </div>
         <div class="row">
-            <div class="col-md-12 col-sm-12 col-xs-12">
-                <div class="x_panel">
-                    <div class="x_content">
-                        <div class="row">
-                            <!-- div class="col-lg-3 col-md-6">
-                                <div>
-                                    <div class="x_title">
-                                        <h2>Ultimi clienti inseriti</h2>
-                                        <div class="clearfix"></div>
-                                    </div>
-                                    <ul class="list-unstyled top_profiles scroll-view" style="height: 50%" id="listClientiInseriti">
-
-                                    </ul>
+            <div class="col-md-6 col-sm-12 col-xs-12 no-padding-lr">
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-r">
+                    <div id='list' class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Geolocalizzazione stazione') ?></h2>
                                 </div>
-
-                            </div-->
-                            <div class="col-lg-3 col-md-6">
-                                <div>
-                                    <div class="x_title">
-                                        <h2>Prossime visite</h2>
-                                        <div class="clearfix"></div>
-                                    </div>
-                                    <ul class="list-unstyled top_profiles scroll-view" id="listProssimiAppuntamenti">
-                                    </ul>
-                                </div>
-
                             </div>
-                            <div class="col-lg-9 col-md-12 col-sm-12">
-                                <div>
-                                    <div class="x_title">
-                                        <h2>Geolocalizzazione visite</h2>
-                                        <div class="clearfix"></div>
-                                    </div>
-                                    <div id="map" style="height: 328px"></div>
-                                </div>
-
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div id="station-map" style="height: 328px"></div>
                             </div>
                         </div>
                     </div>
-
                 </div>
+                <div class='col-md-12 col-sm-12 col-xs-12 no-padding-r'>
+                    <div id='list' class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Detection rilevate oggi') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <table id='DetectionList' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                    <thead>
+                                        <tr>
+                                            <th><?php echo (_('Nome')) ?></th>
+                                            <th><?php echo (_('Data')) ?></th>
+                                            <th><?php echo (_('Ora')) ?></th>
+                                            <th><center><?php echo (_('Anteprima')) ?></center></th>
+                                    <th><center><?php echo (_('DirMap')) ?></center></th>
+                                    <th><center><?php echo (_('GeMap')) ?></center></th>
+                                    <th><center><?php echo (_('Zip')) ?></center></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-6 col-sm-12 col-xs-12 no-padding-lr">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div id='list' class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-8 no-padding'>
+                                    <h2><?= _('Dati stazione') ?></h2>
+                                </div>
+                                <div class='col-md-4 no-padding'>
+                                    <button type = 'button' style= 'margin-left: 10px;' onclick= 'showMask();' class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <table id='StationInfo' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                    <thead>
+                                        <tr>
+                                            <th><?php echo (_('Parametro')) ?></th>
+                                            <th><?php echo (_('Valore')) ?></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id='StationInfoBody'>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div id='list' class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Ultima immagine rilevata') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <img class="img-responsive" src="/lib/stack/V2/stack/preview/laststack"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-    <div class="row" style="height: 20px;"></div>
-    <?php
-    include "./view/template/foot.php";
-    ?>
-
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4&callback=initHome" async defer></script>
+</div>
+<div class="row" style="height: 20px;"></div>
+<?php
+include "./view/template/foot.php";
+?>
+<script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/home.js<?= _VERSION_ ?>'></script>
+<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4'></script>

@@ -312,5 +312,47 @@ $app->GET('/detection/info/lastdetection', function(Application $app, Request $r
 	return $resp;
 });
 
+/**
+*
+* GET LAST DAY DETECTION NUMBER
+*
+**/
+
+$app->GET('/detection/counter/lastday', function(Application $app, Request $request) {
+
+	$result = DetectionApiLogic::GetLastDayDetectionNumber();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
+/**
+*
+* GET LAST MONTH DETECTION NUMBER
+*
+**/
+
+$app->GET('/detection/counter/lastmonth', function(Application $app, Request $request) {
+
+	$result = DetectionApiLogic::GetLastMonthDetectionNumber();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
+/**
+*
+* GET ALL DETECTION NUMBER
+*
+**/
+
+$app->GET('/detection/counter/all', function(Application $app, Request $request) {
+
+	$result = DetectionApiLogic::GetAllDetectionNumber();
+	$resp = new Response($result);
+        $resp->setStatusCode(200);
+	return $resp;
+});
+
 $app->run();
 

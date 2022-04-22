@@ -122,7 +122,7 @@
                             <h5 id="last-capture-description"></h5>
                         </div>
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <img class="img-responsive" src="/lib/capture/V2/capture/preview/last-capture"/>
+                            <img class="img-responsive" src="/lib/capture/V2/capture/preview/lastcapture"/>
                         </div>
                     </div>
                 </div>
