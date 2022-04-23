@@ -38,8 +38,6 @@ function editConfigurationObj() {
     uploadConfigurationFile();
 }
 
-
-
 function uploadConfigurationFile() {
     var formdata = FormData();
     var file = $("#file")[0].files[0];

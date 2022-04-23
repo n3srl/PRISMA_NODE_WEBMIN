@@ -52,7 +52,8 @@ function saveObj() {
                 ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "DATA_PATH":
-                ft.value = "/freeture/" + $('#station-name').val().toUpperCase(); + "/";
+                ft.value = "/freeture/" + $('#station-name').val().toUpperCase();
+                +"/";
                 break;
         }
         ft.insert();
@@ -60,6 +61,47 @@ function saveObj() {
 
     uploadMask();
 
+}
+
+function loadValues() {
+
+    keys.forEach(key => {
+        $.get("/lib/ft/V2/freeturefinal/id/" + key, function (json1) {
+            var id = JSON.parse(json1).data;
+            $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
+                var obj = JSON.parse(json2).data;
+                var ft = new FreetureFinalModel('V2');
+                ft.id = obj.id;
+                ft.key = obj.key;
+                ft.value = obj.value;
+                ft.description = obj.description;
+                freetureObjects.push(ft);
+                switch (key) {
+                    case "STATION_NAME":
+                        $('#station-name').val(obj.value);
+                        break;
+                    case "STATION_CODE":
+                        $('#station-code').val(obj.value);
+                        break;
+                    case "OBSERVER":
+                        $('#observer').val(obj.value);
+                        break;
+                    case "SITELONG":
+                        $('#longitude-observatory').val(obj.value);
+                        changeMarkerLocation();
+                        break;
+                    case "SITELAT":
+                        $('#latitude-observatory').val(obj.value);
+                        changeMarkerLocation();
+                        break;
+                    case "SITEELEV":
+                        $('#elevation-observatory').val(obj.value);
+                        break;
+                }
+            });
+
+        });
+    });
 }
 
 //Caricamento nuova maschera
@@ -125,75 +167,96 @@ function disableStationForm() {
     $("#modifybtn").show();
 }
 
+$('#StationForm').submit(function (e) {
+    e.preventDefault();
+    var submit = true;
 
+    if (!validator.checkAll($(this))) {
+        submit = false;
+    }
+    if (submit) {
 
-function loadValues() {
+        if ($(this).attr("callback") !== undefined) {
+            window[$(this).attr("callback")]();
+        } else {
+            saveObj();
+        }
+    }
+    return false;
+});
 
-    keys.forEach(key => {
-        $.get("/lib/ft/V2/freeturefinal/id/" + key, function (json1) {
-            var id = JSON.parse(json1).data;
-            $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
-                var obj = JSON.parse(json2).data;
-                var ft = new FreetureFinalModel('V2');
-                ft.id = obj.id;
-                ft.key = obj.key;
-                ft.value = obj.value;
-                ft.description = obj.description;
-                freetureObjects.push(ft);
-                switch (key) {
-                    case "STATION_NAME":
-                        $('#station-name').val(obj.value);
-                        break;
-                    case "STATION_CODE":
-                        $('#station-code').val(obj.value);
-                        break;
-                    case "OBSERVER":
-                        $('#observer').val(obj.value);
-                        break;
-                    case "SITELONG":
-                        $('#longitude-observatory').val(obj.value);
-                        break;
-                    case "SITELAT":
-                        $('#latitude-observatory').val(obj.value);
-                        break;
-                    case "SITEELEV":
-                        $('#elevation-observatory').val(obj.value);
-                        break;
-                }
+var map;
+var marker = false;
+
+function initMap() {
+
+    var centerOfMap = new google.maps.LatLng(0, 0);
+
+    var options = {
+        center: centerOfMap,
+        zoom: 7
+    };
+
+    map = new google.maps.Map(document.getElementById('location-picker'), options);
+
+    google.maps.event.addListener(map, 'click', function (event) {
+        var clickedLocation = event.latLng;
+        if (marker === false) {
+            marker = new google.maps.Marker({
+                position: clickedLocation,
+                map: map,
+                draggable: true
             });
-
-        });
+            google.maps.event.addListener(marker, 'dragend', function (event) {
+                markerLocation();
+            });
+        } else {
+            marker.setPosition(clickedLocation);
+        }
+        markerLocation();
     });
 }
 
-$('#StationForm').submit(function (e) {
-        e.preventDefault();
-        var submit = true;
+function markerLocation() {
+    var currentLocation = marker.getPosition();
+    $('#longitude-observatory').val(currentLocation.lng());
+    $('#latitude-observatory').val(currentLocation.lat());
+}
 
-        if (!validator.checkAll($(this))) {
-            submit = false;
-        }
-        if (submit) {
+function changeMarkerLocation() {
+    lat = Number($('#latitude-observatory').val());
+    lng = Number($('#longitude-observatory').val());
+    station = {lat: lat, lng: lng};
+    if (marker === false) {
+        marker = new google.maps.Marker({
+            position: station,
+            map: map,
+            draggable: true
+        });
+        google.maps.event.addListener(marker, 'dragend', function (event) {
+            markerLocation();
+        });
+    } else {
+        marker.setPosition(station);
+    }
+    map.setCenter({lat: lat, lng: lng});
+}
 
-            if ($(this).attr("callback") !== undefined) {
-                window[$(this).attr("callback")]();
-            } else {
-                saveObj();
-            }
-        }
-        return false;
-    });
+$("#latitude-observatory").on('change', function (event) {
+    changeMarkerLocation();
+});
+
+$("#longitude-observatory").on('change', function (event) {
+    changeMarkerLocation();
+});
 
 $(document).ready(function () {
-
     loadValues();
-    /*
-    var locationPicker = new locationPicker('map', {
-        setCurrentPosition: true, // You can omit this, defaults to true
-    }, {
-        zoom: 15 // You can set any google map options here, zoom defaults to 15
-    });*/
+    initMap();
 });
+
+
+
 
 
 
