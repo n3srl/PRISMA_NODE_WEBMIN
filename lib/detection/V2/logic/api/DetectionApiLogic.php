@@ -213,9 +213,12 @@ class DetectionApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/events";
         $reply = array();
-        $tmp_png_dir = _WEBROOTDIR_ . "tmp-png/";
+        $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
+        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
+        
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
+            shell_exec("rm " . $tmp_png_dir . "*.mkv");
         }
         if (!is_dir($data_dir)) {
             return $reply;
@@ -243,11 +246,15 @@ class DetectionApiLogic {
                 $hour = $datetime->format('H:i:s');
                 // /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR/*.fit
                 $fits = glob($data_dir . "/" . $detection . "/*.fit");
-                $exp_fit = explode("/", $fits[0]);
-                $png_name = str_replace(".fit", ".png", $exp_fit[6]);
                 $fit_path = $fits[0];
+                $exp_fit = explode("/", $fits[0]);
+                $png_name_tmp = str_replace(".fit", "-tmp.png", $exp_fit[6]);
+                $png_path_tmp = $tmp_png_dir . $png_name_tmp;
+                shell_exec("fitspng -o $png_path_tmp $fit_path");
+                $png_name = str_replace(".fit", ".png", $exp_fit[6]);
                 $png_path = $tmp_png_dir . $png_name;
-                shell_exec("fitspng -o $png_path $fit_path");
+                shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
+                //$video = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
                 $reply[] = array($detection, $day . ":" . $n_day_detections, $hour, $png_name,
                     $date_dir . "_" . $detection, // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
                     $date_dir . "_" . $detection,
@@ -257,6 +264,35 @@ class DetectionApiLogic {
         }
 
         return $reply;
+    }
+    
+    public static function makeVideo($detection_dir, $video_name){
+        $video_dir = _WEBROOTDIR_ . "detection-video/";
+        $media_dir = _WEBROOTDIR_ . "tmp-media/";
+        $frames = array();
+        $positions = $detection_dir . "positions.txt";
+        
+        if (file_exists($positions) && is_file($positions)) {
+            $contents = file($positions);
+            foreach ($contents as $line) {
+                $info = explode(" ", $line);
+                $frames[] = $info[0];
+            }
+        }
+        foreach($frames as $frame){
+            $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
+            shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
+        }
+        /*
+        $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_DESCENDING);
+        foreach($frames as $frame){
+            $frame_path = $detection_dir . "fits2D/" . $frame;
+            shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
+        }*/
+        
+        shell_exec("cat " . $video_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
+        shell_exec("rm " . $video_dir . "*.png");
+        return $video_name . ".mkv";
     }
 
     public static function getDetectionsDays($start, $end) {
@@ -410,7 +446,7 @@ class DetectionApiLogic {
         if ($detection === "lastdetection") {
             $path = self::GetLastDetection();
         } else {
-            $path = _WEBROOTDIR_ . "tmp-png/" . $detection;
+            $path = _WEBROOTDIR_ . "tmp-media/" . $detection;
         }
         return $path;
     }
@@ -418,7 +454,7 @@ class DetectionApiLogic {
     public static function GetLastDetection() {
         $days = self::getDetectionsDays(0, 0, false);
         $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
-        $lastfile = _WEBROOTDIR_ . "tmp-png/" . $files[0][3];
+        $lastfile = _WEBROOTDIR_ . "tmp-media/" . $files[0][3];
         return $lastfile;
     }
 
@@ -449,17 +485,17 @@ class DetectionApiLogic {
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        if (file_exists(_WEBROOTDIR_ . "tmp-png/" . $detection_name . ".zip")) {
+        if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip")) {
             return $detection_name . ".zip";
         }
-        shell_exec("rm " . _WEBROOTDIR_ . "tmp-png/" . "*.zip");
+        shell_exec("rm " . _WEBROOTDIR_ . "tmp-media/" . "*.zip");
         $zipcreated = self::zipFolder($detection_folder, $detection_name);
         return $zipcreated;
     }
 
-    // Create the zip of the passed folder and put it in /tmp-png/ in webroot
+    // Create the zip of the passed folder and put it in /tmp-media/ in webroot
     public static function zipFolder($pathdir, $zipname) {
-        $zipcreated = _WEBROOTDIR_ . "tmp-png/" . $zipname . ".zip";
+        $zipcreated = _WEBROOTDIR_ . "tmp-media/" . $zipname . ".zip";
         shell_exec("zip -r $zipcreated $pathdir");
         return $zipname . ".zip";
     }

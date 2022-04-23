@@ -211,7 +211,8 @@ class CaptureApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/captures";
         $reply = array();
-        $tmp_png_dir = _WEBROOTDIR_ . "tmp-png/";
+        $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
+        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
@@ -239,10 +240,13 @@ class CaptureApiLogic {
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
-                $png_name = str_replace("fit", "png", $file);
+                $png_name_tmp = str_replace(".fit", "-tmp.png", $file);
+                $png_path_tmp = $tmp_png_dir . $png_name_tmp;
                 $fit_path = $data_dir . "/" . $file;
+                shell_exec("fitspng -o $png_path_tmp $fit_path");
+                $png_name = str_replace(".fit", ".png", $file);
                 $png_path = $tmp_png_dir . $png_name;
-                shell_exec("fitspng -o $png_path $fit_path");
+                shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $png_name, $date_dir . "_" . $file);
                 $i++;
             }
@@ -411,7 +415,7 @@ class CaptureApiLogic {
         if ($file === "lastcapture") {
             $path = self::GetLastCapture();
         } else {
-            $path = _WEBROOTDIR_ . "tmp-png/" . $file;
+            $path = _WEBROOTDIR_ . "tmp-media/" . $file;
         }
         return $path;
     }
@@ -419,7 +423,7 @@ class CaptureApiLogic {
     public static function GetLastCapture() {
         $days = self::getCapturesDays(0, 0, false);
         $files = self::getCapturesFiles(0, 0, $days[0][2], false);
-        $lastfile = _WEBROOTDIR_ . "tmp-png/" . $files[0][3];
+        $lastfile = _WEBROOTDIR_ . "tmp-media/" . $files[0][3];
         return $lastfile;
     }
 

@@ -113,7 +113,7 @@
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
                             <div class='col-md-6 no-padding-l'>
-                                <h2><?= _('Ultima Calibrazione') ?></h2>
+                                <h2><?= _('Ultimo Stack') ?></h2>
                             </div>
                         </div>
                     </div>
