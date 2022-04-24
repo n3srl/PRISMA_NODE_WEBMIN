@@ -431,7 +431,6 @@ class FreetureFinalApiLogic
         return true;
     }
     
-    
     public static function updateConfigurationFile($ob){
         $freetureConf = _FREETURE_;
         if(!empty($ob)){
@@ -442,10 +441,11 @@ class FreetureFinalApiLogic
         return false;
     }
     
+    // Return mask file path
     public static function GetMaskFile(){
         return _FREETURE_MASK_;
     }
-    
+   
     public static function updateMaskFile($ob){
         $freetureConf = _FREETURE_MASK_;
         if(!empty($ob)){
@@ -456,23 +456,18 @@ class FreetureFinalApiLogic
         return false;
     }
     
+    // Restart freeture container in ssh
     public static function restartFreeture(){
         $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
-
         if ($session) {
-            
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-
                 $stream = ssh2_exec($session, "sudo docker restart freeture");
-                
                 return true;
             }
-
             unset($session);
         }
-        
         return false;
     }
        
@@ -494,7 +489,6 @@ class FreetureFinalApiLogic
         
         fwrite($myfile, $string);
         fclose($myfile);
-        
     }
 
 }

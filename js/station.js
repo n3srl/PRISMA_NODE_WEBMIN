@@ -5,7 +5,7 @@
 
 $(setFreetureFinalVisibility());
 var freetureObjects = [];
-var keys = ["ACQ_REGULAR_PRFX", "DATA_PATH", "STATION_NAME", "STATION_CODE", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
+var keys = ["ACQ_REGULAR_PRFX", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
 
 $(function () {
     disableStationForm();
@@ -30,9 +30,6 @@ function saveObj() {
             case "STATION_NAME":
                 ft.value = $('#station-name').val().toUpperCase();
                 break;
-            case "STATION_CODE":
-                ft.value = $('#station-code').val().toUpperCase();
-                break;
             case "OBSERVER":
                 ft.value = $('#observer').val();
                 break;
@@ -46,14 +43,22 @@ function saveObj() {
                 ft.value = $('#elevation-observatory').val();
                 break;
             case "TELESCOP":
-                ft.value = $('#station-name').val().toUpperCase();
+                ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "ACQ_REGULAR_PRFX":
-                ft.value = $('#station-name').val().toUpperCase();
+                ft.value = $('#station-code').val().toUpperCase();
+                break;
+            case "ACQ_MASK_PATH":
+                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/default.bmp";
+                break;
+            case "DET_DEBUG_PATH":
+                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/debug/";
                 break;
             case "DATA_PATH":
-                ft.value = "/freeture/" + $('#station-name').val().toUpperCase();
-                +"/";
+                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/";
+                break;
+            case "LOG_PATH":
+                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/log/";
                 break;
         }
         ft.insert();

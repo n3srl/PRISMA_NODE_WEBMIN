@@ -97,13 +97,12 @@
                                     <div class='col-md-6 col-sm-12 col-xs-12'>
                                         <div class='col-md-12 col-sm-12 col-xs-12'>
                                             <div class='col-xs-12'>
-                                                <small class='text-muted'><?php echo ( _('Pick a location')) ?> </small>
+                                                <small class='text-muted'><?php echo ( _('Indica le coordinate')) ?> </small>
                                                 <div id="location-picker" style="height: 390px"></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             <?php } else { ?>
                                 <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('observer') ?>'>
                                     <div class='item form-group'>
