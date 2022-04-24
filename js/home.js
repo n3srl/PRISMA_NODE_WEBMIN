@@ -65,7 +65,7 @@ function download(value) {
 function initMap() {
     const station = {lat: latitude, lng: longitude};
     const map = new google.maps.Map(document.getElementById("station-map"), {
-        zoom: 4,
+        zoom: 6,
         center: station
     });
     const marker = new google.maps.Marker({
@@ -238,13 +238,16 @@ $(document).ready(function () {
         });
     });
 
-    $.get("/lib/detection/V2/detection/counter/all", function (data) {
+    $.get("/lib/detection/V2/detection/counter/all", function (json) {
+        var data = JSON.parse(json).data;
         $("#all-detections-number").html(data);
     });
-    $.get("/lib/detection/V2/detection/counter/lastday", function (data) {
+    $.get("/lib/detection/V2/detection/counter/lastday", function (json) {
+        var data = JSON.parse(json).data;
         $("#day-detections-number").html(data);
     });
-    $.get("/lib/detection/V2/detection/counter/lastmonth", function (data) {
+    $.get("/lib/detection/V2/detection/counter/lastmonth", function (json) {
+        var data = JSON.parse(json).data;
         $("#month-detections-number").html(data);
     });
     $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {

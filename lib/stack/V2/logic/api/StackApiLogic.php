@@ -421,7 +421,6 @@ class StackApiLogic {
     }
 
     public static function GetLastStack() {
-        //$files = self::getStacksFiles(0, 0, false);
         $days = self::getStacksDays(0, 0, false);
         $files = self::getStacksFiles(0, 0, $days[0][2], false);
         $lastfile = _WEBROOTDIR_ . "tmp-media/" . $files[0][3];
@@ -429,11 +428,15 @@ class StackApiLogic {
     }
 
     public static function GetLastStackInfo() {
-        //$files = self::getStacksFiles(0, 0, false);
-        $days = self::getStacksDays(0, 0, false);
-        $files = self::getStacksFiles(0, 0, $days[0][2], false);
-        $lastfile = $files[0][3];
-        return $lastfile;
+         try {
+            $Person = CoreLogic::VerifyPerson();
+            $days = self::getStacksDays(0, 0, false);
+            $files = self::getStacksFiles(0, 0, $days[0][2], false);
+            $lastfile = $files[0][3];
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $lastfile);
     }
 
 }

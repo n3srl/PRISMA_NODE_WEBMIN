@@ -216,7 +216,7 @@ class CaptureApiLogic {
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
         }
-        if(!is_dir($data_dir)){
+        if (!is_dir($data_dir)) {
             return $reply;
         }
         $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
@@ -313,7 +313,7 @@ class CaptureApiLogic {
     public static function GetFilesListDatatable($request) {
         $reply = array();
         $iDisplayStart = 1;
-        
+
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
@@ -428,10 +428,15 @@ class CaptureApiLogic {
     }
 
     public static function GetLastCaptureInfo() {
-        $days = self::getCapturesDays(0, 0, false);
-        $files = self::getCapturesFiles(0, 0, $days[0][2], false);
-        $lastfile = $files[0][3];
-        return $lastfile;
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $days = self::getCapturesDays(0, 0, false);
+            $files = self::getCapturesFiles(0, 0, $days[0][2], false);
+            $lastfile = $files[0][3];
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $lastfile);
     }
 
 }

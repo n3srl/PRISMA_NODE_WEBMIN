@@ -171,7 +171,8 @@ $(document).ready(function () {
         "searching": false
     });
 
-    $.get("/lib/detection/V2/detection/info/lastdetection", function (data) {
+    $.get("/lib/detection/V2/detection/info/lastdetection", function (json) {
+        var data = JSON.parse(json).data;
         $('#last-detection-description').html("Detection del " + getFileDate(data) + " (" + getFileHour(data) + ")");
     });
 });

@@ -1,9 +1,9 @@
 <?php
-/**
-*
-* @author: N3 S.r.l.
-*/
 
+/**
+ *
+ * @author: N3 S.r.l.
+ */
 require_once __DIR__ . '/autoload.php';
 require_once _EXTLIB_ . 'sylex/vendor/autoload.php';
 
@@ -15,138 +15,131 @@ use Silex\Application;
 $app = new Silex\Application();
 
 $app->before(function (Request $request) {
-	if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
-		$data = json_decode($request->getContent(), true);
-		$request->request->replace(is_array($data) ? $data : array());
-	}
+    if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
+        $data = json_decode($request->getContent(), true);
+        $request->request->replace(is_array($data) ? $data : array());
+    }
 });
 
-/************************************************************
+/* * **********************************************************
 
-DETECTION
+  DETECTION
 
-************************************************************/
-
-/**
-*
-* INSERT
-*
-**/
-
-$app->POST('/detection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::Save($request->request);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
-});
+ * ********************************************************** */
 
 /**
-*
-* UPDATE
-*
-**/
+ *
+ * INSERT
+ *
+ * */
+$app->POST('/detection', function (Application $app, Request $request) {
 
-$app->PUT('/detection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::Update($request->request);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+    $result = DetectionApiLogic::Save($request->request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* DELETE
-*
-**/
+ *
+ * UPDATE
+ *
+ * */
+$app->PUT('/detection', function (Application $app, Request $request) {
 
-$app->DELETE('/detection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::Delete($request->request);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+    $result = DetectionApiLogic::Update($request->request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* ERASED
-*
-**/
+ *
+ * DELETE
+ *
+ * */
+$app->DELETE('/detection', function (Application $app, Request $request) {
 
-$app->PATCH('/detection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::Erase($request->request);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+    $result = DetectionApiLogic::Delete($request->request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET
-*
-**/
+ *
+ * ERASED
+ *
+ * */
+$app->PATCH('/detection', function (Application $app, Request $request) {
 
-$app->GET('/detection/{detectionId}', function(Application $app, Request $request, $detectionId) {
-
-	$result = DetectionApiLogic::Get($detectionId);
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+    $result = DetectionApiLogic::Erase($request->request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET LIST
-*
-**/
+ *
+ * GET
+ *
+ * */
+$app->GET('/detection/{detectionId}', function (Application $app, Request $request, $detectionId) {
 
-$app->GET('/detection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::GetList();
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+    $result = DetectionApiLogic::Get($detectionId);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET DATATABLE
-*
-**/
+ *
+ * GET LIST
+ *
+ * */
+$app->GET('/detection', function (Application $app, Request $request) {
 
+    $result = DetectionApiLogic::GetList();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET DATATABLE
+ *
+ * */
 $app->GET('/detection/datatable/list', function (Application $app, Request $request) {
 
     $result = DetectionApiLogic::GetListDatatable($request);
@@ -156,13 +149,11 @@ $app->GET('/detection/datatable/list', function (Application $app, Request $requ
     return $resp;
 });
 
-
 /**
-*
-* GET DATATABLE FILES
-*
-**/
-
+ *
+ * GET DATATABLE FILES
+ *
+ * */
 $app->GET('/detection/datatable/filelist', function (Application $app, Request $request) {
 
     $result = DetectionApiLogic::GetFilesListDatatable($request);
@@ -173,11 +164,10 @@ $app->GET('/detection/datatable/filelist', function (Application $app, Request $
 });
 
 /**
-*
-* GET DATATABLE DAYS
-*
-**/
-
+ *
+ * GET DATATABLE DAYS
+ *
+ * */
 $app->GET('/detection/datatable/daylist', function (Application $app, Request $request) {
 
     $result = DetectionApiLogic::GetDaysListDatatable($request);
@@ -188,170 +178,179 @@ $app->GET('/detection/datatable/daylist', function (Application $app, Request $r
 });
 
 /**
-*
-* GET AUTOCOMPLETE
-*
-**/
+ *
+ * GET AUTOCOMPLETE
+ *
+ * */
+$app->GET('/detection/autocomplete/{companyColumn}', function (Application $app, Request $request, $companyColumn) {
 
-$app->GET('/detection/autocomplete/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
-
-	$result = DetectionApiLogic::GetListFilterAjax($companyColumn);
-	if ($result->results) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
-});
-
-/**
-*
-* GET FOREIGN KEY
-*
-**/
-
-$app->GET('/detection/foreignkey/{companyColumn}', function(Application $app, Request $request, $companyColumn) {
-
-	$result = DetectionApiLogic::GetListFKAjax($companyColumn);
-	if ($result->results) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
-});
-
-/**
-*
-* GET GEMAP
-*
-**/
-
-$app->GET('/detection/gemap/{detection}', function(Application $app, Request $request, $detection) {
-
-	$result = DetectionApiLogic::GetGeMap($detection);
-	$resp = new BinaryFileResponse($result);
-        $resp->headers->set('Content-Type', 'image/bmp');
+    $result = DetectionApiLogic::GetListFilterAjax($companyColumn);
+    if ($result->results) {
+        $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
-	return $resp;
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET DIRMAP
-*
-**/
+ *
+ * GET FOREIGN KEY
+ *
+ * */
+$app->GET('/detection/foreignkey/{companyColumn}', function (Application $app, Request $request, $companyColumn) {
 
-$app->GET('/detection/dirmap/{detection}', function(Application $app, Request $request, $detection) {
-        
-	$result = DetectionApiLogic::GetDirMap($detection);
-	$resp = new BinaryFileResponse($result);
-        $resp->headers->set('Content-Type', 'image/bmp');
+    $result = DetectionApiLogic::GetListFKAjax($companyColumn);
+    if ($result->results) {
+        $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
-	return $resp;
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET JPG
-*
-**/
+ *
+ * GET GEMAP
+ *
+ * */
+$app->GET('/detection/gemap/{detection}', function (Application $app, Request $request, $detection) {
 
-$app->GET('/detection/preview/{detection}', function(Application $app, Request $request, $detection) {
-        
-	$result = DetectionApiLogic::GetPng($detection);
-	$resp = new BinaryFileResponse($result);
-        $resp->headers->set('Content-Type', 'image/png');
-        $resp->setStatusCode(200);
-	return $resp;
+    $result = DetectionApiLogic::GetGeMap($detection);
+    $resp = new BinaryFileResponse($result);
+    $resp->headers->set('Content-Type', 'image/bmp');
+    $resp->setStatusCode(200);
+    return $resp;
 });
 
 /**
-*
-* GET ZIP
-*
-**/
+ *
+ * GET DIRMAP
+ *
+ * */
+$app->GET('/detection/dirmap/{detection}', function (Application $app, Request $request, $detection) {
 
-$app->GET('/detection/createzip/{detection}', function(Application $app, Request $request, $detection) {
-        
-	$result = DetectionApiLogic::CreateZip($detection);
-	$resp = new Response($result);
-        $resp->setStatusCode(200);
-	return $resp;
+    $result = DetectionApiLogic::GetDirMap($detection);
+    $resp = new BinaryFileResponse($result);
+    $resp->headers->set('Content-Type', 'image/bmp');
+    $resp->setStatusCode(200);
+    return $resp;
 });
 
 /**
-*
-* CREATE ZIP
-*
-**/
+ *
+ * GET JPG
+ *
+ * */
+$app->GET('/detection/preview/{detection}', function (Application $app, Request $request, $detection) {
 
-$app->GET('/detection/download/{detection}', function(Application $app, Request $request, $detection) {
-        
-	$result = DetectionApiLogic::GetZip($detection);
-	$resp = new BinaryFileResponse($result);
-        $resp->setStatusCode(200);
-	return $resp;
+    $result = DetectionApiLogic::GetPng($detection);
+    $resp = new BinaryFileResponse($result);
+    $resp->headers->set('Content-Type', 'image/png');
+    $resp->setStatusCode(200);
+    return $resp;
 });
 
 /**
-*
-* GET LAST DETECTION INFO
-*
-**/
+ *
+ * GET ZIP
+ *
+ * */
+$app->GET('/detection/createzip/{detection}', function (Application $app, Request $request, $detection) {
 
-$app->GET('/detection/info/lastdetection', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::GetLastDetectionInfo();
-	$resp = new Response($result);
-        $resp->setStatusCode(200);
-	return $resp;
+    $result = DetectionApiLogic::CreateZip($detection);
+    $resp = new Response($result);
+    $resp->setStatusCode(200);
+    return $resp;
 });
 
 /**
-*
-* GET LAST DAY DETECTION NUMBER
-*
-**/
+ *
+ * CREATE ZIP
+ *
+ * */
+$app->GET('/detection/download/{detection}', function (Application $app, Request $request, $detection) {
 
-$app->GET('/detection/counter/lastday', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::GetLastDayDetectionNumber();
-	$resp = new Response($result);
-        $resp->setStatusCode(200);
-	return $resp;
+    $result = DetectionApiLogic::GetZip($detection);
+    $resp = new BinaryFileResponse($result);
+    $resp->setStatusCode(200);
+    return $resp;
 });
 
 /**
-*
-* GET LAST MONTH DETECTION NUMBER
-*
-**/
+ *
+ * GET LAST DETECTION INFO
+ *
+ * */
+$app->GET('/detection/info/lastdetection', function (Application $app, Request $request) {
 
-$app->GET('/detection/counter/lastmonth', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::GetLastMonthDetectionNumber();
-	$resp = new Response($result);
+    $result = DetectionApiLogic::GetLastDetectionInfo();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
-	return $resp;
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 /**
-*
-* GET ALL DETECTION NUMBER
-*
-**/
+ *
+ * GET LAST DAY DETECTION NUMBER
+ *
+ * */
+$app->GET('/detection/counter/lastday', function (Application $app, Request $request) {
 
-$app->GET('/detection/counter/all', function(Application $app, Request $request) {
-
-	$result = DetectionApiLogic::GetAllDetectionNumber();
-	$resp = new Response($result);
+    $result = DetectionApiLogic::GetLastDayDetectionNumber();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
-	return $resp;
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET LAST MONTH DETECTION NUMBER
+ *
+ * */
+$app->GET('/detection/counter/lastmonth', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::GetLastMonthDetectionNumber();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET ALL DETECTION NUMBER
+ *
+ * */
+$app->GET('/detection/counter/all', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::GetAllDetectionNumber();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
 });
 
 $app->run();

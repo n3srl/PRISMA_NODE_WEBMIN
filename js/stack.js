@@ -145,7 +145,8 @@ $(document).ready(function () {
         "searching": false
     });
 
-    $.get("/lib/stack/V2/stack/info/laststack", function (data) {
+    $.get("/lib/stack/V2/stack/info/laststack", function (json) {
+        var data = JSON.parse(json).data;
         $('#last-stack-description').html("Stack del " + getFileDate(data) + " (" + getFileHour(data) + ")");
     });
 });

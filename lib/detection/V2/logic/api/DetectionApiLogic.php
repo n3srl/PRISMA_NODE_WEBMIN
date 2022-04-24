@@ -215,7 +215,7 @@ class DetectionApiLogic {
         $reply = array();
         $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
         $logo_path = _WEBROOTDIR_ . "img/watermark.png";
-        
+
         if ($clean) {
             shell_exec("rm " . $tmp_png_dir . "*.png");
             shell_exec("rm " . $tmp_png_dir . "*.mkv");
@@ -265,13 +265,13 @@ class DetectionApiLogic {
 
         return $reply;
     }
-    
-    public static function makeVideo($detection_dir, $video_name){
+
+    public static function makeVideo($detection_dir, $video_name) {
         $video_dir = _WEBROOTDIR_ . "detection-video/";
         $media_dir = _WEBROOTDIR_ . "tmp-media/";
         $frames = array();
         $positions = $detection_dir . "positions.txt";
-        
+
         if (file_exists($positions) && is_file($positions)) {
             $contents = file($positions);
             foreach ($contents as $line) {
@@ -279,17 +279,17 @@ class DetectionApiLogic {
                 $frames[] = $info[0];
             }
         }
-        foreach($frames as $frame){
+        foreach ($frames as $frame) {
             $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
             shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
         }
         /*
-        $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_DESCENDING);
-        foreach($frames as $frame){
-            $frame_path = $detection_dir . "fits2D/" . $frame;
-            shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
-        }*/
-        
+          $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_DESCENDING);
+          foreach($frames as $frame){
+          $frame_path = $detection_dir . "fits2D/" . $frame;
+          shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
+          } */
+
         shell_exec("cat " . $video_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
         shell_exec("rm " . $video_dir . "*.png");
         return $video_name . ".mkv";
@@ -327,7 +327,8 @@ class DetectionApiLogic {
 
         return $reply;
     }
-
+    
+    // Count number of files in 2-level directories
     public static function getAllDaysFilesCount($path) {
 
         $n_files = 0;
@@ -339,7 +340,8 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-
+    
+    // Count number of file in a directory
     public static function getDirectoryFilesCount($path) {
 
         $n_files = 0;
@@ -349,7 +351,8 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-
+    
+    // Get list of all detection in a day
     public static function GetFilesListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
@@ -395,7 +398,8 @@ class DetectionApiLogic {
         );
         return $output;
     }
-
+    
+    // Get list of all days detections folders
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
@@ -440,7 +444,8 @@ class DetectionApiLogic {
         );
         return $output;
     }
-
+    
+    // Return path to detection png
     public static function GetPng($detection) {
         $path = "";
         if ($detection === "lastdetection") {
@@ -450,38 +455,59 @@ class DetectionApiLogic {
         }
         return $path;
     }
-
+    
+    // Return path to last detection png
     public static function GetLastDetection() {
         $days = self::getDetectionsDays(0, 0, false);
         $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
         $lastfile = _WEBROOTDIR_ . "tmp-media/" . $files[0][3];
         return $lastfile;
     }
-
+    
+    // Return last detection name
     public static function GetLastDetectionInfo() {
-        $days = self::getDetectionsDays(0, 0, false);
-        $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
-        $lastfile = $files[0][3];
-        return $lastfile;
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $days = self::getDetectionsDays(0, 0, false);
+            $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
+            $lastfile = $files[0][3];
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $lastfile);
     }
-
+    
+    // Return detection geMap
     public static function GetGeMap($detection) {
         $base_path = self::getDetectionBasePath($detection);
         $path = $base_path . "/GeMap.bmp";
         return $path;
     }
-
+    
+    // Return detection dirMap
     public static function GetDirMap($detection) {
         $base_path = self::getDetectionBasePath($detection);
         $path = $base_path . "/DirMap.bmp";
         return $path;
     }
-
+    
+    // Return detection zip 
     public static function GetZip($zip) {
         return _FREETURE_DATA_ . $zip;
     }
-
+    
+    // Create zip of detection
     public static function CreateZip($detection) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $zip = self::zipDetection($detection);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $zip);
+    }
+
+    public static function zipDetection($detection) {
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
@@ -508,16 +534,34 @@ class DetectionApiLogic {
         $base_path = $data_dir . $day . "/events/" . $detection_name;
         return $base_path;
     }
-
+    
+    // Return number of detection of last day
     public static function GetLastDayDetectionNumber() {
-        $png = self::GetLastDetectionInfo();
-        $now = new DateTime();
-        $date_dir = self::getStationName() . "_" . $now->format('Ymd');
-        $path = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/events/*";
-        return self::getDirectoryFilesCount($path);
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $png = self::GetLastDetectionInfo();
+            $now = new DateTime();
+            $date_dir = self::getStationName() . "_" . $now->format('Ymd');
+            $path = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/events/*";
+            $n_files = self::getDirectoryFilesCount($path);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $n_files);
     }
-
+    
+    // Return number of detection of last month
     public static function GetLastMonthDetectionNumber() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $n_files = self::getLastMonthTotal();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $n_files);
+    }
+    
+    public static function getLastMonthTotal() {
         $png = self::GetLastDetectionInfo();
         $path = _FREETURE_DATA_ . self::getStationName() . "/";
         $now = new DateTime();
@@ -528,9 +572,9 @@ class DetectionApiLogic {
                 $name2 = explode("_", $day);
                 $datetime2 = date_create($name2[1]);
                 $month2 = $datetime2->format('m');
-                if($month1 === $month2){
+                if ($month1 === $month2) {
                     $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
-                }else if(intval($month1) < intval($month2)) {
+                } else if (intval($month1) < intval($month2)) {
                     break;
                 }
             }
@@ -538,10 +582,17 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-
+    
+    // Return number of detection of all time
     public static function GetAllDetectionNumber() {
-        $path = _FREETURE_DATA_ . self::getStationName() . "/";
-        return self::getAllDaysFilesCount($path);
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $path = _FREETURE_DATA_ . self::getStationName() . "/";
+            $n_files = self::getAllDaysFilesCount($path);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $n_files);
     }
 
 }

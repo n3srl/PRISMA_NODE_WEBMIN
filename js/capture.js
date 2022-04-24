@@ -145,7 +145,8 @@ $(document).ready(function () {
         "searching": false
     });
 
-    $.get("/lib/capture/V2/capture/info/lastcapture", function (data) {
+    $.get("/lib/capture/V2/capture/info/lastcapture", function (json) {
+        var data = JSON.parse(json).data;
         $('#last-capture-description').html("Calibrazione del " + getFileDate(data) + " (" + getFileHour(data) + ")");
     });
 });
