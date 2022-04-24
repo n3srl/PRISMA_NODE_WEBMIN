@@ -184,7 +184,7 @@ class CaptureApiLogic {
         }
     }
 
-    public static function getStationName() {
+    public static function getStationPrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
 
@@ -209,7 +209,7 @@ class CaptureApiLogic {
 
     public static function getCapturesFiles($start, $end, $date_dir, $clean = true) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/captures";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/captures";
         $reply = array();
         $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
         $logo_path = _WEBROOTDIR_ . "img/watermark.png";
@@ -257,7 +257,7 @@ class CaptureApiLogic {
 
     public static function getCapturesDays($start, $end) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $reply = array();
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
@@ -318,7 +318,7 @@ class CaptureApiLogic {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
-            $directory = _FREETURE_DATA_ . self::getStationName() . "/" . $day_dir . "/captures/*";
+            $directory = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/captures/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getCapturesFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir);
 
@@ -359,7 +359,7 @@ class CaptureApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/*";
+        $directory = _FREETURE_DATA_ . "/" . self::getStationPrefix() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -402,7 +402,7 @@ class CaptureApiLogic {
     }
 
     public static function GetFitFile($file) {
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $file_info = explode("_", $file);
         $day = $file_info[0] . "_" . $file_info[1];
         $fit_name = $file_info[2] . "_" . $file_info[3] . "_" . $file_info[4];

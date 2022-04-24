@@ -185,7 +185,7 @@ class DetectionApiLogic {
     }
 
     // Get the station name parsing freeture configuration file
-    public static function getStationName() {
+    public static function getStationPrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
 
@@ -211,7 +211,7 @@ class DetectionApiLogic {
     // Scan filesystem to get events folder
     public static function getDetectionsFiles($start, $end, $date_dir, $clean = true) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/events";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/events";
         $reply = array();
         $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
         $logo_path = _WEBROOTDIR_ . "img/watermark.png";
@@ -297,7 +297,7 @@ class DetectionApiLogic {
 
     public static function getDetectionsDays($start, $end) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $reply = array();
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
@@ -361,7 +361,7 @@ class DetectionApiLogic {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
-            $directory = _FREETURE_DATA_ . self::getStationName() . "/" . $day_dir . "/events/*";
+            $directory = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/events/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir);
 
@@ -403,7 +403,7 @@ class DetectionApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getStationName() . "/*";
+        $directory = _FREETURE_DATA_ . "/" . self::getStationPrefix() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -527,7 +527,7 @@ class DetectionApiLogic {
     }
 
     public static function getDetectionBasePath($detection) {
-        $data_dir = _FREETURE_DATA_ . self::getStationName() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $detection_info = explode("_", $detection);
         $day = $detection_info[0] . "_" . $detection_info[1];
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
@@ -541,8 +541,8 @@ class DetectionApiLogic {
             $Person = CoreLogic::VerifyPerson();
             $png = self::GetLastDetectionInfo();
             $now = new DateTime();
-            $date_dir = self::getStationName() . "_" . $now->format('Ymd');
-            $path = _FREETURE_DATA_ . self::getStationName() . "/" . $date_dir . "/events/*";
+            $date_dir = self::getStationPrefix() . "_" . $now->format('Ymd');
+            $path = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/events/*";
             $n_files = self::getDirectoryFilesCount($path);
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -563,7 +563,7 @@ class DetectionApiLogic {
     
     public static function getLastMonthTotal() {
         $png = self::GetLastDetectionInfo();
-        $path = _FREETURE_DATA_ . self::getStationName() . "/";
+        $path = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $now = new DateTime();
         $month1 = $now->format('m');
         $n_files = 0;
@@ -587,7 +587,7 @@ class DetectionApiLogic {
     public static function GetAllDetectionNumber() {
         try {
             $Person = CoreLogic::VerifyPerson();
-            $path = _FREETURE_DATA_ . self::getStationName() . "/";
+            $path = _FREETURE_DATA_ . self::getStationPrefix() . "/";
             $n_files = self::getAllDaysFilesCount($path);
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);

@@ -443,17 +443,35 @@ class FreetureFinalApiLogic
     
     // Return mask file path
     public static function GetMaskFile(){
-        return _FREETURE_MASK_;
+        return self::getMaskPath();
     }
    
     public static function updateMaskFile($ob){
-        $freetureConf = _FREETURE_MASK_;
+        $freetureConf = self::getMaskPath();
         if(!empty($ob)){
             $result = move_uploaded_file($ob, $freetureConf);
             self::restartFreeture();
             return $result;
         }       
         return false;
+    }
+    
+    public static function getMaskPath() {
+        $freetureConf = _FREETURE_;
+        $path = "";
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+            //Parse config file line by line
+            foreach ($contents as $line) {
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                        if (self::getKey($line) === "ACQ_MASK_PATH") {
+                        $path = self::getValue($line);
+                    }
+                }
+            }
+        }
+        return $path;
     }
     
     // Restart freeture container in ssh

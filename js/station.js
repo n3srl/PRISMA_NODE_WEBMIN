@@ -85,7 +85,7 @@ function loadValues() {
                     case "STATION_NAME":
                         $('#station-name').val(obj.value);
                         break;
-                    case "STATION_CODE":
+                    case "ACQ_REGULAR_PRFX":
                         $('#station-code').val(obj.value);
                         break;
                     case "OBSERVER":
