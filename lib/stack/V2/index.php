@@ -218,12 +218,16 @@ $app->GET('/stack/foreignkey/{companyColumn}', function (Application $app, Reque
  * GET PREVIEW
  *
  * */
-$app->GET('/stack/preview/{fileName}', function (Application $app, Request $request, $fileName) {
-
-    $result = StackApiLogic::GetPngFile($fileName);
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/png');
-    $resp->setStatusCode(200);
+$app->GET('/stack/preview/laststack', function (Application $app, Request $request) {
+    
+    $result = StackApiLogic::GetLastStack();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
     return $resp;
 });
 
@@ -237,24 +241,6 @@ $app->GET('/stack/download/{fileName}', function (Application $app, Request $req
     $result = StackApiLogic::GetFitFile($fileName);
     $resp = new BinaryFileResponse($result);
     $resp->setStatusCode(200);
-    return $resp;
-});
-
-/**
- *
- * GET LAST STACK INFO
- *
- * */
-$app->GET('/stack/info/laststack', function (Application $app, Request $request) {
-
-    $result = StackApiLogic::GetLastStackInfo();
-    if ($result->result) {
-        $resp = new Response(json_encode($result));
-        $resp->setStatusCode(200);
-    } else {
-        $resp = new Response(json_encode($result));
-        $resp->setStatusCode(403);
-    }
     return $resp;
 });
 

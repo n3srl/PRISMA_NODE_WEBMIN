@@ -7,6 +7,10 @@ $(setCaptureVisibility());
 var inafcapture = new CaptureModel('V2');
 var lastEditId = '';
 var indexToShow = null;
+var isPreviewEnabled = false;
+var table1 = null;
+var table2 = null;
+
 $(function () {
     disableForm(inafcapture);
 
@@ -30,14 +34,14 @@ function allowEditObj() {
 function saveObj() {
     var f = function () {
         disableForm(inafcapture);
-    }
+    };
     captureLogic.save(inafcapture, setIndexToShow, setLastEditId, f, reloadAllDatatable);
 }
 
 function removeObj() {
     var f = function () {
         disableForm(inafcapture);
-    }
+    };
     captureLogic.remove(inafcapture, inafcapture.id, safeDelete, f, reloadAllDatatable);
 }
 
@@ -59,12 +63,18 @@ function setIndexToShow() {
     indexToShow = inafcapture.id;
 }
 
-function preview(value) {
+function preview(row) {
+    var data = table2.rows(row).data()[0];
     $('#capture-preview-modal').modal('show');
-    $('#capture-preview-modal-label').html("Calibrazione del " + getFileDate(value) + " (" + getFileHour(value) + ")");
-    var body = '<img class="img-responsive" src="/lib/capture/V2/capture/preview/' + value + '"/>';
+    $('#capture-preview-modal-label').html("Calibrazione del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#capture-preview-modal-body').html(body);
 }
+
+$("#enable-capture-preview").on('change', function (event) {
+    isPreviewEnabled = $("#enable-capture-preview").is(":checked");
+    $('#CaptureList').dataTable().fnDraw();
+});
 
 function getFileDate(file) {
     var info = file.split("_");
@@ -145,9 +155,11 @@ $(document).ready(function () {
         "searching": false
     });
 
-    $.get("/lib/capture/V2/capture/info/lastcapture", function (json) {
+    $.get("/lib/capture/V2/capture/preview/lastcapture", function (json) {
         var data = JSON.parse(json).data;
-        $('#last-capture-description').html("Calibrazione del " + getFileDate(data) + " (" + getFileHour(data) + ")");
+        var info = data[1].split(":");
+        $('#last-capture-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+        $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
 });
 
@@ -183,19 +195,24 @@ function initCapturesDatatable(folder, table1) {
                 "targets": [-2],
                 render: function (data, type, row, meta) {
                     var info = row[1].split(":");
+                    //var arg = [data, info[0], row[2]];
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                           "<button class='btn btn-success' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
-                           "</center>";
+                            "<button class='btn btn-success btn-capture-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
+                            "</center>";
                 }
             },
             {
                 "targets": [-1],
                 render: function (data, type, row, meta) {
                     return "<center>" +
-                           "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
-                           "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
-                           "</a>" +
-                           "</center>";
+                            "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
+                            "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
+                            "</a>" +
+                            "</center>";
                 }
             },
             {
@@ -211,6 +228,7 @@ function initCapturesDatatable(folder, table1) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
             aoData.push({"name": "dayDir", "value": folder});
+            aoData.push({"name": "enablePreview", "value": isPreviewEnabled});
             if ($("." + $.md5('id')).is(":visible"))
                 aoData.push({"name": "id", "value": $('#F_id').val()});
             if ($("." + $.md5('name')).is(":visible"))
@@ -258,7 +276,6 @@ function initCapturesDatatable(folder, table1) {
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
     });
-
 }
 
 $(function () {

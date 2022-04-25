@@ -218,12 +218,16 @@ $app->GET('/capture/foreignkey/{companyColumn}', function (Application $app, Req
  * GET PREVIEW
  *
  * */
-$app->GET('/capture/preview/{fileName}', function (Application $app, Request $request, $fileName) {
-
-    $result = CaptureApiLogic::GetPngFile($fileName);
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/png');
-    $resp->setStatusCode(200);
+$app->GET('/capture/preview/lastcapture', function (Application $app, Request $request) {
+    
+    $result = CaptureApiLogic::GetLastCapture();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
     return $resp;
 });
 
@@ -237,24 +241,6 @@ $app->GET('/capture/download/{fileName}', function (Application $app, Request $r
     $result = CaptureApiLogic::GetFitFile($fileName);
     $resp = new BinaryFileResponse($result);
     $resp->setStatusCode(200);
-    return $resp;
-});
-
-/**
- *
- * GET LAST CAPTURE INFO
- *
- * */
-$app->GET('/capture/info/lastcapture', function (Application $app, Request $request) {
-
-    $result = CaptureApiLogic::GetLastCaptureInfo();
-    if ($result->result) {
-        $resp = new Response(json_encode($result));
-        $resp->setStatusCode(200);
-    } else {
-        $resp = new Response(json_encode($result));
-        $resp->setStatusCode(403);
-    }
     return $resp;
 });
 

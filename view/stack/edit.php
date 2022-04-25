@@ -1,4 +1,4 @@
-<?php /* @var $Stack Stack */ ?> 
+<?php // /* @var $Stack Stack */                ?> 
 <!-- Modal -->
 <div class="modal fade" id="stack-preview-modal" tabindex="-1" role="dialog" aria-labelledby="stack-preview-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -19,7 +19,7 @@
     <div class=''>
         <div class='page-title'>
             <div class='title_left'>
-                <h2><?= _('Stack') ?></h2>
+                <h2><?= _('Calibrazioni') ?></h2>
             </div>
         </div>
         <div class='clearfix'></div>
@@ -28,8 +28,21 @@
                 <div id='list' class='x_panel'>
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
-                            <div class='col-md-6 no-padding-l'>
+                            <div class='col-md-4 col-sm-4 col-xs-12 no-padding'>
                                 <h2><?= _('Elenco') ?></h2>
+                            </div>
+                            <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
+                                <div class='pull-right'>
+                                    <div class='col-md-8'>
+                                        <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                    </div>
+                                    <div class='col-md-4'>
+                                        <label class='switch pull-left'>
+                                            <input type='checkbox' id='enable-stack-preview'>
+                                            <span class='slider round'></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -121,8 +134,7 @@
                         <div class='col-md-12 col-sm-12 col-xs-12'>
                             <h5 id="last-stack-description"></h5>
                         </div>
-                        <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <img class="img-responsive" src="/lib/stack/V2/stack/preview/laststack"/>
+                        <div class='col-md-12 col-sm-12 col-xs-12' id='last-stack-preview'>
                         </div>
                     </div>
                 </div>

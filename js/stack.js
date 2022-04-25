@@ -7,6 +7,10 @@ $(setStackVisibility());
 var inafstack = new StackModel('V2');
 var lastEditId = '';
 var indexToShow = null;
+var isPreviewEnabled = false;
+var table1 = null;
+var table2 = null;
+
 $(function () {
     disableForm(inafstack);
 
@@ -30,14 +34,14 @@ function allowEditObj() {
 function saveObj() {
     var f = function () {
         disableForm(inafstack);
-    }
+    };
     stackLogic.save(inafstack, setIndexToShow, setLastEditId, f, reloadAllDatatable);
 }
 
 function removeObj() {
     var f = function () {
         disableForm(inafstack);
-    }
+    };
     stackLogic.remove(inafstack, inafstack.id, safeDelete, f, reloadAllDatatable);
 }
 
@@ -59,12 +63,18 @@ function setIndexToShow() {
     indexToShow = inafstack.id;
 }
 
-function preview(value) {
+function preview(row) {
+    var data = table2.rows(row).data()[0];
     $('#stack-preview-modal').modal('show');
-    $('#stack-preview-modal-label').html("Stack del " + getFileDate(value) + " (" + getFileHour(value) + ")");
-    var body = '<img class="img-responsive" src="/lib/stack/V2/stack/preview/' + value + '"/>';
+    $('#stack-preview-modal-label').html("Stack del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#stack-preview-modal-body').html(body);
 }
+
+$("#enable-stack-preview").on('change', function (event) {
+    isPreviewEnabled = $("#enable-stack-preview").is(":checked");
+    $('#StackList').dataTable().fnDraw();
+});
 
 function getFileDate(file) {
     var info = file.split("_");
@@ -145,9 +155,11 @@ $(document).ready(function () {
         "searching": false
     });
 
-    $.get("/lib/stack/V2/stack/info/laststack", function (json) {
+    $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
-        $('#last-stack-description').html("Stack del " + getFileDate(data) + " (" + getFileHour(data) + ")");
+        var info = data[1].split(":");
+        $('#last-stack-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+        $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
 });
 
@@ -183,8 +195,13 @@ function initStacksDatatable(folder, table1) {
                 "targets": [-2],
                 render: function (data, type, row, meta) {
                     var info = row[1].split(":");
+                    //var arg = [data, info[0], row[2]];
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
+                            "<button class='btn btn-success btn-stack-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
                             "</center>";
                 }
             },
@@ -211,6 +228,7 @@ function initStacksDatatable(folder, table1) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
             aoData.push({"name": "dayDir", "value": folder});
+            aoData.push({"name": "enablePreview", "value": isPreviewEnabled});
             if ($("." + $.md5('id')).is(":visible"))
                 aoData.push({"name": "id", "value": $('#F_id').val()});
             if ($("." + $.md5('name')).is(":visible"))
@@ -257,9 +275,7 @@ function initStacksDatatable(folder, table1) {
         $('#StackList').dataTable().fnDraw();
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
-
     });
-
 }
 
 $(function () {
