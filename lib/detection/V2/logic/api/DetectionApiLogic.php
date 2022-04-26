@@ -256,10 +256,11 @@ class DetectionApiLogic {
                     shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
                     $gemap_path = $data_dir . "/" . $detection . "/GeMap.bmp";
                     $dirmap_path = $data_dir . "/" . $detection . "/DirMap.bmp";
-                    $preview_base64 = self::encodeCapture($png_path);
-                    $gemap_base64 = self::encodeCapture($gemap_path, "bmp");
-                    $dirmap_base64 = self::encodeCapture($dirmap_path, "bmp");
-                    //$video = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
+                    $preview_base64 = self::encodeDetection($png_path);
+                    $gemap_base64 = self::encodeDetection($gemap_path, "bmp");
+                    $dirmap_base64 = self::encodeDetection($dirmap_path, "bmp");
+                    shell_exec("rm " . $tmp_png_dir . "*.png");
+                    //$video_base64 = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
                 }
                 $reply[] = array($detection, $day . ":" . $n_day_detections, $hour, 
                     $preview_base64,
@@ -269,7 +270,6 @@ class DetectionApiLogic {
                 $i++;
             }
         }
-        shell_exec("rm " . $tmp_png_dir . "*.png");
         return $reply;
     }
     
@@ -278,14 +278,14 @@ class DetectionApiLogic {
         
     }*/
 
-    public static function encodeCapture($path, $type = "png") {
+    public static function encodeDetection($path, $type = "png") {
         $data = file_get_contents($path);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         return $base64;
     }
 
     public static function makeVideo($detection_dir, $video_name) {
-        $video_dir = _WEBROOTDIR_ . "detection-video/";
+        //$video_dir = _WEBROOTDIR_ . "detection-video/";
         $media_dir = _WEBROOTDIR_ . "tmp-media/";
         $frames = array();
         $positions = $detection_dir . "positions.txt";
@@ -299,7 +299,7 @@ class DetectionApiLogic {
         }
         foreach ($frames as $frame) {
             $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
-            shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
+            shell_exec("fitspng -o " . $media_dir . $frame . ".png " . $frame_path);
         }
         /*
           $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_DESCENDING);
@@ -308,9 +308,11 @@ class DetectionApiLogic {
           shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
           } */
 
-        shell_exec("cat " . $video_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
-        shell_exec("rm " . $video_dir . "*.png");
-        return $video_name . ".mkv";
+        shell_exec("cat " . $media_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
+        shell_exec("rm " . $media_dir . "*.png");
+        $base64_video = self::encodeDetection($media_dir . $video_name . ".mkv", "mkv");
+        shell_exec("rm " . $media_dir . "*.mkv");
+        return $base64_video;
     }
 
     public static function getDetectionsDays($start, $end) {

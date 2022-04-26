@@ -3,7 +3,7 @@
 
         <div class="pull-right">
             Copyright &copy; <?php echo date("Y") ?> &ndash; <?php echo (date("Y") + 1) ?>
-            N3 S.r.l. All rights reserved 
+            <a href="https://n-3.it/" style="color:black">N3 S.r.l.</a> All rights reserved 
         </div>
         <div class="clearfix"></div>
     </footer>

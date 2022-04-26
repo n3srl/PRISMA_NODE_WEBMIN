@@ -242,12 +242,12 @@ class StackApiLogic {
                     $png_path = $tmp_png_dir . $png_name;
                     shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
                     $base64 = self::encodeStack($png_path);
+                    shell_exec("rm " . $tmp_png_dir . "*.png");
                 }
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $date_dir . "_" . $file);
                 $i++;
             }
         }
-        shell_exec("rm " . $tmp_png_dir . "*.png");
         return $reply;
     }
 
