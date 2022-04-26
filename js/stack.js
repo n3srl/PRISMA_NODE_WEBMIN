@@ -76,17 +76,6 @@ $("#enable-stack-preview").on('change', function (event) {
     $('#StackList').dataTable().fnDraw();
 });
 
-function getFileDate(file) {
-    var info = file.split("_");
-    return info[1].substring(0, 4) + "-" + info[1].substring(4, 6) + "-" + info[1].substring(6, 8);
-
-}
-
-function getFileHour(file) {
-    var info = file.split("_");
-    return info[1].substring(9, 11) + ":" + info[1].substring(11, 13) + ":" + info[1].substring(13);
-}
-
 $(document).ready(function () {
     table1 = $('#StackDayList').DataTable({
         "oLanguage": {
@@ -161,6 +150,8 @@ $(document).ready(function () {
         $('#last-stack-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
         $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
+    
+    $("#enable-stack-preview").attr("checked", false);
 });
 
 function initStacksDatatable(folder, table1) {
@@ -194,8 +185,6 @@ function initStacksDatatable(folder, table1) {
             {
                 "targets": [-2],
                 render: function (data, type, row, meta) {
-                    var info = row[1].split(":");
-                    //var arg = [data, info[0], row[2]];
                     var disabled = "";
                     if (!isPreviewEnabled) {
                         disabled = "disabled";
@@ -246,8 +235,7 @@ function initStacksDatatable(folder, table1) {
                     r.style.display = collapsed ? 'none' : '';
                 });
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="3">' + info[0] + '</td>')
-                        .append('<td><center>' + info[1] + '</center></td>')
+                        .append('<td colspan="4">' + info[0] + ' ('+ info[1] +' stack)' + '</td>')
                         .attr('data-name', group)
                         .toggleClass('collapsed', collapsed);
             },

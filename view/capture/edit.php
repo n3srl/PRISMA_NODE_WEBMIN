@@ -107,7 +107,7 @@
                             <table id='CaptureList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>
                                     <tr>
-                                        <th><?php echo (_('Calibrazioni')) ?></th>
+                                        <th><?php echo (_('Nome Calibrazione')) ?></th>
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('Ora')) ?></th>
                                         <th><?php echo (_('Anteprima')) ?></th>

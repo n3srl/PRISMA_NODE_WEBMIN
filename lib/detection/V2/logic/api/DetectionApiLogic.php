@@ -209,17 +209,11 @@ class DetectionApiLogic {
     }
 
     // Scan filesystem to get events folder
-    public static function getDetectionsFiles($start, $end, $date_dir, $clean = true) {
+    public static function getDetectionsFiles($start, $end, $date_dir, $enablePreview = false) {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/events";
         $reply = array();
-        $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
-        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
 
-        if ($clean) {
-            shell_exec("rm " . $tmp_png_dir . "*.png");
-            shell_exec("rm " . $tmp_png_dir . "*.mkv");
-        }
         if (!is_dir($data_dir)) {
             return $reply;
         }
@@ -241,29 +235,53 @@ class DetectionApiLogic {
             }
             $name = explode("_", $detection);
             if (isset($name[1])) {
+                $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
+                $logo_path = _WEBROOTDIR_ . "img/watermark.png";
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
-                // /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR/*.fit
-                $fits = glob($data_dir . "/" . $detection . "/*.fit");
-                $fit_path = $fits[0];
-                $exp_fit = explode("/", $fits[0]);
-                $png_name_tmp = str_replace(".fit", "-tmp.png", $exp_fit[6]);
-                $png_path_tmp = $tmp_png_dir . $png_name_tmp;
-                shell_exec("fitspng -o $png_path_tmp $fit_path");
-                $png_name = str_replace(".fit", ".png", $exp_fit[6]);
-                $png_path = $tmp_png_dir . $png_name;
-                shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
-                //$video = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
-                $reply[] = array($detection, $day . ":" . $n_day_detections, $hour, $png_name,
-                    $date_dir . "_" . $detection, // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
-                    $date_dir . "_" . $detection,
-                    $date_dir . "_" . $detection);
+                $preview_base64 = "";
+                $gemap_base64 = "";
+                $dirmap_base64 = "";
+                if ($enablePreview) {
+                    // /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR/*.fit
+                    $fits = glob($data_dir . "/" . $detection . "/*.fit");
+                    $fit_path = $fits[0];
+                    $exp_fit = explode("/", $fits[0]);
+                    $png_name_tmp = str_replace(".fit", "-tmp.png", $exp_fit[6]);
+                    $png_path_tmp = $tmp_png_dir . $png_name_tmp;
+                    shell_exec("fitspng -o $png_path_tmp $fit_path");
+                    $png_name = str_replace(".fit", ".png", $exp_fit[6]);
+                    $png_path = $tmp_png_dir . $png_name;
+                    shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
+                    $gemap_path = $data_dir . "/" . $detection . "/GeMap.bmp";
+                    $dirmap_path = $data_dir . "/" . $detection . "/DirMap.bmp";
+                    $preview_base64 = self::encodeCapture($png_path);
+                    $gemap_base64 = self::encodeCapture($gemap_path, "bmp");
+                    $dirmap_base64 = self::encodeCapture($dirmap_path, "bmp");
+                    //$video = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
+                }
+                $reply[] = array($detection, $day . ":" . $n_day_detections, $hour, 
+                    $preview_base64,
+                    $dirmap_base64, 
+                    $gemap_base64,
+                    $date_dir . "_" . $detection); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
                 $i++;
             }
         }
-
+        shell_exec("rm " . $tmp_png_dir . "*.png");
         return $reply;
+    }
+    
+    /*
+    public static function processDetection($data_dir){
+        
+    }*/
+
+    public static function encodeCapture($path, $type = "png") {
+        $data = file_get_contents($path);
+        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        return $base64;
     }
 
     public static function makeVideo($detection_dir, $video_name) {
@@ -327,7 +345,7 @@ class DetectionApiLogic {
 
         return $reply;
     }
-    
+
     // Count number of files in 2-level directories
     public static function getAllDaysFilesCount($path) {
 
@@ -340,7 +358,7 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-    
+
     // Count number of file in a directory
     public static function getDirectoryFilesCount($path) {
 
@@ -351,7 +369,7 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-    
+
     // Get list of all detection in a day
     public static function GetFilesListDatatable($request) {
         $reply = null;
@@ -361,9 +379,10 @@ class DetectionApiLogic {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
+            $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
             $directory = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/events/*";
             $iTotal = self::getDirectoryFilesCount($directory);
-            $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir);
+            $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
             $test = $reply[0];
             if (empty($test)) {
@@ -376,7 +395,7 @@ class DetectionApiLogic {
             }
         }
 
-        /* Ordering */
+        /* Ordering 
         if (isset($_GET['iSortCol_0'])) {
             if ($_GET['bSortable_' . intval($_GET['iSortCol_0'])] == 'true') {
                 $i = $_GET['iSortCol_0'];
@@ -387,7 +406,7 @@ class DetectionApiLogic {
                     array_multisort($sort, SORT_DESC, $reply);
                 }
             }
-        }
+        }*/
 
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
@@ -398,7 +417,7 @@ class DetectionApiLogic {
         );
         return $output;
     }
-    
+
     // Get list of all days detections folders
     public static function GetDaysListDatatable($request) {
         $reply = null;
@@ -422,7 +441,7 @@ class DetectionApiLogic {
             }
         }
 
-        /* Ordering */
+        /* Ordering 
         if (isset($_GET['iSortCol_0'])) {
             if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
                 $i = $_GET['iSortCol_0'];
@@ -433,7 +452,7 @@ class DetectionApiLogic {
                     array_multisort($sort, SORT_DESC, $reply);
                 }
             }
-        }
+        }*/
 
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
@@ -444,7 +463,7 @@ class DetectionApiLogic {
         );
         return $output;
     }
-    
+/*
     // Return path to detection png
     public static function GetPng($detection) {
         $path = "";
@@ -454,48 +473,40 @@ class DetectionApiLogic {
             $path = _WEBROOTDIR_ . "tmp-media/" . $detection;
         }
         return $path;
-    }
-    
-    // Return path to last detection png
+    }*/
+
+    // Return path to last detection info
     public static function GetLastDetection() {
-        $days = self::getDetectionsDays(0, 0, false);
-        $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
-        $lastfile = _WEBROOTDIR_ . "tmp-media/" . $files[0][3];
-        return $lastfile;
-    }
-    
-    // Return last detection name
-    public static function GetLastDetectionInfo() {
         try {
             $Person = CoreLogic::VerifyPerson();
-            $days = self::getDetectionsDays(0, 0, false);
-            $files = self::getDetectionsFiles(0, 0, $days[0][2], false);
-            $lastfile = $files[0][3];
+            $days = self::getDetectionsDays(0, 0);
+            $files = self::getDetectionsFiles(0, 0, $days[0][2], true);
+            $lastdetection = $files[0];
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
-        return CoreLogic::GenerateResponse(true, $lastfile);
+        return CoreLogic::GenerateResponse(true, $lastdetection);
     }
-    
+    /*
     // Return detection geMap
     public static function GetGeMap($detection) {
         $base_path = self::getDetectionBasePath($detection);
         $path = $base_path . "/GeMap.bmp";
         return $path;
     }
-    
+
     // Return detection dirMap
     public static function GetDirMap($detection) {
         $base_path = self::getDetectionBasePath($detection);
         $path = $base_path . "/DirMap.bmp";
         return $path;
-    }
-    
+    }*/
+
     // Return detection zip 
     public static function GetZip($zip) {
         return _FREETURE_DATA_ . $zip;
     }
-    
+
     // Create zip of detection
     public static function CreateZip($detection) {
         try {
@@ -534,7 +545,7 @@ class DetectionApiLogic {
         $base_path = $data_dir . $day . "/events/" . $detection_name;
         return $base_path;
     }
-    
+
     // Return number of detection of last day
     public static function GetLastDayDetectionNumber() {
         try {
@@ -549,7 +560,7 @@ class DetectionApiLogic {
         }
         return CoreLogic::GenerateResponse(true, $n_files);
     }
-    
+
     // Return number of detection of last month
     public static function GetLastMonthDetectionNumber() {
         try {
@@ -560,7 +571,7 @@ class DetectionApiLogic {
         }
         return CoreLogic::GenerateResponse(true, $n_files);
     }
-    
+
     public static function getLastMonthTotal() {
         $png = self::GetLastDetectionInfo();
         $path = _FREETURE_DATA_ . self::getStationPrefix() . "/";
@@ -582,7 +593,7 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-    
+
     // Return number of detection of all time
     public static function GetAllDetectionNumber() {
         try {

@@ -107,7 +107,7 @@
                             <table id='StackList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>
                                     <tr>
-                                        <th><?php echo (_('Stack')) ?></th>
+                                        <th><?php echo (_('Nome Stack')) ?></th>
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('Ora')) ?></th>
                                         <th><?php echo (_('Anteprima')) ?></th>

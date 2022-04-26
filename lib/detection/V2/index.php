@@ -217,7 +217,7 @@ $app->GET('/detection/foreignkey/{companyColumn}', function (Application $app, R
  *
  * GET GEMAP
  *
- * */
+ * 
 $app->GET('/detection/gemap/{detection}', function (Application $app, Request $request, $detection) {
 
     $result = DetectionApiLogic::GetGeMap($detection);
@@ -225,13 +225,13 @@ $app->GET('/detection/gemap/{detection}', function (Application $app, Request $r
     $resp->headers->set('Content-Type', 'image/bmp');
     $resp->setStatusCode(200);
     return $resp;
-});
+});*/
 
 /**
  *
  * GET DIRMAP
  *
- * */
+ * 
 $app->GET('/detection/dirmap/{detection}', function (Application $app, Request $request, $detection) {
 
     $result = DetectionApiLogic::GetDirMap($detection);
@@ -239,21 +239,7 @@ $app->GET('/detection/dirmap/{detection}', function (Application $app, Request $
     $resp->headers->set('Content-Type', 'image/bmp');
     $resp->setStatusCode(200);
     return $resp;
-});
-
-/**
- *
- * GET JPG
- *
- * */
-$app->GET('/detection/preview/{detection}', function (Application $app, Request $request, $detection) {
-
-    $result = DetectionApiLogic::GetPng($detection);
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/png');
-    $resp->setStatusCode(200);
-    return $resp;
-});
+});*/
 
 /**
  *
@@ -283,12 +269,12 @@ $app->GET('/detection/download/{detection}', function (Application $app, Request
 
 /**
  *
- * GET LAST DETECTION INFO
+ * GET PREVIEW
  *
  * */
-$app->GET('/detection/info/lastdetection', function (Application $app, Request $request) {
-
-    $result = DetectionApiLogic::GetLastDetectionInfo();
+$app->GET('/detection/preview/lastdetection', function (Application $app, Request $request) {
+    
+    $result = DetectionApiLogic::GetLastDetection();
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);

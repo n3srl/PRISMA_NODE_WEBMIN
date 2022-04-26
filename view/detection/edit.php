@@ -31,8 +31,21 @@
                 <div id='list' class='x_panel'>
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
-                            <div class='col-md-6 no-padding-l'>
+                            <div class='col-md-4 col-sm-4 col-xs-12 no-padding'>
                                 <h2><?= _('Elenco') ?></h2>
+                            </div>
+                            <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
+                                <div class='pull-right'>
+                                    <div class='col-md-8'>
+                                        <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                    </div>
+                                    <div class='col-md-4'>
+                                        <label class='switch pull-left'>
+                                            <input type='checkbox' id='enable-detection-preview'>
+                                            <span class='slider round'></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -97,7 +110,7 @@
                             <table id='DetectionList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>
                                     <tr>
-                                        <th><?php echo (_('Nome')) ?></th>
+                                        <th><?php echo (_('Nome Detection')) ?></th>
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('Ora')) ?></th>
                                         <th><center><?php echo (_('Anteprima')) ?></center></th>
@@ -130,7 +143,8 @@
                             <!--<video>
                                 <source src="/lib/detection/V2/detection/preview/lastdetection" type="video/webm">
                             </video>-->
-                            <img class="img-responsive" src="/lib/detection/V2/detection/preview/lastdetection"/>
+                            <div class='col-md-12 col-sm-12 col-xs-12' id='last-detection-preview'>
+                            </div>
                         </div>
                     </div> 
                 </div>
