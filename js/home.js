@@ -9,44 +9,38 @@ var lastEditId = '';
 var indexToShow = null;
 var latitude = 0;
 var longitude = 0;
+var isPreviewEnabled = false;
 
 function setIndexToShow() {
     indexToShow = inafdetection.id;
 }
 
-function preview(value) {
+function preview(row) {
+    var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("Detection del " + getFileDate(value) + " (" + getFileHour(value) + ")");
-    var body = '<img class="img-responsive" src="/lib/detection/V2/detection/preview/' + value + '"/>';
+    $('#detection-preview-modal-label').html("Detection del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
-function showMask(value) {
-    $('#mask-preview-modal').modal('show');
-}
+$("#enable-detection-preview").on('change', function (event) {
+    isPreviewEnabled = $("#enable-detection-preview").is(":checked");
+    $('#DetectionList').dataTable().fnDraw();
+});
 
-function getFileDate(file) {
-    var info = file.split("_");
-    return info[1].substring(0, 4) + "-" + info[1].substring(4, 6) + "-" + info[1].substring(6, 8);
-
-}
-
-function getFileHour(file) {
-    var info = file.split("_");
-    return info[1].substring(9, 11) + ":" + info[1].substring(11, 13) + ":" + info[1].substring(13);
-}
-
-function geMap(value) {
+function dirMap(row) {
+    var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("GeMap " + value);
-    var body = '<img class="img-responsive" src="/lib/detection/V2/detection/gemap/' + value + '"/>';
+    $('#detection-preview-modal-label').html("DirMap del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[4] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
-function dirMap(value) {
+function geMap(row) {
+    var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("DirMap " + value);
-    var body = '<img class="img-responsive" src="/lib/detection/V2/detection/dirmap/' + value + '"/>';
+    $('#detection-preview-modal-label').html("GeMap del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[5] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
@@ -61,6 +55,14 @@ function download(value) {
         }
     });
 }
+
+function showMask() {
+
+}
+
+$("#btn-show-mask").click(function () {
+    $('#mask-preview-modal').modal('show');
+});
 
 function initMap() {
     const station = {lat: latitude, lng: longitude};
@@ -83,7 +85,7 @@ function loadStationInfoValues() {
                 k = "STATION_NAME";
                 break;
             case "Station Code":
-                k = "STATION_CODE";
+                k = "ACQ_REGULAR_PRFX";
                 break;
             case "Observer":
                 k = "OBSERVER";
@@ -140,24 +142,36 @@ function initDetectionsDatatable(folder) {
             {
                 "targets": [-4],
                 render: function (data, type, row, meta) {
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'preview(this.value)'><i class='fa fa-file'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
                             "</center>";
                 }
             },
             {
                 "targets": [-3],
                 render: function (data, type, row, meta) {
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'dirMap(this.value)'><i class='fa fa-map'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'dirMap(" + meta.row + ")'><i class='fa fa-map'></i></button>" +
                             "</center>";
                 }
             },
             {
                 "targets": [-2],
                 render: function (data, type, row, meta) {
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'geMap(this.value)'><i class='fa fa-globe'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-globe'></i></button>" +
                             "</center>";
                 }
             },
@@ -165,7 +179,7 @@ function initDetectionsDatatable(folder) {
                 "targets": [-1],
                 render: function (data, type, row, meta) {
                     return "<center>" +
-                            "<button class='btn btn-success' value='" + data + "' onclick= 'download(this.value)'><i class='fa fa-download'></i></button>" +
+                            "<button class='btn btn-success' onclick= 'download(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
                             "</center>";
                 }
             },
@@ -182,6 +196,7 @@ function initDetectionsDatatable(folder) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
             aoData.push({"name": "dayDir", "value": folder});
+            aoData.push({"name": "enablePreview", "value": isPreviewEnabled});
             if ($("." + $.md5('id')).is(":visible"))
                 aoData.push({"name": "id", "value": $('#F_id').val()});
             if ($("." + $.md5('name')).is(":visible"))
@@ -195,8 +210,7 @@ function initDetectionsDatatable(folder) {
             startRender: function (rows, group) {
                 var info = group.split(":");
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="5">' + info[0] + '</td>')
-                        .append('<td><center>' + info[1] + '</center></td>')
+                        .append('<td colspan="6">' + info[0] + ' (' + info[1] + ' detection)' + '</td>')
             },
             endRender: null,
             dataSrc: groupColumn
@@ -264,6 +278,24 @@ $(document).ready(function () {
                 });
             });
         });
+    });
+
+    $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
+        var data = JSON.parse(json).data;
+        var info = data[1].split(":");
+        $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
+        $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+    });
+
+    $("#enable-detection-preview").attr("checked", false);
+
+    $.get("/lib/ft/V2/freeturefinal/preview/mask", function (json) {
+        var data = JSON.parse(json).data;
+        if (data) {
+            $('#mask-preview-modal-body').html("<img class='img-responsive' src='" + data + "'/>");
+        } else {
+            $('#btn-show-mask').hide();
+        }
     });
 
     loadStationInfoValues();

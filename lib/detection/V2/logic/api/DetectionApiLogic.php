@@ -277,7 +277,8 @@ class DetectionApiLogic {
     public static function processDetection($data_dir){
         
     }*/
-
+    
+    // Convert media to base64 (default png)
     public static function encodeDetection($path, $type = "png") {
         $data = file_get_contents($path);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
@@ -465,17 +466,6 @@ class DetectionApiLogic {
         );
         return $output;
     }
-/*
-    // Return path to detection png
-    public static function GetPng($detection) {
-        $path = "";
-        if ($detection === "lastdetection") {
-            $path = self::GetLastDetection();
-        } else {
-            $path = _WEBROOTDIR_ . "tmp-media/" . $detection;
-        }
-        return $path;
-    }*/
 
     // Return path to last detection info
     public static function GetLastDetection() {
@@ -489,20 +479,6 @@ class DetectionApiLogic {
         }
         return CoreLogic::GenerateResponse(true, $lastdetection);
     }
-    /*
-    // Return detection geMap
-    public static function GetGeMap($detection) {
-        $base_path = self::getDetectionBasePath($detection);
-        $path = $base_path . "/GeMap.bmp";
-        return $path;
-    }
-
-    // Return detection dirMap
-    public static function GetDirMap($detection) {
-        $base_path = self::getDetectionBasePath($detection);
-        $path = $base_path . "/DirMap.bmp";
-        return $path;
-    }*/
 
     // Return detection zip 
     public static function GetZip($zip) {
@@ -552,7 +528,7 @@ class DetectionApiLogic {
     public static function GetLastDayDetectionNumber() {
         try {
             $Person = CoreLogic::VerifyPerson();
-            $png = self::GetLastDetectionInfo();
+            //$png = self::GetLastDetectionInfo();
             $now = new DateTime();
             $date_dir = self::getStationPrefix() . "_" . $now->format('Ymd');
             $path = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/events/*";
@@ -575,7 +551,7 @@ class DetectionApiLogic {
     }
 
     public static function getLastMonthTotal() {
-        $png = self::GetLastDetectionInfo();
+        //$png = self::GetLastDetectionInfo();
         $path = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $now = new DateTime();
         $month1 = $now->format('m');

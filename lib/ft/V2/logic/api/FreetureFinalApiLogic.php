@@ -1,220 +1,225 @@
 <?php
+
 /**
-*
-* @author: N3 S.r.l.
-*/
+ *
+ * @author: N3 S.r.l.
+ */
+class FreetureFinalApiLogic {
 
-class FreetureFinalApiLogic
-{
-        public static function Save($request) {
-		try {
+    public static function Save($request) {
+        try {
 
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
-                            
-			$ob = new FreetureFinal();
-			$tmp = $request->get("data");
-                        
-			$ob->id  = $tmp["id"] ;
-                        $ob->key = $tmp["key"] ;
-                        $ob->value = $tmp["value"] ;
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$res = self::updateValue($ob);
-                        self::restartFreeture();
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
-        
-        public static function EditConfiguration($request) {
-		try {
+            $ob = new FreetureFinal();
+            $tmp = $request->get("data");
 
-			$Person = CoreLogic::VerifyPerson();
-			//CoreLogic::CheckCSRF($request->get("token"));
+            $ob->id = $tmp["id"];
+            $ob->key = $tmp["key"];
+            $ob->value = $tmp["value"];
 
-			//$tmp = $request->get("data");
+            $res = self::updateValue($ob);
+            self::restartFreeture();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$res = self::updateConfigurationFile($request);
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res);
-	}
-        
-        public static function EditMask($request) {
-		try {
+    public static function EditConfiguration($request) {
+        try {
 
-			$Person = CoreLogic::VerifyPerson();
-			//CoreLogic::CheckCSRF($request->get("token"));
+            $Person = CoreLogic::VerifyPerson();
+            //CoreLogic::CheckCSRF($request->get("token"));
+            //$tmp = $request->get("data");
 
-			//$tmp = $request->get("data");
+            $res = self::updateConfigurationFile($request);
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res);
+    }
 
-			$res = self::updateMaskFile($request);
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res);
-	}
+    public static function EditMask($request) {
+        try {
 
-	public static function Update($request){
+            $Person = CoreLogic::VerifyPerson();
+            //CoreLogic::CheckCSRF($request->get("token"));
+            //$tmp = $request->get("data");
 
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $res = self::updateMaskFile($request);
+            If ($res) {
+                $ob = new FreetureFinal();
+                $ob->id = self::getId("ACQ_MASK_ENABLED");
+                $ob->key = "ACQ_MASK_ENABLED";
+                $ob->value = "true";
+                self::updateValue($ob);
+            }
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res);
+    }
 
-			$ob = new FreetureFinal();
-			$tmp = $request->get("data");
+    public static function Update($request) {
 
-			$ob->id = $tmp["id"] ;
-                        $ob->key = $tmp["key"] ;
-                        $ob->value = $tmp["value"] ;
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$res = self::updateValue($ob);
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob = new FreetureFinal();
+            $tmp = $request->get("data");
 
-	public static function Erase($request) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $ob->id = $tmp["id"];
+            $ob->key = $tmp["key"];
+            $ob->value = $tmp["value"];
 
-			$ob = new FreetureFinal();
-			$tmp = $request->get("data");
+            $res = self::updateValue($ob);
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$ob->id = $tmp["id"] ;
+    public static function Erase($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$ob = FreetureFinalLogic::Get($ob->id);
+            $ob = new FreetureFinal();
+            $tmp = $request->get("data");
 
-			CoreLogic::beginTransaction();
-			$res = FreetureFinalLogic::Erase($ob);
-			CoreLogic::commitTransaction();
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob->id = $tmp["id"];
 
-	public static function Delete($request) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $ob = FreetureFinalLogic::Get($ob->id);
 
-			$ob = new FreetureFinal();
-			$tmp = $request->get("data");
+            CoreLogic::beginTransaction();
+            $res = FreetureFinalLogic::Erase($ob);
+            CoreLogic::commitTransaction();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$ob->id = $tmp["id"] ;
+    public static function Delete($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$ob = FreetureFinalLogic::Get($ob->id);
+            $ob = new FreetureFinal();
+            $tmp = $request->get("data");
 
-			CoreLogic::beginTransaction();
-			$res = FreetureFinalLogic::Delete($ob);
-			CoreLogic::commitTransaction();
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob->id = $tmp["id"];
 
-	public static function Get($id) {
-		try {
-			$res = false;
-			$Person = CoreLogic::VerifyPerson();
-			$ob = self::getCfg($id);
-			$res = true;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
-        
-        public static function GetIdByKey($key) {
-		try {
-			$res = false;
-			$Person = CoreLogic::VerifyPerson();
-			$ob = self::getId($key);
-			$res = true;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob = FreetureFinalLogic::Get($ob->id);
 
-	public static function GetList() {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$ob = FreetureFinalLogic::GetList();
-			$res = true;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            CoreLogic::beginTransaction();
+            $res = FreetureFinalLogic::Delete($ob);
+            CoreLogic::commitTransaction();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-	public static function GetListFilterAjax($columnName) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$results = array();
-			$data = new stdClass();
-		$codes = FreetureFinalFactory::GetListFilter($columnName,$_GET['term']);
-			foreach ($codes as $code){ 
-				$obj = new stdClass(); 
-				$obj->id = $code->{$columnName}; 
-				$obj->text = $code->{$columnName}; 
-				$results[] = $obj; 
-			}
-			$data->results = $results;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-			return $data;
-	}
+    public static function Get($id) {
+        try {
+            $res = false;
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getCfg($id);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-	public static function GetListFKAjax($columnName) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$results = array();
-			$data = new stdClass();
-			switch ($columnName) {
-				/* ** ESEMPIO **
-				case "created_by":
-					$foreignKey = end(FreetureFinalFactory::GetForeignKeyParams($columnName));
-					$codes = FreetureFinalFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,array("id","CONCAT(last_name, ' ', first_name) AS full_name"),$_GET['term']);
-					$data = new stdClass();
-					foreach ($codes as $code){ 
-						$obj = new stdClass(); 
-						$obj->id = $code->id; 
-						$obj->text = $code->full_name; 
-						$results[] = $obj; 
-					}
-				break;
-				*/
-				default:
-					$foreignKey = end(FreetureFinalFactory::GetForeignKeyParams($columnName));
-					$codes = FreetureFinalFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,$foreignKey->REFERENCED_COLUMN_NAME,$_GET['term']);
-					$data = new stdClass();
-					foreach ($codes as $code){ 
-						$obj = new stdClass(); 
-						$obj->id = $code->{$foreignKey->REFERENCED_COLUMN_NAME}; 
-						$obj->text = $code->{$foreignKey->REFERENCED_COLUMN_NAME}; 
-						$results[] = $obj; 
-					}
-				}
-			$data->results = $results;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-			return $data;
-	}
+    public static function GetIdByKey($key) {
+        try {
+            $res = false;
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getId($key);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function GetList() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = FreetureFinalLogic::GetList();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function GetListFilterAjax($columnName) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $results = array();
+            $data = new stdClass();
+            $codes = FreetureFinalFactory::GetListFilter($columnName, $_GET['term']);
+            foreach ($codes as $code) {
+                $obj = new stdClass();
+                $obj->id = $code->{$columnName};
+                $obj->text = $code->{$columnName};
+                $results[] = $obj;
+            }
+            $data->results = $results;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return $data;
+    }
+
+    public static function GetListFKAjax($columnName) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $results = array();
+            $data = new stdClass();
+            switch ($columnName) {
+                /*                 * * ESEMPIO **
+                  case "created_by":
+                  $foreignKey = end(FreetureFinalFactory::GetForeignKeyParams($columnName));
+                  $codes = FreetureFinalFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,array("id","CONCAT(last_name, ' ', first_name) AS full_name"),$_GET['term']);
+                  $data = new stdClass();
+                  foreach ($codes as $code){
+                  $obj = new stdClass();
+                  $obj->id = $code->id;
+                  $obj->text = $code->full_name;
+                  $results[] = $obj;
+                  }
+                  break;
+                 */
+                default:
+                    $foreignKey = end(FreetureFinalFactory::GetForeignKeyParams($columnName));
+                    $codes = FreetureFinalFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME, $foreignKey->REFERENCED_COLUMN_NAME, $_GET['term']);
+                    $data = new stdClass();
+                    foreach ($codes as $code) {
+                        $obj = new stdClass();
+                        $obj->id = $code->{$foreignKey->REFERENCED_COLUMN_NAME};
+                        $obj->text = $code->{$foreignKey->REFERENCED_COLUMN_NAME};
+                        $results[] = $obj;
+                    }
+            }
+            $data->results = $results;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return $data;
+    }
 
     public static function GetListDatatable() {
         $reply = self::parseCfg();
@@ -227,7 +232,7 @@ class FreetureFinalApiLogic
         );
         return $output;
     }
-        
+
     //Clean string 
     public static function trim(String $raw) {
         return str_replace(array(" ", "\n", "\r"), "", $raw);
@@ -249,20 +254,20 @@ class FreetureFinalApiLogic
     public static function isVisible(String $raw) {
         return strpos($raw, "#nv") === false;
     }
-    
+
     //Remove the comment character "#" at the beginning
     public static function removeComment(String $raw) {
-        for($i=0; $i<strlen($raw); $i++){
-            if($raw[$i]!==" " && $raw[$i]!=="#"){
-                return substr($raw,$i);
+        for ($i = 0; $i < strlen($raw); $i++) {
+            if ($raw[$i] !== " " && $raw[$i] !== "#") {
+                return substr($raw, $i);
             }
         }
         return $raw;
     }
-    
+
     //Add the comment character "#" at the beginning
     public static function addComment(String $raw) {
-        return "# ".$raw;
+        return "# " . $raw;
     }
 
     //Parse line by line the config file and get the list of params
@@ -274,8 +279,7 @@ class FreetureFinalApiLogic
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-            
-         
+
             //Parse config file line by line
             foreach ($contents as $line) {
 
@@ -294,20 +298,20 @@ class FreetureFinalApiLogic
                     $i++;
                 } else {
                     if ($line[0] === "#") { //Comments contains the description
-                        if(strlen($line) >= 2 && ($line[1] === "#" || $line[1] === "-")){
+                        if (strlen($line) >= 2 && ($line[1] === "#" || $line[1] === "-")) {
                             $descr = "";
-                        }else{
+                        } else {
                             $descr .= self::removeComment($line);
                         }
                     }
                 }
             }
         }
-        
+
         return $list;
     }
-    
-    public static function formatDescription($raw){
+
+    public static function formatDescription($raw) {
         $raw = str_replace("\n", " ", $raw);
         $raw = str_replace("<", "&lt;", $raw);
         $raw = str_replace(">", "&gt;", $raw);
@@ -319,7 +323,7 @@ class FreetureFinalApiLogic
         $freetureConf = _FREETURE_;
         $i = 0;
         $descr = "no description";
-        
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
 
@@ -351,7 +355,8 @@ class FreetureFinalApiLogic
         }
         return false;
     }
-    
+
+    // Find freeture element id from given key
     public static function getId($key) {
         $freetureConf = _FREETURE_;
         $i = 0;
@@ -364,7 +369,7 @@ class FreetureFinalApiLogic
                         return $i;
                     }
                     $i++;
-                } 
+                }
             }
         }
         return false;
@@ -411,9 +416,8 @@ class FreetureFinalApiLogic
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     //Update the requested param
                     if ($i === $ob->id) {
-                        $reply .= $ob->key." = ".$ob->value."\n";
-                        
-                    }else{
+                        $reply .= $ob->key . " = " . $ob->value . "\n";
+                    } else {
                         $reply .= $line;
                     }
 
@@ -430,32 +434,52 @@ class FreetureFinalApiLogic
         }
         return true;
     }
-    
-    public static function updateConfigurationFile($ob){
+
+    public static function updateConfigurationFile($ob) {
         $freetureConf = _FREETURE_;
-        if(!empty($ob)){
+        if (!empty($ob)) {
             $result = move_uploaded_file($ob, $freetureConf);
             self::restartFreeture();
             return $result;
         }
         return false;
     }
-    
+
     // Return mask file path
-    public static function GetMaskFile(){
-        return self::getMaskPath();
+    public static function GetMaskFile() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $enabled = self::isMaskEnabled() === 'true' ? true : false;
+            $base64 = null;
+            $res = true;
+            if ($enabled) {
+                $base64 = self::encodeMask(self::getMaskPath());
+            }
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $base64);
     }
-   
-    public static function updateMaskFile($ob){
+
+    // Convert media to base64 (default png)
+    public static function encodeMask($path) {
+        $data = file_get_contents($path);
+        $base64 = 'data:image/bmp;base64,' . base64_encode($data);
+        return $base64;
+    }
+
+    // Update mask file 
+    public static function updateMaskFile($ob) {
         $freetureConf = self::getMaskPath();
-        if(!empty($ob)){
+        if (!empty($ob)) {
             $result = move_uploaded_file($ob, $freetureConf);
             self::restartFreeture();
             return $result;
-        }       
+        }
         return false;
     }
-    
+
     public static function getMaskPath() {
         $freetureConf = _FREETURE_;
         $path = "";
@@ -465,7 +489,7 @@ class FreetureFinalApiLogic
             foreach ($contents as $line) {
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-                        if (self::getKey($line) === "ACQ_MASK_PATH") {
+                    if (self::getKey($line) === "ACQ_MASK_PATH") {
                         $path = self::getValue($line);
                     }
                 }
@@ -473,10 +497,28 @@ class FreetureFinalApiLogic
         }
         return $path;
     }
-    
+
+    public static function isMaskEnabled() {
+        $freetureConf = _FREETURE_;
+        $isMaskEnabled = "";
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+            //Parse config file line by line
+            foreach ($contents as $line) {
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === "ACQ_MASK_ENABLED") {
+                        $isMaskEnabled = self::getValue($line);
+                    }
+                }
+            }
+        }
+        return $isMaskEnabled;
+    }
+
     // Restart freeture container in ssh
-    public static function restartFreeture(){
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+    public static function restartFreeture() {
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
@@ -488,26 +530,25 @@ class FreetureFinalApiLogic
         }
         return false;
     }
-       
-    //Generates passwords
+
+    // Generates passwords
     public static function passwdGen() {
         $file = "";
         $name = "";
         $passwd = "";
         $myfile = fopen($file, "w");
-        
+
         $reply = new Person();
         $reply->id = "0";
         $reply->username = $name;
         $reply->password = password_hash($passwd, PASSWORD_BCRYPT);
         $reply->timezone = "0";
         $reply->erased = "0";
-        
-        $string = $reply->id." ".$reply->username." ".$reply->password." ".$reply->timezone." ".$reply->erased;
-        
+
+        $string = $reply->id . " " . $reply->username . " " . $reply->password . " " . $reply->timezone . " " . $reply->erased;
+
         fwrite($myfile, $string);
         fclose($myfile);
     }
 
 }
-

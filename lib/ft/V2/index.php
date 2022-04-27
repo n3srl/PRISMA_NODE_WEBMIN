@@ -247,10 +247,13 @@ $app->GET('/freeturefinal/foreignkey/{companyColumn}', function (Application $ap
 $app->GET('/freeturefinal/preview/mask', function (Application $app, Request $request) {
 
     $result = FreetureFinalApiLogic::GetMaskFile();
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/bmp');
-    $resp->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT);
-    $resp->setStatusCode(200);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
     return $resp;
 });
 

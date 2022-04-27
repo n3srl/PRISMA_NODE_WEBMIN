@@ -24,7 +24,7 @@
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
                         <a href='/lib/ft/V2/freeturefinal/preview/mask'>
-                            <button type="button" class="btn btn-success pull-right" >Download</button>
+                            <button type="button" class="btn btn-success pull-right">Download</button>
                         </a>
                     </div>
                     <div class="col-md-1 col-sm-1 col-xs-1 no-padding-r">
@@ -35,7 +35,6 @@
                 </div>
             </div>
             <div class="modal-body" id="mask-preview-modal-body">
-                <img class="img-responsive" src="/lib/ft/V2/freeturefinal/preview/mask"/>
             </div>
         </div>
     </div>
@@ -102,8 +101,21 @@
                     <div id='list' class='x_panel'>
                         <div class='x_title no-padding-lr'>
                             <div class='clearfix'>
-                                <div class='col-md-6 no-padding-l'>
+                                <div class='col-md-4 col-sm-4 col-xs-12 no-padding'>
                                     <h2><?= _('Detection rilevate oggi') ?></h2>
+                                </div>
+                                <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
+                                    <div class='pull-right'>
+                                        <div class='col-md-8'>
+                                            <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                        </div>
+                                        <div class='col-md-4'>
+                                            <label class='switch pull-left'>
+                                                <input type='checkbox' id='enable-detection-preview'>
+                                                <span class='slider round'></span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -139,7 +151,7 @@
                                     <h2><?= _('Dati stazione') ?></h2>
                                 </div>
                                 <div class='col-md-4 no-padding'>
-                                    <button type = 'button' style= 'margin-left: 10px;' onclick= 'showMask();' class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
                                 </div>
                             </div>
                         </div>
@@ -170,19 +182,22 @@
                         </div>
                         <div class='x_content'>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <img class="img-responsive" src="/lib/stack/V2/stack/preview/laststack"/>
+                                <h5 id="last-detection-description"></h5>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class='col-md-12 col-sm-12 col-xs-12' id='last-detection-preview'>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div class="row" style="height: 20px;"></div>
-<?php
-include "./view/template/foot.php";
-?>
-<script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/home.js<?= _VERSION_ ?>'></script>
-<script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4'></script>
+    <div class="row" style="height: 20px;"></div>
+    <?php
+    include "./view/template/foot.php";
+    ?>
+    <script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/home.js<?= _VERSION_ ?>'></script>
+    <script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4'></script>
