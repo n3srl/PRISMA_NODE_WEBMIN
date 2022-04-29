@@ -10,17 +10,10 @@ var indexToShow = null;
 var latitude = 0;
 var longitude = 0;
 var isPreviewEnabled = false;
+var table = null;
 
 function setIndexToShow() {
     indexToShow = inafdetection.id;
-}
-
-function preview(row) {
-    var data = table2.rows(row).data()[0];
-    $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("Detection del " + data[1] + " (" + data[2] + ")");
-    var body = '<img class="img-responsive" src="' + data[3] + '"/>';
-    $('#detection-preview-modal-body').html(body);
 }
 
 $("#enable-detection-preview").on('change', function (event) {
@@ -28,22 +21,34 @@ $("#enable-detection-preview").on('change', function (event) {
     $('#DetectionList').dataTable().fnDraw();
 });
 
+// Show modal with detection preview and timestamp
+function preview(row) {
+    var data = table.rows(row).data()[0];
+    $('#detection-preview-modal').modal('show');
+    $('#detection-preview-modal-label').html("Detection del " + data[1] + " (" + data[2] + ")");
+    var body = '<img class="img-responsive" src="' + data[3] + '"/>';
+    $('#detection-preview-modal-body').html(body);
+}
+
+// Show modal with detection dirmap and timestamp
 function dirMap(row) {
-    var data = table2.rows(row).data()[0];
+    var data = table.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
     $('#detection-preview-modal-label').html("DirMap del " + data[1] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[4] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
+// Show modal with detection gemap and timestamp
 function geMap(row) {
-    var data = table2.rows(row).data()[0];
+    var data = table.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
     $('#detection-preview-modal-label').html("GeMap del " + data[1] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[5] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
+// Download detection zip
 function download(value) {
 
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
@@ -56,14 +61,12 @@ function download(value) {
     });
 }
 
-function showMask() {
-
-}
-
+// Show modal with freeture mask
 $("#btn-show-mask").click(function () {
     $('#mask-preview-modal').modal('show');
 });
 
+// Create map to locate the station
 function initMap() {
     const station = {lat: latitude, lng: longitude};
     const map = new google.maps.Map(document.getElementById("station-map"), {
@@ -76,6 +79,7 @@ function initMap() {
     });
 }
 
+// Create table with station info values
 function loadStationInfoValues() {
     var keys = ["Station Name", "Station Code", "Observer", "Elevation Observatory", "Longitude Observatory", "Latitude Observatory"];
     keys.forEach(key => {
@@ -100,6 +104,7 @@ function loadStationInfoValues() {
                 k = "SITEELEV";
                 break;
         }
+        // First get the id, then use id to get value
         $.get("/lib/ft/V2/freeturefinal/id/" + k, function (json1) {
             var id = JSON.parse(json1).data;
             $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
@@ -112,6 +117,7 @@ function loadStationInfoValues() {
 
 }
 
+// Create datatable with detections of last day
 function initDetectionsDatatable(folder) {
 
     var groupColumn = 1;
@@ -235,6 +241,8 @@ function initDetectionsDatatable(folder) {
 }
 
 $(document).ready(function () {
+    
+    // Get last day folder name to get last day detections
     $.get("/lib/ft/V2/freeturefinal/id/ACQ_REGULAR_PRFX", function (json1) {
         var id = JSON.parse(json1).data;
         $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
@@ -251,19 +259,26 @@ $(document).ready(function () {
             initDetectionsDatatable(folder);
         });
     });
-
+    
+    // Get number of all detections
     $.get("/lib/detection/V2/detection/counter/all", function (json) {
         var data = JSON.parse(json).data;
         $("#all-detections-number").html(data);
     });
-    $.get("/lib/detection/V2/detection/counter/lastday", function (json) {
-        var data = JSON.parse(json).data;
-        $("#day-detections-number").html(data);
-    });
+    
+    // Get number of last month detections
     $.get("/lib/detection/V2/detection/counter/lastmonth", function (json) {
         var data = JSON.parse(json).data;
         $("#month-detections-number").html(data);
     });
+    
+    // Get number of last day detections
+    $.get("/lib/detection/V2/detection/counter/lastday", function (json) {
+        var data = JSON.parse(json).data;
+        $("#day-detections-number").html(data);
+    });
+    
+    // Get station latitude and longitude to create map
     $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {
         var id1 = JSON.parse(json1).data;
         $.get("/lib/ft/V2/freeturefinal/" + id1, function (json2) {
@@ -279,16 +294,19 @@ $(document).ready(function () {
             });
         });
     });
-
-    $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
+    
+    // Get last image base64 encoded and its timestamp (last stack)
+    $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
         var info = data[1].split(":");
-        $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
-        $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
+        $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-
+    
+    // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
-
+    
+    // Get freeture mask image base64 encoded
     $.get("/lib/ft/V2/freeturefinal/preview/mask", function (json) {
         var data = JSON.parse(json).data;
         if (data) {

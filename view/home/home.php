@@ -182,10 +182,10 @@
                         </div>
                         <div class='x_content'>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <h5 id="last-detection-description"></h5>
+                                <h5 id="last-image-description"></h5>
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <div class='col-md-12 col-sm-12 col-xs-12' id='last-detection-preview'>
+                                <div id='last-image-preview'>
                                 </div>
                             </div>
                         </div>

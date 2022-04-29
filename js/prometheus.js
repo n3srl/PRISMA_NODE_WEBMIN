@@ -2,7 +2,7 @@ $(document).ready(function () {
     
     showStatus();
     
-    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+    // Enable upload button if user has chosen a file 
     $("#form-prometheuscfg").on('change', function(event){
         filename=$(this).val();
         if(filename!==''){
@@ -10,7 +10,7 @@ $(document).ready(function () {
         }
     });   
     
-    // Caricamento nuova configurazione prometheus 
+    // Upload new Prometheus configuration 
     $("#prometheusCfgFileForm").on("submit", function(e) {
         e.preventDefault();
         var file = $("#form-prometheuscfg")[0].files[0];
@@ -21,6 +21,7 @@ $(document).ready(function () {
     
 });
 
+// Show Prometheus status
 function showStatus(){
     
     $.getJSON('http://' + window.location.hostname + ':9090/api/v1/status/runtimeinfo', function(res){            

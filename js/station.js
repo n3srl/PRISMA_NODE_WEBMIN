@@ -5,7 +5,7 @@
 
 $(setFreetureFinalVisibility());
 var freetureObjects = [];
-var keys = ["ACQ_REGULAR_PRFX", "ACQ_MASK_ENABLED", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
+var keys = ["ACQ_REGULAR_PRFX", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
 
 $(function () {
     disableStationForm();
@@ -50,10 +50,6 @@ function saveObj() {
             case "ACQ_REGULAR_PRFX":
                 ft.value = $('#station-code').val().toUpperCase();
                 break;
-            /*case "ACQ_MASK_ENABLED":
-                ft.value = ($("#station-mask-upload").get(0).files.length !== 0).toString();
-                uploadMask();
-                break;*/
             case "ACQ_MASK_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/default.bmp";
                 break;
@@ -132,7 +128,6 @@ function uploadMask() {
             processData: false,
             contentType: false,
             success: function (res) {
-                //defaultSuccess("Maschera caricata correttamente");
                 $("#uploadmaskbtn").attr('disabled', true);
                 $('#form-mask').val('');
             }

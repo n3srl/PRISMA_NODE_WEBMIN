@@ -30,11 +30,8 @@ class FreetureFinalApiLogic {
 
     public static function EditConfiguration($request) {
         try {
-
+            
             $Person = CoreLogic::VerifyPerson();
-            //CoreLogic::CheckCSRF($request->get("token"));
-            //$tmp = $request->get("data");
-
             $res = self::updateConfigurationFile($request);
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
@@ -434,7 +431,8 @@ class FreetureFinalApiLogic {
         }
         return true;
     }
-
+    
+    // Update freeture configuration file with the given file
     public static function updateConfigurationFile($ob) {
         $freetureConf = _FREETURE_;
         if (!empty($ob)) {
@@ -479,14 +477,18 @@ class FreetureFinalApiLogic {
         }
         return false;
     }
-
+    
+    // Get path to mask file parsing freeture configuration
     public static function getMaskPath() {
         $freetureConf = _FREETURE_;
         $path = "";
+        
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
+            
             //Parse config file line by line
             foreach ($contents as $line) {
+                
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "ACQ_MASK_PATH") {
@@ -497,14 +499,18 @@ class FreetureFinalApiLogic {
         }
         return $path;
     }
-
+    
+    // Check if mask is enabled parsing freeture configuration
     public static function isMaskEnabled() {
         $freetureConf = _FREETURE_;
         $isMaskEnabled = "";
+        
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
+            
             //Parse config file line by line
             foreach ($contents as $line) {
+                
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "ACQ_MASK_ENABLED") {
@@ -520,6 +526,7 @@ class FreetureFinalApiLogic {
     public static function restartFreeture() {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
+        
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
@@ -530,7 +537,7 @@ class FreetureFinalApiLogic {
         }
         return false;
     }
-
+ 
     // Generates passwords
     public static function passwdGen() {
         $file = "";

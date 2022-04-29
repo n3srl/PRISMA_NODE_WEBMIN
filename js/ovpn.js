@@ -2,7 +2,7 @@ $(document).ready(function () {
 
     showStatus();
 
-    // Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+    // Enable upload button if user has chosen a file 
     $("#form-ovpncfg").on('change', function (event) {
         filename = $(this).val();
         if (filename !== '') {
@@ -10,7 +10,7 @@ $(document).ready(function () {
         }
     });
 
-    // Caricamento nuova configurazione freeture 
+    // Upload new ovpn configuration
     $("#ovpnCfgFileForm").on("submit", function (e) {
         e.preventDefault();
         var file = $("#form-ovpncfg")[0].files[0];
@@ -36,6 +36,7 @@ $(document).ready(function () {
 
 });
 
+// Show ovpn status
 function showStatus() {
     $.ajax({
         url: "/lib/ovpn/V2/ovpn/status",

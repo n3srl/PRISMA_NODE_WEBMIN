@@ -249,7 +249,13 @@ $app->GET('/detection/dirmap/{detection}', function (Application $app, Request $
 $app->GET('/detection/createzip/{detection}', function (Application $app, Request $request, $detection) {
 
     $result = DetectionApiLogic::CreateZip($detection);
-    $resp = new Response($result);
+     if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
     $resp->setStatusCode(200);
     return $resp;
 });

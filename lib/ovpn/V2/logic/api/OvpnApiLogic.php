@@ -25,7 +25,8 @@ class OvpnApiLogic {
         }
         return CoreLogic::GenerateResponse($res, $ob);
     }
-
+    
+    // Update ovpn configuration file with given file
     public static function updateConfigurationFile($ob) {
 
         $vpnConf = _OVPN_;
@@ -54,14 +55,12 @@ class OvpnApiLogic {
                 $result = true;
                 
             }
-
             unset($session);
         }
-
-
         return $result;
     }
-
+    
+    // Get vpn status 
     public static function getVpnStatus() {
         $i = 0;
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);

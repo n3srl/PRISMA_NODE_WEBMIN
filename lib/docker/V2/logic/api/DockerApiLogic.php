@@ -1,176 +1,174 @@
 <?php
+
 /**
-*
-* @author: N3 S.r.l.
-*/
+ *
+ * @author: N3 S.r.l.
+ */
+class DockerApiLogic {
 
-class DockerApiLogic
-{
-	public static function Save($request) {
-            
-		try {
+    public static function Save($request) {
 
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+        try {
 
-			$ob = new Docker();
-			$tmp = $request->get("data");
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$ob->id = $tmp["id"] ;
-                        $ob->name = $tmp["name"] ;
+            $ob = new Docker();
+            $tmp = $request->get("data");
 
-			$res = self::sshContainerRestart($ob);
-                        
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob->id = $tmp["id"];
+            $ob->name = $tmp["name"];
 
-	public static function Update($request){
-            
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $res = self::sshContainerRestart($ob);
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$ob = new Docker();
-			$tmp = $request->get("data");
+    public static function Update($request) {
 
-			$ob->id = $tmp["id"] ;
-                        $ob->name = $tmp["name"] ;
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$res = self::sshContainerRestart($ob);
-			
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob = new Docker();
+            $tmp = $request->get("data");
 
-	public static function Erase($request) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $ob->id = $tmp["id"];
+            $ob->name = $tmp["name"];
 
-			$ob = new Docker();
-			$tmp = $request->get("data");
+            $res = self::sshContainerRestart($ob);
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$ob->id = $tmp["id"] ;
+    public static function Erase($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$ob = DockerLogic::Get($ob->id);
+            $ob = new Docker();
+            $tmp = $request->get("data");
 
-			CoreLogic::beginTransaction();
-			$res = DockerLogic::Erase($ob);
-			CoreLogic::commitTransaction();
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob->id = $tmp["id"];
 
-	public static function Delete($request) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			CoreLogic::CheckCSRF($request->get("token"));
+            $ob = DockerLogic::Get($ob->id);
 
-			$ob = new Docker();
-			$tmp = $request->get("data");
+            CoreLogic::beginTransaction();
+            $res = DockerLogic::Erase($ob);
+            CoreLogic::commitTransaction();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-			$ob->id = $tmp["id"] ;
+    public static function Delete($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
 
-			$ob = DockerLogic::Get($ob->id);
+            $ob = new Docker();
+            $tmp = $request->get("data");
 
-			CoreLogic::beginTransaction();
-			$res = DockerLogic::Delete($ob);
-			CoreLogic::commitTransaction();
-		} catch (ApiException $a) {
-			CoreLogic::rollbackTransaction();
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob->id = $tmp["id"];
 
-	public static function Get($id) {
-		try {
-			$res = false;
-			$Person = CoreLogic::VerifyPerson();
-			$ob = self::sshContainerGet($id);
-			$res = true;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            $ob = DockerLogic::Get($ob->id);
 
-	public static function GetList() {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$ob = DockerLogic::GetList();
-			$res = true;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-		return CoreLogic::GenerateResponse($res, $ob);
-	}
+            CoreLogic::beginTransaction();
+            $res = DockerLogic::Delete($ob);
+            CoreLogic::commitTransaction();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-	public static function GetListFilterAjax($columnName) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$results = array();
-			$data = new stdClass();
-		$codes = DockerFactory::GetListFilter($columnName,$_GET['term']);
-			foreach ($codes as $code){ 
-				$obj = new stdClass(); 
-				$obj->id = $code->{$columnName}; 
-				$obj->text = $code->{$columnName}; 
-				$results[] = $obj; 
-			}
-			$data->results = $results;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-			return $data;
-	}
+    public static function Get($id) {
+        try {
+            $res = false;
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::sshContainerGet($id);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
 
-	public static function GetListFKAjax($columnName) {
-		try {
-			$Person = CoreLogic::VerifyPerson();
-			$results = array();
-			$data = new stdClass();
-			switch ($columnName) {
-				/* ** ESEMPIO **
-				case "created_by":
-					$foreignKey = end(DockerFactory::GetForeignKeyParams($columnName));
-					$codes = DockerFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,array("id","CONCAT(last_name, ' ', first_name) AS full_name"),$_GET['term']);
-					$data = new stdClass();
-					foreach ($codes as $code){ 
-						$obj = new stdClass(); 
-						$obj->id = $code->id; 
-						$obj->text = $code->full_name; 
-						$results[] = $obj; 
-					}
-				break;
-				*/
-				default:
-					$foreignKey = end(DockerFactory::GetForeignKeyParams($columnName));
-					$codes = DockerFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,$foreignKey->REFERENCED_COLUMN_NAME,$_GET['term']);
-					$data = new stdClass();
-					foreach ($codes as $code){ 
-						$obj = new stdClass(); 
-						$obj->id = $code->{$foreignKey->REFERENCED_COLUMN_NAME}; 
-						$obj->text = $code->{$foreignKey->REFERENCED_COLUMN_NAME}; 
-						$results[] = $obj; 
-					}
-				}
-			$data->results = $results;
-		} catch (ApiException $a) {
-			return CoreLogic::GenerateErrorResponse($a->message);
-		}
-			return $data;
-	}
+    public static function GetList() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = DockerLogic::GetList();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function GetListFilterAjax($columnName) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $results = array();
+            $data = new stdClass();
+            $codes = DockerFactory::GetListFilter($columnName, $_GET['term']);
+            foreach ($codes as $code) {
+                $obj = new stdClass();
+                $obj->id = $code->{$columnName};
+                $obj->text = $code->{$columnName};
+                $results[] = $obj;
+            }
+            $data->results = $results;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return $data;
+    }
+
+    public static function GetListFKAjax($columnName) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $results = array();
+            $data = new stdClass();
+            switch ($columnName) {
+                /*                 * * ESEMPIO **
+                  case "created_by":
+                  $foreignKey = end(DockerFactory::GetForeignKeyParams($columnName));
+                  $codes = DockerFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME,array("id","CONCAT(last_name, ' ', first_name) AS full_name"),$_GET['term']);
+                  $data = new stdClass();
+                  foreach ($codes as $code){
+                  $obj = new stdClass();
+                  $obj->id = $code->id;
+                  $obj->text = $code->full_name;
+                  $results[] = $obj;
+                  }
+                  break;
+                 */
+                default:
+                    $foreignKey = end(DockerFactory::GetForeignKeyParams($columnName));
+                    $codes = DockerFactory::GetListFK($foreignKey->REFERENCED_TABLE_NAME, $foreignKey->REFERENCED_COLUMN_NAME, $_GET['term']);
+                    $data = new stdClass();
+                    foreach ($codes as $code) {
+                        $obj = new stdClass();
+                        $obj->id = $code->{$foreignKey->REFERENCED_COLUMN_NAME};
+                        $obj->text = $code->{$foreignKey->REFERENCED_COLUMN_NAME};
+                        $results[] = $obj;
+                    }
+            }
+            $data->results = $results;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return $data;
+    }
 
     public static function GetListDatatable() {
         $reply = self::sshContainerList();
@@ -181,7 +179,7 @@ class DockerApiLogic
             "iTotalDisplayRecords" => count($reply),
             "aaData" => $reply
         );
-        
+
         return $output;
     }
 
@@ -189,32 +187,32 @@ class DockerApiLogic
     public static function sshContainerList() {
         $list = array();
         $i = 0;
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
 
         if ($session) {
-            
-            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+
+            // Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
-                //Execute command to get containers
+                // Execute command to get containers
                 //https://www.baeldung.com/ops/docker-list-containers
                 $stream = ssh2_exec($session, "docker container ls -a --format \"{{.Names}} {{.Image}} {{.Status}}\"");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
-                
-                //Parse Containers
+
+                // Parse Containers
                 $containers = explode("\n", $text);
-                foreach($containers as $container){
-                    
-                    //Parse Container
-                    if($i < count($containers)-1){
-                        
+                foreach ($containers as $container) {
+
+                    // Parse Container
+                    if ($i < count($containers) - 1) {
+
                         $conta = explode(" ", $container);
-                        
+
                         $list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", $conta[0], $conta[0], $i);
-                        
+
                         $i++;
                     }
                 }
@@ -223,19 +221,19 @@ class DockerApiLogic
             //ssh2_disconnect($session); -> This causes Segmentation fault !
             unset($session);
         }
-                
+
         return $list;
     }
-    
+
     //Access SSH container and get a single Container
     public static function sshContainerGet($id) {
         $list = array();
         $i = 0;
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
 
         if ($session) {
-            
+
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
@@ -245,15 +243,15 @@ class DockerApiLogic
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
-                
+
                 //Parse Containers
                 $containers = explode("\n", $text);
-                foreach($containers as $container){
-                    
+                foreach ($containers as $container) {
+
                     //Parse Container
-                    if($i < count($containers)-1){
-                        
-                        if("$i"===$id){
+                    if ($i < count($containers) - 1) {
+
+                        if ("$i" === $id) {
                             $conta = explode(" ", $container);
                             $dc = new Docker();
                             $dc->id = $id;
@@ -262,10 +260,10 @@ class DockerApiLogic
                             $dc->status = $conta[2];
                             return $dc;
                         }
-                        
-                        
+
+
                         //$list[] = array($conta[0], $conta[1], "empty", $conta[2], "no date", 0, $i);
-                        
+
                         $i++;
                     }
                 }
@@ -274,56 +272,56 @@ class DockerApiLogic
             //ssh2_disconnect($session); -> This causes Segmentation fault !
             unset($session);
         }
-        
+
         return false;
     }
-    
+
     //Access SSH container and get a single Container
     public static function sshContainerStart($ob) {
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $result = false;
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker start " . $ob);             
+                $stream = ssh2_exec($session, "sudo docker start " . $ob);
                 $result = true;
             }
             unset($session);
         }
         return CoreLogic::GenerateResponse($result, $ob);
     }
-    
+
     //Access SSH container and get a single Container
     public static function sshContainerRestart($ob) {
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $result = false;
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker restart " . $ob);             
+                $stream = ssh2_exec($session, "sudo docker restart " . $ob);
                 $result = true;
             }
             unset($session);
         }
         return CoreLogic::GenerateResponse($result, $ob);
     }
-    
+
     //Access SSH container and get a single Container
     public static function sshContainerStop($ob) {
-        $session = ssh2_connect( _DOCKER_IP_, _DOCKER_PORT_);
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $result = false;
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-               $stream = ssh2_exec($session, "sudo docker stop " . $ob);
-               $result = true;
+                $stream = ssh2_exec($session, "sudo docker stop " . $ob);
+                $result = true;
             }
             unset($session);
         }
         return CoreLogic::GenerateResponse($result, $ob);
     }
-}
 
+}

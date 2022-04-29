@@ -134,7 +134,7 @@ $(document).ready(function () {
 
 });
 
-// Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+// Enable upload button if user has chosen a file 
 $("#form-ftcfg").on('change', function (event) {
     filename = $(this).val();
     if (filename !== '') {
@@ -142,7 +142,7 @@ $("#form-ftcfg").on('change', function (event) {
     }
 });
 
-// Abilita il pulsante 'carica' se l'utente ha scelto un file da caricare
+// Enable upload button if user has chosen a file 
 $("#form-mask").on('change', function (event) {
     filename = $(this).val();
     if (filename !== '') {
@@ -150,7 +150,7 @@ $("#form-mask").on('change', function (event) {
     }
 });
 
-// Caricamento nuova configurazione freeture 
+// Upload new freeture configuration
 $("#ftCfgFileForm").on("submit", function (e) {
     e.preventDefault();
     var file = $("#form-ftcfg")[0].files[0];
@@ -173,7 +173,7 @@ $("#ftCfgFileForm").on("submit", function (e) {
 
 });
 
-// Caricamento nuova maschera
+// Upload new freeture mask
 $("#maskFileForm").on("submit", function (e) {
     e.preventDefault();
     var file = $("#form-mask")[0].files[0];

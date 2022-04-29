@@ -158,160 +158,9 @@ class CaptureApiLogic {
         return $data;
     }
 
-    //Get the value from the line
-    public static function getValue(String $raw) {
-        $value1 = explode("=", $raw)[1];
-        return self::trim(self::cleanComments($value1));
-    }
-
-    //Get the key from the line
-    public static function getKey(String $raw) {
-        $key1 = explode("=", $raw)[0];
-        return self::trim($key1);
-    }
-
-    //Clean string 
-    public static function trim(String $raw) {
-        return str_replace(array(" ", "\n", "\r"), "", $raw);
-    }
-
-    //Clean comments in the end of the string
-    public static function cleanComments(String $raw) {
-        if (!strpos($raw, "#") === false) {
-            return substr($raw, 0, strpos($raw, "#")) . "\n";
-        } else {
-            return $raw;
-        }
-    }
-
-    public static function getStationPrefix() {
-        $freetureConf = _FREETURE_;
-        $stationName = "NO_NAME";
-        if (file_exists($freetureConf) && is_file($freetureConf)) {
-            $contents = file($freetureConf);
-            //Parse config file line by line
-            foreach ($contents as $line) {
-                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
-                        (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "ACQ_REGULAR_PRFX") {
-                        $stationName = self::getValue($line);
-                    }
-                }
-            }
-        }
-        return $stationName;
-    }
-
-    public static function getCapturesFiles($start, $end, $date_dir, $enablePreview = false) {
-        $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $date_dir . "/captures";
-        $reply = array();
-        $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
-        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
-        if (!is_dir($data_dir)) {
-            return $reply;
-        }
-        $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
-        $files = scandir($data_dir, SCANDIR_SORT_DESCENDING);
-        foreach ($files as $file) {
-            if ($i < $start) {
-                $i++;
-                continue;
-            }
-            if ($i > $end) {
-                return $reply;
-            }
-            if ('.' === $file) {
-                continue;
-            }
-            if ('..' === $file) {
-                continue;
-            }
-            $name = explode("_", $file);
-            if (isset($name[1])) {
-                $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
-                $hour = $datetime->format('H:i:s');
-                $base64 = "";
-                if ($enablePreview) {
-                    $png_name_tmp = str_replace(".fit", "-tmp.png", $file);
-                    $png_path_tmp = $tmp_png_dir . $png_name_tmp;
-                    $fit_path = $data_dir . "/" . $file;
-                    shell_exec("fitspng -o $png_path_tmp $fit_path");
-                    $png_name = str_replace(".fit", ".png", $file);
-                    $png_path = $tmp_png_dir . $png_name;
-                    shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
-                    $base64 = self::encodeCapture($png_path);
-                    shell_exec("rm " . $tmp_png_dir . "*.png");
-                }
-                $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $date_dir . "_" . $file);
-                $i++;
-            }
-        }
-        return $reply;
-    }
-
-    public static function encodeCapture($path) {
-        $data = file_get_contents($path);
-        $base64 = 'data:image/png;base64,' . base64_encode($data);
-        return $base64;
-    }
-
-    public static function getCapturesDays($start, $end) {
-        $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
-        $reply = array();
-
-        $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
-        foreach ($dirs as $day_dir) {
-            $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/captures/*.fit");
-            if ($i < $start) {
-                $i++;
-                continue;
-            }
-            if ($i > $end) {
-                return $reply;
-            }
-            if ('.' === $day_dir) {
-                continue;
-            }
-            if ('..' === $day_dir) {
-                continue;
-            }
-            $name = explode("_", $day_dir);
-            if (isset($name[1])) {
-                $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
-                $reply[] = array($day, $n_day_files, $day_dir);
-                $i++;
-            }
-        }
-
-        return $reply;
-    }
-
-    public static function getAllDaysFilesCount($path) {
-
-        $n_files = 0;
-        if ($handle = opendir($path)) {
-            while (false !== ($day = readdir($handle))) {
-                $n_files += self::getDirectoryFilesCount($path . $day . "/captures/*.fit");
-            }
-            closedir($handle);
-        }
-        return $n_files;
-    }
-
-    public static function getDirectoryFilesCount($path) {
-
-        $n_files = 0;
-        $files = glob($path);
-        if ($files) {
-            $n_files = count($files);
-        }
-        return $n_files;
-    }
-
+    /* FILESYSTEM OPERATIONS */
+    
+    // Get list of all captures in a day
     public static function GetFilesListDatatable($request) {
         $reply = array();
         $iDisplayStart = 1;
@@ -335,8 +184,8 @@ class CaptureApiLogic {
                 $pageNumber = ($iDisplayStart / $iDisplayLength);
             }
         }
-
-        /* Ordering 
+        /*
+          //Ordering
           if (isset($_GET['iSortCol_0'])) {
           if ($_GET['bSortable_' . intval($_GET['iSortCol_0'])] == 'true') {
           $i = $_GET['iSortCol_0'];
@@ -345,10 +194,8 @@ class CaptureApiLogic {
           array_multisort($sort, SORT_ASC, $reply);
           } else {
           array_multisort($sort, SORT_DESC, $reply);
-          }
-          }
-          } */
-
+          }}}
+         */
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
             "pageToShow" => $pageNumber,
@@ -362,7 +209,7 @@ class CaptureApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getStationPrefix() . "/*";
+        $directory = _FREETURE_DATA_ . "/" . Self::getStationPrefix() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -380,8 +227,8 @@ class CaptureApiLogic {
                 $pageNumber = ($iDisplayStart / $iDisplayLength);
             }
         }
-
-        /* Ordering 
+        /*
+          //Ordering
           if (isset($_GET['iSortCol_0'])) {
           if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
           $i = $_GET['iSortCol_0'];
@@ -389,11 +236,8 @@ class CaptureApiLogic {
           if ($_GET['sSortDir_' . $i] === 'asc') {
           array_multisort($sort, SORT_ASC, $reply);
           } else {
-          array_multisort($sort, SORT_DESC, $reply);
-          }
-          }
-          } */
-
+          array_multisort($sort, SORT_DESC, $reply);}}}
+         */
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
             "pageToShow" => $pageNumber,
@@ -404,6 +248,8 @@ class CaptureApiLogic {
         return $output;
     }
 
+    // Get fit file path from given file info
+    // File info given is 
     public static function GetFitFile($file) {
         $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
         $file_info = explode("_", $file);
@@ -413,6 +259,7 @@ class CaptureApiLogic {
         return $path;
     }
 
+    // Get last capture in time data
     public static function GetLastCapture() {
         try {
             $Person = CoreLogic::VerifyPerson();
@@ -423,6 +270,186 @@ class CaptureApiLogic {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
         return CoreLogic::GenerateResponse(true, $lastcapture);
+    }
+
+    // Get the value from the line
+    public static function getValue(String $raw) {
+        $value1 = explode("=", $raw)[1];
+        return self::trim(self::cleanComments($value1));
+    }
+
+    // Get the key from the line
+    public static function getKey(String $raw) {
+        $key1 = explode("=", $raw)[0];
+        return self::trim($key1);
+    }
+
+    // Clean string 
+    public static function trim(String $raw) {
+        return str_replace(array(" ", "\n", "\r"), "", $raw);
+    }
+
+    // Clean comments in the end of the string
+    public static function cleanComments(String $raw) {
+        if (!strpos($raw, "#") === false) {
+            return substr($raw, 0, strpos($raw, "#")) . "\n";
+        } else {
+            return $raw;
+        }
+    }
+
+    // Get station code string, images prefix
+    public static function getStationPrefix() {
+        $freetureConf = _FREETURE_;
+        $stationName = "NO_NAME";
+        
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+            
+            //Parse config file line by line
+            foreach ($contents as $line) {
+                
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === "ACQ_REGULAR_PRFX") {
+                        $stationName = self::getValue($line);
+                    }
+                }
+            }
+        }
+        return $stationName;
+    }
+
+    // Encode image to base64
+    public static function encodeCapture($path) {
+        $data = file_get_contents($path);
+        $base64 = 'data:image/png;base64,' . base64_encode($data);
+        return $base64;
+    }
+
+    // Process capture fit file, apply watermark and convert image to base64
+    public static function processCapture($file, $data_dir) {
+        $png_dir = _WEBROOTDIR_ . "tmp-media/";
+        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
+        
+        // Convert fit to png by Fitspng, save in webroot temporary directory
+        $png_name_tmp = str_replace(".fit", "-tmp.png", $file);
+        $png_path_tmp = $png_dir . $png_name_tmp;
+        $fit_path = $data_dir . "/" . $file;
+        shell_exec("fitspng -o $png_path_tmp $fit_path");
+        
+        // Apply watermark by Imagemagick
+        $png_name = str_replace(".fit", ".png", $file);
+        $png_path = $png_dir . $png_name;
+        shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
+        
+        $base64 = self::encodeCapture($png_path);
+        shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
+        return $base64;
+    }
+
+    // Get captures data given starting and ending index and the day directory
+    // If preview enabled, convert images to base64
+    public static function getCapturesFiles($start, $end, $day_dir, $enablePreview = false) {
+        $i = 0;
+        // Day directory with captures /freeture/PREFIX/PREFIX_DATE/captures
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/captures";
+        $reply = array();
+        // If there isn't data for this day return an empty array
+        if (!is_dir($data_dir)) {
+            return $reply;
+        }
+        $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
+        $files = scandir($data_dir, SCANDIR_SORT_DESCENDING);
+        foreach ($files as $file) {
+            
+            if ($i < $start) {
+                $i++;
+                continue;
+            }
+            if ($i > $end) {
+                return $reply;
+            }
+            if ('.' === $file) {
+                continue;
+            }
+            if ('..' === $file) {
+                continue;
+            }
+            
+            $name = explode("_", $file);
+            
+            if (isset($name[1])) { // Check if file name is correct
+                
+                $datetime = date_create($name[1]);
+                $day = $datetime->format('Y-m-d');
+                $hour = $datetime->format('H:i:s');
+                $base64 = $enablePreview ? self::processCapture($file, $data_dir) : "";
+                $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $day_dir . "_" . $file);
+                $i++;
+            }
+        }
+        return $reply;
+    }
+
+    // Get all days and compute number of capture in that day
+    public static function getCapturesDays($start, $end) {
+        $i = 0;
+        // Main directory with days /freeture/PREFIX/
+        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
+        $reply = array();
+        $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
+        foreach ($dirs as $day_dir) {
+            
+            $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/captures/*.fit");
+            
+            if ($i < $start) {
+                $i++;
+                continue;
+            }
+            if ($i > $end) {
+                return $reply;
+            }
+            if ('.' === $day_dir) {
+                continue;
+            }
+            if ('..' === $day_dir) {
+                continue;
+            }
+            
+            $name = explode("_", $day_dir);
+            
+            if (isset($name[1])) {
+                
+                $datetime = date_create($name[1]);
+                $day = $datetime->format('Y-m-d');
+                $reply[] = array($day, $n_day_files, $day_dir);
+                $i++;
+            }
+        }
+        return $reply;
+    }
+
+    // Compute number of a 2-level directories structure
+    public static function getAllDaysFilesCount($path) {
+        $n_files = 0;
+        if ($handle = opendir($path)) {
+            while (false !== ($day = readdir($handle))) {
+                $n_files += self::getDirectoryFilesCount($path . $day . "/captures/*.fit");
+            }
+            closedir($handle);
+        }
+        return $n_files;
+    }
+
+    // Compute number of file in given directory
+    public static function getDirectoryFilesCount($path) {
+        $n_files = 0;
+        $files = glob($path);
+        if ($files) {
+            $n_files = count($files);
+        }
+        return $n_files;
     }
 
 }

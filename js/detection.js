@@ -62,6 +62,13 @@ function setIndexToShow() {
     indexToShow = inafdetection.id;
 }
 
+// Enable detections previews
+$("#enable-detection-preview").on('change', function (event) {
+    isPreviewEnabled = $("#enable-detection-preview").is(":checked");
+    $('#DetectionList').dataTable().fnDraw();
+});
+
+// Show modal with detection preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
@@ -70,11 +77,7 @@ function preview(row) {
     $('#detection-preview-modal-body').html(body);
 }
 
-$("#enable-detection-preview").on('change', function (event) {
-    isPreviewEnabled = $("#enable-detection-preview").is(":checked");
-    $('#DetectionList').dataTable().fnDraw();
-});
-
+// Show modal with detection dirmap and timestamp
 function dirMap(row) {
     var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
@@ -83,6 +86,7 @@ function dirMap(row) {
     $('#detection-preview-modal-body').html(body);
 }
 
+// Show modal with detection gemap and timestamp
 function geMap(row) {
     var data = table2.rows(row).data()[0];
     $('#detection-preview-modal').modal('show');
@@ -91,19 +95,23 @@ function geMap(row) {
     $('#detection-preview-modal-body').html(body);
 }
 
+// Download detection zip
 function download(row) {
     var data = table2.rows(row).data()[0];
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
     $.ajax({
         url: "/lib/detection/V2/detection/createzip/" + data[6],
         async: false,
-        success: function (data) {
+        success: function (json) {
+            var data = JSON.parse(json).data;
             window.location.href = "/lib/detection/V2/detection/download/" + data;
         }
     });
 }
 
 $(document).ready(function () {
+    
+    // Create days datatable
     table1 = $('#DetectionDayList').DataTable({
         "oLanguage": {
             "sZeroRecords": "Nessun risultato",
@@ -153,7 +161,7 @@ $(document).ready(function () {
             if (table1.data().count()) {
                 var folder = table1.row(':eq(0)').data()[2];
                 $('#DetectionDayList tbody tr:eq(0)').addClass('selected');
-                initDetectionsDatatable(folder, table1);
+                initDetectionsDatatable(folder);
             }
         },
 
@@ -170,7 +178,8 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-
+    
+    // Get last detection image and its timestamp
     $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
         var data = JSON.parse(json).data;
         var info = data[1].split(":");
@@ -178,11 +187,13 @@ $(document).ready(function () {
         $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
     
+    // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
 
 });
 
-function initDetectionsDatatable(folder, table1) {
+// Create datatable with detections of selected day
+function initDetectionsDatatable(folder) {
     var groupColumn = 1;
     table2 = $('#DetectionList').DataTable({
         "oLanguage": {
@@ -300,6 +311,8 @@ function initDetectionsDatatable(folder, table1) {
         "info": true,
         "searching": false
     });
+    
+    // Change detections displayed by click on corresponding day
     $('#DetectionDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
         folder = rowData[2];

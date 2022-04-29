@@ -63,6 +63,7 @@ function setIndexToShow() {
     indexToShow = inafcapture.id;
 }
 
+// Show modal with capture preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
     $('#capture-preview-modal').modal('show');
@@ -71,12 +72,15 @@ function preview(row) {
     $('#capture-preview-modal-body').html(body);
 }
 
+// Enable captures previews
 $("#enable-capture-preview").on('change', function (event) {
     isPreviewEnabled = $("#enable-capture-preview").is(":checked");
     $('#CaptureList').dataTable().fnDraw();
 });
 
 $(document).ready(function () {
+    
+    // Create days datatable
     table1 = $('#CaptureDayList').DataTable({
         "oLanguage": {
             "sZeroRecords": "Nessun risultato",
@@ -126,7 +130,7 @@ $(document).ready(function () {
             if (table1.data().count()) {
                 var folder = table1.row(':eq(0)').data()[2];
                 $('#CaptureDayList tbody tr:eq(0)').addClass('selected');
-                initCapturesDatatable(folder, table1);
+                initCapturesDatatable(folder);
             }
         },
 
@@ -143,7 +147,8 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-
+    
+    // Get last capture image and its timestamp
     $.get("/lib/capture/V2/capture/preview/lastcapture", function (json) {
         var data = JSON.parse(json).data;
         var info = data[1].split(":");
@@ -151,10 +156,12 @@ $(document).ready(function () {
         $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
     
+    // Set toggle switch unchecked 
     $("#enable-capture-preview").attr("checked", false);
 });
 
-function initCapturesDatatable(folder, table1) {
+// Create datatable with captures of selected day
+function initCapturesDatatable(folder) {
     var groupColumn = 1;
     var collapsedGroups = {};
     table2 = $('#CaptureList').DataTable({
@@ -257,6 +264,8 @@ function initCapturesDatatable(folder, table1) {
         "info": true,
         "searching": false
     });
+    
+    // Change captures displayed by click on corresponding day
     $('#CaptureDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
         folder = rowData[2];

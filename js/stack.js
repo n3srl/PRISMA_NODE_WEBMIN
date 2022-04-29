@@ -63,6 +63,7 @@ function setIndexToShow() {
     indexToShow = inafstack.id;
 }
 
+// Show modal with stack preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
     $('#stack-preview-modal').modal('show');
@@ -71,12 +72,15 @@ function preview(row) {
     $('#stack-preview-modal-body').html(body);
 }
 
+// Enable stacks previews
 $("#enable-stack-preview").on('change', function (event) {
     isPreviewEnabled = $("#enable-stack-preview").is(":checked");
     $('#StackList').dataTable().fnDraw();
 });
 
 $(document).ready(function () {
+    
+    // Create days datatable
     table1 = $('#StackDayList').DataTable({
         "oLanguage": {
             "sZeroRecords": "Nessun risultato",
@@ -126,7 +130,7 @@ $(document).ready(function () {
             if (table1.data().count()) {
                 var folder = table1.row(':eq(0)').data()[2];
                 $('#StackDayList tbody tr:eq(0)').addClass('selected');
-                initStacksDatatable(folder, table1);
+                initStacksDatatable(folder);
             }
         },
 
@@ -143,18 +147,21 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-
+    
+    // Get last stack image and its timestamp
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
         var info = data[1].split(":");
-        $('#last-stack-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+        $('#last-stack-description').html("Stack del " + info[0] + " (" + data[2] + ")");
         $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
     
+    // Set toggle switch unchecked 
     $("#enable-stack-preview").attr("checked", false);
 });
 
-function initStacksDatatable(folder, table1) {
+// Create datatable with captures of selected day
+function initStacksDatatable(folder) {
     var groupColumn = 1;
     var collapsedGroups = {};
     table2 = $('#StackList').DataTable({
@@ -257,6 +264,8 @@ function initStacksDatatable(folder, table1) {
         "info": true,
         "searching": false
     });
+    
+    // Change stacks displayed by click on corresponding day
     $('#StackDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
         folder = rowData[2];
