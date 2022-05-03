@@ -30,7 +30,7 @@ class FreetureFinalApiLogic {
 
     public static function EditConfiguration($request) {
         try {
-            
+
             $Person = CoreLogic::VerifyPerson();
             $res = self::updateConfigurationFile($request);
         } catch (ApiException $a) {
@@ -219,40 +219,79 @@ class FreetureFinalApiLogic {
     }
 
     public static function GetListDatatable() {
-        $reply = self::parseCfg();
+        $iTotal = self::countFreetureValues();
+        if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
+            $iDisplayStart = intval($_GET['iDisplayStart']);
+            $iDisplayLength = intval($_GET['iDisplayLength']);
+            $reply = self::parseCfg($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
+
+            $test = $reply[0];
+            if (empty($test)) {
+                $iDisplayStart = 0;
+            }
+            if ($iDisplayStart < $iDisplayLength) {
+                $pageNumber = 0;
+            } else {
+                $pageNumber = ($iDisplayStart / $iDisplayLength);
+            }
+        }
+
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
-            "pageToShow" => 0,
-            "iTotalRecords" => count($reply),
-            "iTotalDisplayRecords" => count($reply),
+            "pageToShow" => $pageNumber,
+            "iTotalRecords" => $iTotal,
+            "iTotalDisplayRecords" => $iTotal,
             "aaData" => $reply
         );
         return $output;
     }
 
-    //Clean string 
+    // Clean string 
+    public static function countFreetureValues() {
+        $freetureConf = _FREETURE_;
+        $i = 0;
+
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+
+            // Parse config file line by line
+            foreach ($contents as $line) {
+
+                // If the line has some content and does not start with #,
+                // or contains only new line or whitespaces
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    $i++;
+                }
+            }
+        }
+
+        return $i;
+    }
+
+    // Clean string 
     public static function trim(String $raw) {
         return str_replace(array(" ", "\n", "\r"), "", $raw);
     }
 
-    //Get the value from the line
+    // Get the value from the line
     public static function getValue(String $raw) {
         $value1 = explode("=", $raw)[1];
         return self::trim(self::cleanComments($value1));
     }
 
-    //Get the key from the line
+    // Get the key from the line
     public static function getKey(String $raw) {
         $key1 = explode("=", $raw)[0];
         return self::trim($key1);
     }
 
-    //If the string has "#nv" in the end mean it is invisible
+    // If the string has "#nv" in the end mean it is invisible
     public static function isVisible(String $raw) {
         return strpos($raw, "#nv") === false;
     }
 
-    //Remove the comment character "#" at the beginning
+    // Remove the comment character "#" at the beginning
     public static function removeComment(String $raw) {
         for ($i = 0; $i < strlen($raw); $i++) {
             if ($raw[$i] !== " " && $raw[$i] !== "#") {
@@ -262,13 +301,13 @@ class FreetureFinalApiLogic {
         return $raw;
     }
 
-    //Add the comment character "#" at the beginning
+    // Add the comment character "#" at the beginning
     public static function addComment(String $raw) {
         return "# " . $raw;
     }
 
-    //Parse line by line the config file and get the list of params
-    public static function parseCfg() {
+    // Parse line by line the config file and get the list of params
+    public static function parseCfg($start, $end) {
         $freetureConf = _FREETURE_;
         $list = array();
         $i = 0;
@@ -277,15 +316,21 @@ class FreetureFinalApiLogic {
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
 
-            //Parse config file line by line
+            // Parse config file line by line
             foreach ($contents as $line) {
 
-                //If the line has some content and does not start with #,
-                //or contains only new line or whitespaces
+                // If the line has some content and does not start with #,
+                // or contains only new line or whitespaces
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-
-                    //Add parameter to the list
+                    if ($i < $start) {
+                        $i++;
+                        continue;
+                    }
+                    if ($i > $end) {
+                        return $list;
+                    }
+                    // Add parameter to the list
                     if (self::isVisible($line)) {
                         $list[] = array(self::getKey($line), self::getValue($line), self::formatDescription($descr), 1, 0, $i);
                     } else {
@@ -315,7 +360,7 @@ class FreetureFinalApiLogic {
         return $raw;
     }
 
-    //Parse line by line the config file and get a single id
+    // Parse line by line the config file and get a single id
     public static function getCfg($id) {
         $freetureConf = _FREETURE_;
         $i = 0;
@@ -324,11 +369,11 @@ class FreetureFinalApiLogic {
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
 
-            //Parse config file line by line
+            // Parse config file line by line
             foreach ($contents as $line) {
 
-                //If the line has some content and does not start with #,
-                //or contains only new line or whitespaces
+                // If the line has some content and does not start with #,
+                // or contains only new line or whitespaces
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
 
@@ -372,7 +417,7 @@ class FreetureFinalApiLogic {
         return false;
     }
 
-    //Clean comments in the end of the string
+    // Clean comments in the end of the string
     public static function cleanComments(String $raw) {
         if (!strpos($raw, "#") === false) {
             return substr($raw, 0, strpos($raw, "#")) . "\n";
@@ -381,19 +426,19 @@ class FreetureFinalApiLogic {
         }
     }
 
-    //Set parameter as invisible adding "#nv" (not visible)
+    // Set parameter as invisible adding "#nv" (not visible)
     public static function setVisible(String $raw) {
         if (!strpos($raw, "#nv") === false) {
             return substr($raw, 0, strpos($raw, "#")) . "\n";
         }
     }
 
-    //Set parameter as visible removing "#nv"
+    // Set parameter as visible removing "#nv"
     public static function setInvisible(String $raw) {
         return str_replace("\n", " #nv\n", $raw);
     }
 
-    //Update the value, from a given object, in the cfg file
+    // Update the value, from a given object, in the cfg file
     public static function updateValue($ob) {
         $freetureConf = _FREETURE_;
         $reply = "";
@@ -431,7 +476,7 @@ class FreetureFinalApiLogic {
         }
         return true;
     }
-    
+
     // Update freeture configuration file with the given file
     public static function updateConfigurationFile($ob) {
         $freetureConf = _FREETURE_;
@@ -477,18 +522,18 @@ class FreetureFinalApiLogic {
         }
         return false;
     }
-    
+
     // Get path to mask file parsing freeture configuration
     public static function getMaskPath() {
         $freetureConf = _FREETURE_;
         $path = "";
-        
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-            
+
             //Parse config file line by line
             foreach ($contents as $line) {
-                
+
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "ACQ_MASK_PATH") {
@@ -499,18 +544,18 @@ class FreetureFinalApiLogic {
         }
         return $path;
     }
-    
+
     // Check if mask is enabled parsing freeture configuration
     public static function isMaskEnabled() {
         $freetureConf = _FREETURE_;
         $isMaskEnabled = "";
-        
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-            
+
             //Parse config file line by line
             foreach ($contents as $line) {
-                
+
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "ACQ_MASK_ENABLED") {
@@ -526,7 +571,7 @@ class FreetureFinalApiLogic {
     public static function restartFreeture() {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
-        
+
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
@@ -537,7 +582,7 @@ class FreetureFinalApiLogic {
         }
         return false;
     }
- 
+
     // Generates passwords
     public static function passwdGen() {
         $file = "";

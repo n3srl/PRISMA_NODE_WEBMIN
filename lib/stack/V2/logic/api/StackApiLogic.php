@@ -170,7 +170,7 @@ class StackApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
             $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
-            $directory = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/stacks/*";
+            $directory = _FREETURE_DATA_ . self::getStackPrefix() . "/" . $day_dir . "/stacks/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getStacksFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
@@ -209,7 +209,7 @@ class StackApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . Self::getStationPrefix() . "/*";
+        $directory = _FREETURE_DATA_ . "/" . Self::getStackPrefix() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -251,7 +251,7 @@ class StackApiLogic {
     // Get fit file path from given file info
     // File info given is 
     public static function GetFitFile($file) {
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStackPrefix() . "/";
         $file_info = explode("_", $file);
         $day = $file_info[0] . "_" . $file_info[1];
         $fit_name = $file_info[2] . "_" . $file_info[3] . "_" . $file_info[4];
@@ -299,7 +299,7 @@ class StackApiLogic {
     }
 
     // Get station code string, images prefix
-    public static function getStationPrefix() {
+    public static function getStackPrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
         
@@ -311,7 +311,7 @@ class StackApiLogic {
                 
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "ACQ_REGULAR_PRFX") {
+                    if (self::getKey($line) === "TELESCOP") {
                         $stationName = self::getValue($line);
                     }
                 }
@@ -353,7 +353,7 @@ class StackApiLogic {
     public static function getStacksFiles($start, $end, $day_dir, $enablePreview = false) {
         $i = 0;
         // Day directory with stacks /freeture/PREFIX/PREFIX_DATE/stacks
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/stacks";
+        $data_dir = _FREETURE_DATA_ . self::getStackPrefix() . "/" . $day_dir . "/stacks";
         $reply = array();
         // If there isn't data for this day return an empty array
         if (!is_dir($data_dir)) {
@@ -396,7 +396,7 @@ class StackApiLogic {
     public static function getStacksDays($start, $end) {
         $i = 0;
         // Main directory with days /freeture/PREFIX/
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStackPrefix() . "/";
         $reply = array();
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {

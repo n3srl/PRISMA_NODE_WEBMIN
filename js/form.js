@@ -355,7 +355,7 @@ function getClass(objClass, id, ...callBack) {
     if (objClass.form_name != undefined) {
         $("[name='" + objClass.form_name + "']").trigger("reset");
     } else {
-        $("form").trigger("reset");
+        $("form").not('.file-upload').trigger("reset");
     }
 
 

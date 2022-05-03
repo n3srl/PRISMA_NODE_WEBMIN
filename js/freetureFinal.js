@@ -121,13 +121,16 @@ $(document).ready(function () {
                 }
             }, 100);
         },
+        "iDisplayLength": 10,
+        "iDisplayStart": 0,
+        "pageLength": 10,
         bProcessing: true,
         bServerSide: true,
         bStateSave: true,
         sAjaxSource: '/lib/ft/V2/freeturefinal/datatable/list',
-        "paging": false,
+        "paging": true,
         "ordering": false,
-        "info": false,
+        "info": true,
         "searching": false
     });
 
@@ -143,12 +146,13 @@ $("#form-ftcfg").on('change', function (event) {
 });
 
 // Enable upload button if user has chosen a file 
+/*
 $("#form-mask").on('change', function (event) {
     filename = $(this).val();
     if (filename !== '') {
         $("#uploadmaskbtn").attr('disabled', false);
     }
-});
+});*/
 
 // Upload new freeture configuration
 $("#ftCfgFileForm").on("submit", function (e) {
@@ -174,6 +178,7 @@ $("#ftCfgFileForm").on("submit", function (e) {
 });
 
 // Upload new freeture mask
+/*
 $("#maskFileForm").on("submit", function (e) {
     e.preventDefault();
     var file = $("#form-mask")[0].files[0];
@@ -194,7 +199,7 @@ $("#maskFileForm").on("submit", function (e) {
         }
     });
 
-});
+});*/
 
 
 $(function () {

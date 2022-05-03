@@ -12,26 +12,22 @@ $(function () {
 });
 
 
-function editObj() {
+function editStation() {
     disableStationForm();
 }
 
-function allowEditObj() {
+function allowEditStation() {
     enableStationForm();
 }
 
-
 // For each element to change assign the new value and send a post request
-function saveObj() {
+function saveStation() {
     var f = function () {
         disableStationForm();
     };
 
     freetureObjects.forEach(ft => {
         switch (ft.key) {
-            case "STATION_NAME":
-                ft.value = $('#station-name').val().toUpperCase();
-                break;
             case "OBSERVER":
                 ft.value = $('#observer').val();
                 break;
@@ -44,23 +40,26 @@ function saveObj() {
             case "SITEELEV":
                 ft.value = $('#elevation-observatory').val();
                 break;
+            case "STATION_NAME":
+                ft.value = $('#station-name').val().toUpperCase();
+                break;
             case "TELESCOP":
-                ft.value = $('#station-code').val().toUpperCase();
+                ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "ACQ_REGULAR_PRFX":
-                ft.value = $('#station-code').val().toUpperCase();
+                ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "ACQ_MASK_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/default.bmp";
+                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/default.bmp";
                 break;
             case "DET_DEBUG_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/debug/";
+                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/debug/";
                 break;
             case "DATA_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/";
+                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/";
                 break;
             case "LOG_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toLowerCase() + "/log/";
+                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/log/";
                 break;
         }
         ft.insert();
@@ -72,7 +71,7 @@ function saveObj() {
 
 // For each field load the actual value and creates the objects
 function loadValues() {
-    
+
     keys.forEach(key => {
         $.get("/lib/ft/V2/freeturefinal/id/" + key, function (json1) {
             var id = JSON.parse(json1).data;
@@ -119,7 +118,7 @@ function uploadMask() {
         if (file)
             var formData = new FormData();
         formData.append("mask", file);
-        
+
         // Make a POST request to update mask file
         $.ajax({
             url: "/lib/ft/V2/freeturefinal/editmask",
@@ -132,7 +131,7 @@ function uploadMask() {
                 $('#form-mask').val('');
             }
         });
-        
+
         // Make a POST request to enable mask
         $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
             var id = JSON.parse(json1).data;
@@ -150,9 +149,9 @@ function uploadMask() {
     }
 }
 
-function undoObj() {
+function undoStation() {
     var f = function () {
-        editObj();
+        editStation();
         loadValues();
     };
     alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
@@ -167,9 +166,9 @@ function enableStationForm() {
         $(this).removeClass("input-disabled");
         $(this).prop('disabled', false);
     });
-    $("#savebtn").show();
-    $("#undobtn").show();
-    $("#modifybtn").hide();
+    $("#ftsavebtn").show();
+    $("#ftundobtn").show();
+    $("#ftmodifybtn").hide();
 
 }
 
@@ -186,9 +185,9 @@ function disableStationForm() {
         $(this).prop('disabled', true);
         validator.unmark($(this)); // Per rimuovere alert precedenti
     });
-    $("#savebtn").hide();
-    $("#undobtn").hide();
-    $("#modifybtn").show();
+    $("#ftsavebtn").hide();
+    $("#ftundobtn").hide();
+    $("#ftmodifybtn").show();
 }
 
 $('#StationForm').submit(function (e) {
@@ -203,7 +202,7 @@ $('#StationForm').submit(function (e) {
         if ($(this).attr("callback") !== undefined) {
             window[$(this).attr("callback")]();
         } else {
-            saveObj();
+            saveStation();
         }
     }
     return false;
