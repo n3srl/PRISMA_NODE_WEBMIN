@@ -37,16 +37,17 @@
                             <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
                                 <div class='pull-right'>
                                     <div class='col-md-8'>
-                                        <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                        <label class='pull-right text-nowrap' style='vertical-align: middle;'>Abilita anteprima</label>
                                     </div>
                                     <div class='col-md-4'>
-                                        <label class='switch pull-left'>
+                                        <label class='switch pull-right'>
                                             <input type='checkbox' id='enable-detection-preview'>
                                             <span class='slider round'></span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                     <!--

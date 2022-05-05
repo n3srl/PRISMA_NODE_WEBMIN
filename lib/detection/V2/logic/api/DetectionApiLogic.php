@@ -271,6 +271,17 @@ class DetectionApiLogic {
     public static function GetZip($zip) {
         return _WEBROOTDIR_ . "tmp-media/" . $zip;
     }
+    
+    // Reset zip in progress
+    public static function ResetZip() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $res = self::cancelZips();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $res);
+    }
 
     // Create zip of detection
     public static function CreateZip($detection) {
@@ -345,9 +356,16 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
+    
+    // Kill any active zip process
+    public static function cancelZips(){
+        shell_exec("killall zip");
+        return true;
+    }
 
     // Create the zip of the passed folder and put it in /tmp-media/ in webroot
     public static function processDetectionZip($detection) {
+        self::cancelZips();
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
@@ -356,7 +374,7 @@ class DetectionApiLogic {
             return $detection_name . ".zip";
         }
         
-        shell_exec("rm " . _WEBROOTDIR_ . "tmp-media/" . "*.zip");
+        //shell_exec("rm " . _WEBROOTDIR_ . "tmp-media/" . "*.zip");
         $zipcreated = _WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip";
         shell_exec("zip -r $zipcreated $detection_folder");
         return $zipcreated;

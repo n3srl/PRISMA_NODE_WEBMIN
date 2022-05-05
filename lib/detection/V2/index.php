@@ -215,34 +215,6 @@ $app->GET('/detection/foreignkey/{companyColumn}', function (Application $app, R
 
 /**
  *
- * GET GEMAP
- *
- * 
-$app->GET('/detection/gemap/{detection}', function (Application $app, Request $request, $detection) {
-
-    $result = DetectionApiLogic::GetGeMap($detection);
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/bmp');
-    $resp->setStatusCode(200);
-    return $resp;
-});*/
-
-/**
- *
- * GET DIRMAP
- *
- * 
-$app->GET('/detection/dirmap/{detection}', function (Application $app, Request $request, $detection) {
-
-    $result = DetectionApiLogic::GetDirMap($detection);
-    $resp = new BinaryFileResponse($result);
-    $resp->headers->set('Content-Type', 'image/bmp');
-    $resp->setStatusCode(200);
-    return $resp;
-});*/
-
-/**
- *
  * GET ZIP
  *
  * */
@@ -269,6 +241,25 @@ $app->GET('/detection/download/{detection}', function (Application $app, Request
 
     $result = DetectionApiLogic::GetZip($detection);
     $resp = new BinaryFileResponse($result);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+ *
+ * CANCEL ZIP
+ *
+ * */
+$app->POST('/detection/zip/cancel', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::ResetZip();
+     if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
     $resp->setStatusCode(200);
     return $resp;
 });
