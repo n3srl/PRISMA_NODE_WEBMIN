@@ -221,7 +221,7 @@ $app->GET('/detection/foreignkey/{companyColumn}', function (Application $app, R
 $app->GET('/detection/createzip/{detection}', function (Application $app, Request $request, $detection) {
 
     $result = DetectionApiLogic::CreateZip($detection);
-     if ($result->result) {
+    if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
     } else {
@@ -253,14 +253,15 @@ $app->GET('/detection/download/{detection}', function (Application $app, Request
 $app->POST('/detection/zip/cancel', function (Application $app, Request $request) {
 
     $result = DetectionApiLogic::ResetZip();
-     if ($result->result) {
+    shell_exec("echo prima di response >> /freeture/err.txt");
+
+    if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
     } else {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(403);
     }
-    $resp->setStatusCode(200);
     return $resp;
 });
 
@@ -270,7 +271,7 @@ $app->POST('/detection/zip/cancel', function (Application $app, Request $request
  *
  * */
 $app->GET('/detection/preview/lastdetection', function (Application $app, Request $request) {
-    
+
     $result = DetectionApiLogic::GetLastDetection();
     if ($result->result) {
         $resp = new Response(json_encode($result));

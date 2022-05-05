@@ -13,6 +13,7 @@ var table2 = null;
 var isProcessingZip = false;
 var zipRow = null;
 var stopZip = false;
+var createZipXhr = null;
 
 $(function () {
     disableForm(inafdetection);
@@ -111,65 +112,74 @@ function download(row) {
      var data = JSON.parse(json).data;
      window.location.href = "/lib/detection/V2/detection/download/" + data;
      });*/
-    
-    //$.when(createZip(data[6])).done(downloadZip);
-    
-    //createZip(data[6]).done(downloadZip); BEST EFFORT
-    
-    /*
-    $.ajax({
-        url: "/lib/detection/V2/detection/createzip/" + data[6],
-        async: false,
-        success: function (json) {
-            isProcessingZip = false;
-            zipRow = null;
-            $('#DetectionList').dataTable().fnDraw();
-            if (!cancelZip) {
-                var data = JSON.parse(json).data;
-                window.location.href = "/lib/detection/V2/detection/download/" + data;
-                cancelZip = false;
-            }
 
+    //$.when(createZip(data[6])).done(downloadZip);
+
+    //createZip(data[6]).done(downloadZip);
+
+    createZipXhr = $.ajax({
+        url: "/lib/detection/V2/detection/createzip/" + data[6],
+        async: true,
+        global: false,
+        success: function (json) {
+            downloadZip(json);
         },
         error: function (jqXHR, error, errorThrown) {
+            $.ajax({
+                async: true,
+                type: "POST",
+                global: false,
+                url: "/lib/detection/V2/detection/zip/cancel",
+                success: function (json) {
+                    defaultError("Zip annullato");
+                }
+            });
             isProcessingZip = false;
             zipRow = null;
             $('#DetectionList').dataTable().fnDraw();
-
         }
-    });*/
-
-}
-
-function createZip(data) {
-    return $.ajax({
-        url: "/lib/detection/V2/detection/createzip/" + data,
-        async: true
     });
+
 }
+
+/*
+ function createZip(data) {
+ createZipXhr = $.ajax({
+ url: "/lib/detection/V2/detection/createzip/" + data,
+ global: false,
+ async: true
+ });
+ return createZipXhr;
+ }*/
 
 function downloadZip(json) {
     isProcessingZip = false;
     zipRow = null;
     $('#DetectionList').dataTable().fnDraw();
-    if (!stopZip) {
-        var data = JSON.parse(json).data;
-        window.location.href = "/lib/detection/V2/detection/download/" + data;
-        stopZip = false;
-    }
+    // if (!stopZip) {
+    var data = JSON.parse(json).data;
+    window.location.href = "/lib/detection/V2/detection/download/" + data;
+    // }
 }
 
 function cancelZip() {
-    isProcessingZip = false;
+    createZipXhr.abort();
     stopZip = true;
-    zipRow = null;
-    $('#DetectionList').dataTable().fnDraw();
-    
-    $.ajax({
-        type: "POST",
-        url: "/lib/detection/V2/detection/zip/cancel"
-    });
-    defaultError("Zip annullato");
+    /*
+     isProcessingZip = false;
+     
+     zipRow = null;
+     $('#DetectionList').dataTable().fnDraw();
+     $.ajax({
+     async: true,
+     type: "POST",
+     global: false,
+     url: "/lib/detection/V2/detection/zip/cancel",
+     success: function (json) {
+     defaultError("Zip annullato");
+     }        
+     });*/
+
 }
 
 $(document).ready(function () {

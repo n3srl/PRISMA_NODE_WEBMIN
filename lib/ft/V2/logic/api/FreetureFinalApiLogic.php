@@ -246,6 +246,28 @@ class FreetureFinalApiLogic {
         return $output;
     }
 
+    public static function GetStorageInfo() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getStoragePercentage();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function CleanMediaStorage() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::cleanTmpMediaFolder();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
     // Clean string 
     public static function countFreetureValues() {
         $freetureConf = _FREETURE_;
@@ -601,6 +623,58 @@ class FreetureFinalApiLogic {
 
         fwrite($myfile, $string);
         fclose($myfile);
+    }
+
+    // Get percentage values of cpu, ram and disk usage
+    public static function getStoragePercentage() {
+        $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
+
+        $cpu = sys_getloadavg()[0] * 100;
+        
+        /*
+        $stat1 = file('/proc/stat');
+        sleep(1);
+        $stat2 = file('/proc/stat');
+        $info1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
+        $info2 = explode(" ", preg_replace("!cpu +!", "", $stat2[0]));
+        $dif = array();
+        $dif['user'] = $info2[0] - $info1[0];
+        $dif['nice'] = $info2[1] - $info1[1];
+        $dif['sys'] = $info2[2] - $info1[2];
+        //$dif['idle'] = $info2[3] - $info1[3];
+        $total = array_sum($dif);
+        $cpus = array();
+        foreach ($dif as $x => $y) {
+            $cpus[$x] = round($y / $total * 100, 1);
+        }
+        $cpu = 0;
+        foreach ($cpus as $x => $y) {
+            $cpu += $y;
+        }*/
+        
+        
+        $free1 = shell_exec('free');
+        $free2 = (string) trim($free1);
+        $free_arr = explode("\n", $free2);
+        $mem1 = explode(" ", $free_arr[1]);
+        $mem2 = array_filter($mem1);
+        $mem3 = array_merge($mem2);
+        $ram = $mem3[2] / $mem3[1] * 100;
+
+        return array($cpu, $ram, $disk);
+    }
+
+    public static function getMediaStorageUsage() {
+        $data_dir = _WEBROOTDIR_ . "tmp-media/";
+        $media = disk_total_space($data_dir) - disk_free_space($data_dir);
+        return $media;
+    }
+
+    // Remove all files from tmp-media
+    public static function cleanTmpMediaFolder() {
+        $data_dir = _WEBROOTDIR_ . "tmp-media/";
+        shell_exec("rm " . $data_dir . "*");
+        return true;
     }
 
 }

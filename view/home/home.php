@@ -23,7 +23,7 @@
                         <h5 class="modal-title" id="mask-preview-modal-label">Mask</h5>
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
-                        <a href='/lib/ft/V2/freeturefinal/preview/mask'>
+                        <a download="default.bmp" id="download-mask">
                             <button type="button" class="btn btn-success pull-right">Download</button>
                         </a>
                     </div>
@@ -136,6 +136,49 @@
                                     <tbody>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-r">
+                    <div id='list' class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Utilizzo Dati') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <label>CPU</label>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-success" id="cpu-percentage" role="progressbar" aria-valuenow="0"
+                                         aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <label>RAM</label>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-info" id="ram-percentage" role="progressbar" aria-valuenow="0"
+                                         aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <label>Disco</label>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-danger" id="disk-percentage" role="progressbar" aria-valuenow="0"
+                                         aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

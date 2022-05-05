@@ -513,9 +513,17 @@ class DetectionApiLogic {
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
                 
+                $processedFiles = $enablePreview ? self::processDetection($detection, $data_dir) : array("", "", "");
+                
+                $preview_base64 = $processedFiles[0];
+                $dirmap_base64 = $processedFiles[1];
+                $gemap_base64 = $processedFiles[2];
+                
+                /*
                 $preview_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[0] : "";
                 $dirmap_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[1] : "";
                 $gemap_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[2] : "";
+                */
                 
                 $reply[] = array($detection, $day . ":" . $n_day_detections, $hour,
                     $preview_base64,

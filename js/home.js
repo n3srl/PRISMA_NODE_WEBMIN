@@ -54,12 +54,36 @@ function download(value) {
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
     $.ajax({
         url: "/lib/detection/V2/detection/createzip/" + value,
-        async: false,
         success: function (data) {
             window.location.href = "/lib/detection/V2/detection/download/" + data;
         }
     });
 }
+
+// Refresh every 5 seconds storage info (cpu, ram, disk)
+function storageInfo() {
+    $.ajax({
+        url: "/lib/ft/V2/freeturefinal/storage/info",
+        type: "GET",
+        dataType: "json",
+        global: false,
+        timeout: 5000,
+        complete: storageInfo,
+        success: function (res) {
+            var info = res.data;
+            $("#cpu-percentage").attr("aria-valuenow", info[0]);
+            $("#ram-percentage").attr("aria-valuenow", info[1]);
+            $("#disk-percentage").attr("aria-valuenow", info[2]);
+            $("#cpu-percentage").attr("style", "width:" + info[0] + "%");
+            $("#ram-percentage").attr("style", "width:" + info[1] + "%");
+            $("#disk-percentage").attr("style", "width:" + info[2] + "%");
+            $("#cpu-percentage").html(Math.round(info[0]) + "%");
+            $("#ram-percentage").html(Math.round(info[1]) + "%");
+            $("#disk-percentage").html(Math.round(info[2]) + "%");
+        }
+    });
+}
+
 
 // Show modal with freeture mask
 $("#btn-show-mask").click(function () {
@@ -241,7 +265,7 @@ function initDetectionsDatatable(folder) {
 }
 
 $(document).ready(function () {
-    
+
     // Get last day folder name to get last day detections
     $.get("/lib/ft/V2/freeturefinal/id/ACQ_REGULAR_PRFX", function (json1) {
         var id = JSON.parse(json1).data;
@@ -259,25 +283,25 @@ $(document).ready(function () {
             initDetectionsDatatable(folder);
         });
     });
-    
+
     // Get number of all detections
     $.get("/lib/detection/V2/detection/counter/all", function (json) {
         var data = JSON.parse(json).data;
         $("#all-detections-number").html(data);
     });
-    
+
     // Get number of last month detections
     $.get("/lib/detection/V2/detection/counter/lastmonth", function (json) {
         var data = JSON.parse(json).data;
         $("#month-detections-number").html(data);
     });
-    
+
     // Get number of last day detections
     $.get("/lib/detection/V2/detection/counter/lastday", function (json) {
         var data = JSON.parse(json).data;
         $("#day-detections-number").html(data);
     });
-    
+
     // Get station latitude and longitude to create map
     $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {
         var id1 = JSON.parse(json1).data;
@@ -294,7 +318,7 @@ $(document).ready(function () {
             });
         });
     });
-    
+
     // Get last image base64 encoded and its timestamp (last stack)
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
@@ -302,21 +326,26 @@ $(document).ready(function () {
         $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
         $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-    
+
     // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
-    
+
     // Get freeture mask image base64 encoded
     $.get("/lib/ft/V2/freeturefinal/preview/mask", function (json) {
         var data = JSON.parse(json).data;
         if (data) {
             $('#mask-preview-modal-body').html("<img class='img-responsive' src='" + data + "'/>");
+            $('#download-mask').attr('href', data);
         } else {
             $('#btn-show-mask').hide();
         }
     });
 
     loadStationInfoValues();
+
+    storageInfo();
+
+
 
 });
 

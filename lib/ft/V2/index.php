@@ -257,5 +257,41 @@ $app->GET('/freeturefinal/preview/mask', function (Application $app, Request $re
     return $resp;
 });
 
+/**
+ *
+ * GET STORAGE INFO
+ *
+ * */
+$app->GET('/freeturefinal/storage/info', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetStorageInfo();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * CLEAN STORAGE INFO
+ *
+ * */
+$app->POST('/freeturefinal/storage/clean', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::CleanMediaStorage();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
 $app->run();
 
