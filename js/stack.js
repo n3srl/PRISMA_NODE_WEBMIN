@@ -79,7 +79,7 @@ $("#enable-stack-preview").on('change', function (event) {
 });
 
 $(document).ready(function () {
-    
+
     // Create days datatable
     table1 = $('#StackDayList').DataTable({
         "oLanguage": {
@@ -147,7 +147,7 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-    
+
     // Get last stack image and its timestamp
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
@@ -155,7 +155,7 @@ $(document).ready(function () {
         $('#last-stack-description').html("Stack del " + info[0] + " (" + data[2] + ")");
         $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-    
+
     // Set toggle switch unchecked 
     $("#enable-stack-preview").attr("checked", false);
 });
@@ -242,7 +242,7 @@ function initStacksDatatable(folder) {
                     r.style.display = collapsed ? 'none' : '';
                 });
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="4">' + info[0] + ' ('+ info[1] +' stack)' + '</td>')
+                        .append('<td colspan="4">' + info[0] + ' (' + info[1] + ' stack)' + '</td>')
                         .attr('data-name', group)
                         .toggleClass('collapsed', collapsed);
             },
@@ -264,7 +264,7 @@ function initStacksDatatable(folder) {
         "info": true,
         "searching": false
     });
-    
+
     // Change stacks displayed by click on corresponding day
     $('#StackDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
@@ -272,6 +272,15 @@ function initStacksDatatable(folder) {
         $('#StackList').dataTable().fnDraw();
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
+    });
+
+    // Hide preview column and enable preview toggle if media not enabled
+    $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
+        var data = JSON.parse(json).data;
+        table2.column(3).visible(data);
+        if (!data) {
+            $("#enable-stack-preview-box").hide();
+        }
     });
 }
 

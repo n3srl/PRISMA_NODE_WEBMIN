@@ -77,6 +77,9 @@
                     </a>
                     <ul class="dropdown-menu dropdown-usermenu pull-right">
                         <li><a href="#" id="logout" onclick="logout()"><i class="fa fa-sign-out pull-right"></i> <?= _("Log Out") ?></a>
+                            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+                            <li><a href="/settings/edit" id="settings"><i class="fa fa-gear pull-right"></i> <?= _("Impostazioni") ?></a>
+                            <?php } ?>
                     </ul>
                 </li>
                 <!--                <li role="presentation" class="dropdown">

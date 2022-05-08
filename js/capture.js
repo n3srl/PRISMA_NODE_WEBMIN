@@ -79,7 +79,7 @@ $("#enable-capture-preview").on('change', function (event) {
 });
 
 $(document).ready(function () {
-    
+
     // Create days datatable
     table1 = $('#CaptureDayList').DataTable({
         "oLanguage": {
@@ -147,7 +147,7 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-    
+
     // Get last capture image and its timestamp
     $.get("/lib/capture/V2/capture/preview/lastcapture", function (json) {
         var data = JSON.parse(json).data;
@@ -155,9 +155,10 @@ $(document).ready(function () {
         $('#last-capture-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
         $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-    
+
     // Set toggle switch unchecked 
     $("#enable-capture-preview").attr("checked", false);
+
 });
 
 // Create datatable with captures of selected day
@@ -197,18 +198,18 @@ function initCapturesDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                           "<button class='btn btn-success btn-capture-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
-                           "</center>";
+                            "<button class='btn btn-success btn-capture-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
+                            "</center>";
                 }
             },
             {
                 "targets": [-1],
                 render: function (data, type, row, meta) {
                     return "<center>" +
-                           "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
-                           "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
-                           "</a>" +
-                           "</center>";
+                            "<a href='/lib/capture/V2/capture/download/" + data + "'>" +
+                            "<button class='btn btn-success'><i class='fa fa-download'></i></button>" +
+                            "</a>" +
+                            "</center>";
                 }
             },
             {
@@ -242,7 +243,7 @@ function initCapturesDatatable(folder) {
                     r.style.display = collapsed ? 'none' : '';
                 });
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="4">' + info[0] + ' ('+ info[1] +' calibrazioni)' + '</td>')
+                        .append('<td colspan="4">' + info[0] + ' (' + info[1] + ' calibrazioni)' + '</td>')
                         .attr('data-name', group)
                         .toggleClass('collapsed', collapsed);
             },
@@ -264,7 +265,7 @@ function initCapturesDatatable(folder) {
         "info": true,
         "searching": false
     });
-    
+
     // Change captures displayed by click on corresponding day
     $('#CaptureDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
@@ -272,6 +273,15 @@ function initCapturesDatatable(folder) {
         $('#CaptureList').dataTable().fnDraw();
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
+    });
+
+    // Hide preview column and enable preview toggle if media not enabled
+    $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
+        var data = JSON.parse(json).data;
+        table2.column(3).visible(data);
+        if (!data) {
+            $("#enable-capture-preview-box").hide();
+        }
     });
 }
 

@@ -257,6 +257,41 @@ class FreetureFinalApiLogic {
         return CoreLogic::GenerateResponse($res, $ob);
     }
 
+    public static function GetMediaStorageInfo() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getMediaStorageUsage();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function GetMediaVisibility() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::isMediaPreviewEnabled();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function UpdateMediaVisibility($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $tmp = $request->get("mediaPreview");
+            $enable_preview = $tmp === 'true' ? true : false;
+            $ob = self::updateMediaPreview($enable_preview);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
     public static function CleanMediaStorage() {
         try {
             $Person = CoreLogic::VerifyPerson();
@@ -630,29 +665,29 @@ class FreetureFinalApiLogic {
         $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
 
         $cpu = sys_getloadavg()[0] * 100;
-        
+
         /*
-        $stat1 = file('/proc/stat');
-        sleep(1);
-        $stat2 = file('/proc/stat');
-        $info1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
-        $info2 = explode(" ", preg_replace("!cpu +!", "", $stat2[0]));
-        $dif = array();
-        $dif['user'] = $info2[0] - $info1[0];
-        $dif['nice'] = $info2[1] - $info1[1];
-        $dif['sys'] = $info2[2] - $info1[2];
-        //$dif['idle'] = $info2[3] - $info1[3];
-        $total = array_sum($dif);
-        $cpus = array();
-        foreach ($dif as $x => $y) {
-            $cpus[$x] = round($y / $total * 100, 1);
-        }
-        $cpu = 0;
-        foreach ($cpus as $x => $y) {
-            $cpu += $y;
-        }*/
-        
-        
+          $stat1 = file('/proc/stat');
+          sleep(1);
+          $stat2 = file('/proc/stat');
+          $info1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
+          $info2 = explode(" ", preg_replace("!cpu +!", "", $stat2[0]));
+          $dif = array();
+          $dif['user'] = $info2[0] - $info1[0];
+          $dif['nice'] = $info2[1] - $info1[1];
+          $dif['sys'] = $info2[2] - $info1[2];
+          //$dif['idle'] = $info2[3] - $info1[3];
+          $total = array_sum($dif);
+          $cpus = array();
+          foreach ($dif as $x => $y) {
+          $cpus[$x] = round($y / $total * 100, 1);
+          }
+          $cpu = 0;
+          foreach ($cpus as $x => $y) {
+          $cpu += $y;
+          } */
+
+
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);
         $free_arr = explode("\n", $free2);
@@ -664,16 +699,38 @@ class FreetureFinalApiLogic {
         return array($cpu, $ram, $disk);
     }
 
+    // Get size temp media folder
     public static function getMediaStorageUsage() {
-        $data_dir = _WEBROOTDIR_ . "tmp-media/";
-        $media = disk_total_space($data_dir) - disk_free_space($data_dir);
-        return $media;
+        $media_dir = _WEBROOTDIR_ . "tmp-media/";
+        $temp = shell_exec("du -s -B1 $media_dir");
+        $bytes = explode(" ", $temp);
+        $media_usage = intval($bytes[0]);
+        return $media_usage;
+    }
+
+    // Get if media preview and download is enabled
+    public static function isMediaPreviewEnabled() {
+        $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
+        $strJsonFileContents = file_get_contents($media_info);
+        $array = json_decode($strJsonFileContents, true);
+        $media_preview = $array["mediaPreview"];
+        return $media_preview;
+    }
+
+    // Get if media preview and download is enabled
+    public static function updateMediaPreview($previewEnabled) {
+        $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
+        $jsonString = file_get_contents($media_info);
+        $data = json_decode($jsonString, true);
+        $data['mediaPreview'] = $previewEnabled;
+        $newJsonString = json_encode($data);
+        return file_put_contents($media_info, $newJsonString);
     }
 
     // Remove all files from tmp-media
     public static function cleanTmpMediaFolder() {
         $data_dir = _WEBROOTDIR_ . "tmp-media/";
-        shell_exec("rm " . $data_dir . "*");
+        shell_exec("find $data_dir ! -name 'README.md' -type f -exec rm -f {} +");
         return true;
     }
 

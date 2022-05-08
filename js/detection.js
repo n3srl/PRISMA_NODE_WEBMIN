@@ -202,7 +202,7 @@ $(document).ready(function () {
 
         columnDefs: [
             {
-                "targets": [-1, -2, -3],
+                "targets": "_all",
                 "orderable": false
             },
             {
@@ -410,7 +410,18 @@ function initDetectionsDatatable(folder) {
         $('#DetectionList').dataTable().fnDraw();
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
+    });
 
+    // Hide preview column and enable preview toggle if media not enabled
+    $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
+        var data = JSON.parse(json).data;
+        table2.column(3).visible(data);
+        table2.column(4).visible(data);
+        table2.column(5).visible(data);
+        table2.column(6).visible(data);
+        if (!data) {
+            $("#enable-detection-preview-box").hide();
+        }
     });
 }
 

@@ -451,5 +451,4 @@ class CaptureApiLogic {
         }
         return $n_files;
     }
-
 }

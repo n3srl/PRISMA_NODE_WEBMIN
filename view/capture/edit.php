@@ -31,7 +31,7 @@
                             <div class='col-md-4 col-sm-4 col-xs-12 no-padding'>
                                 <h2><?= _('Elenco') ?></h2>
                             </div>
-                            <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
+                            <div class='col-md-8 col-sm-8 col-xs-12 no-padding' id='enable-capture-preview-box'>
                                 <div class='pull-right'>
                                     <div class='col-md-8'>
                                         <label class='pull-right text-nowrap'>Abilita anteprima</label>

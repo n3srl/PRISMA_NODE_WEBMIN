@@ -277,6 +277,60 @@ $app->GET('/freeturefinal/storage/info', function (Application $app, Request $re
 
 /**
  *
+ * GET MEDIA STORAGE INFO
+ *
+ * */
+$app->GET('/freeturefinal/media/info', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetMediaStorageInfo();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * UPDATE MEDIA PREVIEW
+ *
+ * */
+$app->POST('/freeturefinal/media/preview', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::UpdateMediaVisibility($request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET MEDIA PREVIEW
+ *
+ * */
+$app->GET('/freeturefinal/media/preview', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetMediaVisibility();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
  * CLEAN STORAGE INFO
  *
  * */

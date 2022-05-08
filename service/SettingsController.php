@@ -1,10 +1,10 @@
 <?php
 /**
- * Class for OvpnController
+ * Class for SettingsController
  * 
  * @author: N3 S.r.l.
  */
-class OvpnController extends Controller
+class SettingsController extends Controller
 {
 	public function editOperation() {
 		$permission = parent::securityCheck();
@@ -22,5 +22,3 @@ class OvpnController extends Controller
 	}
         
 }
-
-
