@@ -322,6 +322,9 @@ class CaptureApiLogic {
 
     // Encode image to base64
     public static function encodeCapture($path) {
+        if (!file_exists($path)) {
+            return "";
+        }
         $data = file_get_contents($path);
         $base64 = 'data:image/png;base64,' . base64_encode($data);
         return $base64;

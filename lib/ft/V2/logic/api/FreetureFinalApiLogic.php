@@ -664,29 +664,8 @@ class FreetureFinalApiLogic {
     public static function getStoragePercentage() {
         $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
 
-        $cpu = sys_getloadavg()[0] * 100;
-
-        /*
-          $stat1 = file('/proc/stat');
-          sleep(1);
-          $stat2 = file('/proc/stat');
-          $info1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
-          $info2 = explode(" ", preg_replace("!cpu +!", "", $stat2[0]));
-          $dif = array();
-          $dif['user'] = $info2[0] - $info1[0];
-          $dif['nice'] = $info2[1] - $info1[1];
-          $dif['sys'] = $info2[2] - $info1[2];
-          //$dif['idle'] = $info2[3] - $info1[3];
-          $total = array_sum($dif);
-          $cpus = array();
-          foreach ($dif as $x => $y) {
-          $cpus[$x] = round($y / $total * 100, 1);
-          }
-          $cpu = 0;
-          foreach ($cpus as $x => $y) {
-          $cpu += $y;
-          } */
-
+        $cpu_cmd = "cat /proc/stat |grep cpu |tail -1|awk '{print ($5*100)/($2+$3+$4+$5+$6+$7+$8+$9+$10)}'|awk '{print 100-$1}'";
+        $cpu = (float)str_replace("\n", "", shell_exec($cpu_cmd));
 
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);

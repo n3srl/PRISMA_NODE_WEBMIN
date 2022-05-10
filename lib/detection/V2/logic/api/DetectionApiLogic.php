@@ -421,15 +421,15 @@ class DetectionApiLogic {
     public static function processDetectionVideo($detection) {
         self::cancelVideos();
         $_SESSION['cancel_video'] = false;
-        
+
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        
+
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".mkv")) {
             return $detection_name . ".mkv";
         }
-        
+
         $video = self::makeVideo($detection_folder . "/", $detection_name);
         return $video;
     }
@@ -618,6 +618,9 @@ class DetectionApiLogic {
 
     // Convert media to base64 (default png)
     public static function encodeDetection($path, $type = "png") {
+        if (!file_exists($path)) {
+            return "";
+        }
         $data = file_get_contents($path);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
         return $base64;
@@ -625,29 +628,10 @@ class DetectionApiLogic {
 
     // Make video of passed detection
     public static function makeVideo($detection_dir, $video_name) {
-        
+
         $media_dir = _WEBROOTDIR_ . "tmp-media/";
         $frames_dir = $media_dir . "tmp-video/";
         mkdir($frames_dir);
-        
-        //$frames = array();
-        //$positions = $detection_dir . "positions.txt";
-
-        // Extract detection frames
-        /*
-          if (file_exists($positions) && is_file($positions)) {
-          $contents = file($positions);
-          foreach ($contents as $line) {
-          $info = explode(" ", $line);
-          $frames[] = $info[0];
-          }
-          } */
-
-        /*
-          foreach ($frames as $frame) {
-          $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
-          shell_exec("fitspng -o " . $media_dir . $frame . ".png " . $frame_path);
-          } */
 
         // Convert each frame to png
         $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_ASCENDING);
@@ -667,12 +651,7 @@ class DetectionApiLogic {
             shell_exec("echo fitspng -o " . $frames_dir . $frame . ".png " . $frame_path . " >> /freeture/video.txt");
         }
         shell_exec("ls $frames_dir >> /freeture/video.txt");
-
         shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
-        //shell_exec("rm " . $media_dir . "*.png");
-        //$base64_video = self::encodeDetection($media_dir . $video_name . ".mkv", "mkv");
-        //shell_exec("rm " . $media_dir . "*.mkv");
-        //rmdir($frames_dir);
         shell_exec("rm -r $frames_dir");
         return $video_name . ".mkv";
     }
