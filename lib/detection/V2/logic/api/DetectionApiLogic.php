@@ -271,7 +271,7 @@ class DetectionApiLogic {
     public static function GetZip($zip) {
         return _WEBROOTDIR_ . "tmp-media/" . $zip;
     }
-    
+
     // Reset zip in progress
     public static function ResetZip() {
         try {
@@ -288,6 +288,33 @@ class DetectionApiLogic {
         try {
             $Person = CoreLogic::VerifyPerson();
             $zip = self::processDetectionZip($detection);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $zip);
+    }
+
+    // Get already created detection video
+    public static function GetVideo($video) {
+        return _WEBROOTDIR_ . "tmp-media/" . $video;
+    }
+
+    // Reset video in progress
+    public static function ResetVideo() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $res = self::cancelVideos();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $res);
+    }
+
+    // Create video of detection
+    public static function CreateVideo($detection) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $zip = self::processDetectionVideo($detection);
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
@@ -337,14 +364,14 @@ class DetectionApiLogic {
         $now = new DateTime();
         $month1 = $now->format('m');
         $n_files = 0;
-        
+
         if ($handle = opendir($path)) {
-            
+
             while (false !== ($day = readdir($handle))) {
                 $name2 = explode("_", $day);
                 $datetime2 = date_create($name2[1]);
                 $month2 = $datetime2->format('m');
-                
+
                 // Find folder of the right month
                 if ($month1 === $month2) {
                     $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
@@ -356,9 +383,9 @@ class DetectionApiLogic {
         }
         return $n_files;
     }
-    
+
     // Kill any active zip process
-    public static function cancelZips(){
+    public static function cancelZips() {
         shell_exec("killall zip");
         return true;
     }
@@ -369,15 +396,42 @@ class DetectionApiLogic {
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        
+
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip")) {
             return $detection_name . ".zip";
         }
-        
+
         //shell_exec("rm " . _WEBROOTDIR_ . "tmp-media/" . "*.zip");
         $zipcreated = _WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip";
         shell_exec("zip -r $zipcreated $detection_folder");
-        return $zipcreated;
+        return $detection_name . ".zip";
+    }
+
+    // Kill any active video process
+    public static function cancelVideos() {
+        $_SESSION['cancel_video'] = true;
+        shell_exec("killall fitspng");
+        shell_exec("killall ffmpeg");
+        $frames_dir = _WEBROOTDIR_ . "tmp-media/tmp-video/";
+        shell_exec("rm -r $frames_dir");
+        return true;
+    }
+
+    // Create the video of detection and put it in /tmp-media/ in webroot
+    public static function processDetectionVideo($detection) {
+        self::cancelVideos();
+        $_SESSION['cancel_video'] = false;
+        
+        $detection_folder = self::getDetectionBasePath($detection);
+        $detection_info = explode("_", $detection);
+        $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        
+        if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".mkv")) {
+            return $detection_name . ".mkv";
+        }
+        
+        $video = self::makeVideo($detection_folder . "/", $detection_name);
+        return $video;
     }
 
     // Get base path to passed detection files
@@ -420,13 +474,13 @@ class DetectionApiLogic {
     public static function getDetectionPrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
-        
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-            
+
             //Parse config file line by line
             foreach ($contents as $line) {
-                
+
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "STATION_NAME") {
@@ -437,7 +491,7 @@ class DetectionApiLogic {
         }
         return $stationName;
     }
-    
+
     // Get all days and compute number of detections in that day
     public static function getDetectionsDays($start, $end) {
         $i = 0;
@@ -445,11 +499,11 @@ class DetectionApiLogic {
         $reply = array();
 
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
-        
+
         foreach ($dirs as $day_dir) {
-            
+
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/events/*");
-            
+
             if ($i < $start) {
                 $i++;
                 continue;
@@ -463,9 +517,9 @@ class DetectionApiLogic {
             if ('..' === $day_dir) {
                 continue;
             }
-            
+
             $name = explode("_", $day_dir);
-            
+
             if (isset($name[1])) {
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
@@ -482,16 +536,16 @@ class DetectionApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getDetectionPrefix() . "/" . $date_dir . "/events";
         $reply = array();
-        
+
         if (!is_dir($data_dir)) {
             return $reply;
         }
-        
+
         $n_day_detections = self::getDirectoryFilesCount($data_dir . "/*");
         $detections = scandir($data_dir, SCANDIR_SORT_DESCENDING);
-        
+
         foreach ($detections as $detection) {
-            
+
             if ($i < $start) {
                 $i++;
                 continue;
@@ -505,30 +559,25 @@ class DetectionApiLogic {
             if ('..' === $detection) {
                 continue;
             }
-            
+
             $name = explode("_", $detection);
-            
+
             if (isset($name[1])) {
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
-                
+
                 $processedFiles = $enablePreview ? self::processDetection($detection, $data_dir) : array("", "", "");
-                
+
                 $preview_base64 = $processedFiles[0];
                 $dirmap_base64 = $processedFiles[1];
                 $gemap_base64 = $processedFiles[2];
-                
-                /*
-                $preview_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[0] : "";
-                $dirmap_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[1] : "";
-                $gemap_base64 = $enablePreview ? self::processDetection($detection, $data_dir)[2] : "";
-                */
-                
+
                 $reply[] = array($detection, $day . ":" . $n_day_detections, $hour,
                     $preview_base64,
                     $dirmap_base64,
                     $gemap_base64,
+                    $date_dir . "_" . $detection,
                     $date_dir . "_" . $detection); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
                 $i++;
             }
@@ -538,33 +587,32 @@ class DetectionApiLogic {
 
     // Process capture fit file, apply watermark and convert image to base64, create video
     public static function processDetection($detection, $data_dir) {
-        
+
         // Path strcuture: /freeture/STATION_NAME/STATION_NAME_DAY/events/STATION_NAME_DAY_HOUR/*.fit
         $tmp_png_dir = _WEBROOTDIR_ . "tmp-media/";
         $logo_path = _WEBROOTDIR_ . "img/watermark.png";
         $fits = glob($data_dir . "/" . $detection . "/*.fit");
         $fit_path = $fits[0];
         $exp_fit = explode("/", $fits[0]);
-        
+
         // Convert fit to png
         $png_name_tmp = str_replace(".fit", "-tmp.png", $exp_fit[6]);
         $png_path_tmp = $tmp_png_dir . $png_name_tmp;
         shell_exec("fitspng -o $png_path_tmp $fit_path");
-        
+
         // Apply watermark
         $png_name = str_replace(".fit", ".png", $exp_fit[6]);
         $png_path = $tmp_png_dir . $png_name;
         shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
-        
+
         $gemap_path = $data_dir . "/" . $detection . "/GeMap.bmp";
         $dirmap_path = $data_dir . "/" . $detection . "/DirMap.bmp";
-        
+
         $preview_base64 = self::encodeDetection($png_path);
         $gemap_base64 = self::encodeDetection($gemap_path, "bmp");
         $dirmap_base64 = self::encodeDetection($dirmap_path, "bmp");
-        
+
         shell_exec("rm " . $tmp_png_dir . "*.png");
-        //$video_base64 = self::makeVideo($data_dir . "/" . $detection . "/", $detection);
         return array($preview_base64, $dirmap_base64, $gemap_base64);
     }
 
@@ -577,37 +625,56 @@ class DetectionApiLogic {
 
     // Make video of passed detection
     public static function makeVideo($detection_dir, $video_name) {
-        //$video_dir = _WEBROOTDIR_ . "detection-video/";
+        
         $media_dir = _WEBROOTDIR_ . "tmp-media/";
-        $frames = array();
-        $positions = $detection_dir . "positions.txt";
+        $frames_dir = $media_dir . "tmp-video/";
+        mkdir($frames_dir);
         
+        //$frames = array();
+        //$positions = $detection_dir . "positions.txt";
+
         // Extract detection frames
-        if (file_exists($positions) && is_file($positions)) {
-            $contents = file($positions);
-            foreach ($contents as $line) {
-                $info = explode(" ", $line);
-                $frames[] = $info[0];
-            }
-        }
-        
-        // Convert each frame to png
-        foreach ($frames as $frame) {
-            $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
-            shell_exec("fitspng -o " . $media_dir . $frame . ".png " . $frame_path);
-        }
         /*
-        $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_DESCENDING);
-        foreach($frames as $frame){
-        $frame_path = $detection_dir . "fits2D/" . $frame;
-        shell_exec("fitspng -o " . $video_dir . $frame . ".png " . $frame_path);
-        } 
-        */
-        shell_exec("cat " . $media_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
-        shell_exec("rm " . $media_dir . "*.png");
-        $base64_video = self::encodeDetection($media_dir . $video_name . ".mkv", "mkv");
-        shell_exec("rm " . $media_dir . "*.mkv");
-        return $base64_video;
+          if (file_exists($positions) && is_file($positions)) {
+          $contents = file($positions);
+          foreach ($contents as $line) {
+          $info = explode(" ", $line);
+          $frames[] = $info[0];
+          }
+          } */
+
+        /*
+          foreach ($frames as $frame) {
+          $frame_path = $detection_dir . "fits2D/frame_" . $frame . ".fit";
+          shell_exec("fitspng -o " . $media_dir . $frame . ".png " . $frame_path);
+          } */
+
+        // Convert each frame to png
+        $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_ASCENDING);
+        foreach ($frames as $frame) {
+            if ($_SESSION['cancel_video']) {
+                return;
+            }
+            if ('.' === $frame) {
+                continue;
+            }
+            if ('..' === $frame) {
+                continue;
+            }
+            $frame_png = str_replace(".fit", ".png", $frame);
+            $frame_path = $detection_dir . "fits2D/" . $frame;
+            shell_exec("fitspng -o " . $frames_dir . $frame_png . " " . $frame_path);
+            shell_exec("echo fitspng -o " . $frames_dir . $frame . ".png " . $frame_path . " >> /freeture/video.txt");
+        }
+        shell_exec("ls $frames_dir >> /freeture/video.txt");
+
+        shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
+        //shell_exec("rm " . $media_dir . "*.png");
+        //$base64_video = self::encodeDetection($media_dir . $video_name . ".mkv", "mkv");
+        //shell_exec("rm " . $media_dir . "*.mkv");
+        //rmdir($frames_dir);
+        shell_exec("rm -r $frames_dir");
+        return $video_name . ".mkv";
     }
 
     // Count number of files in 2-level directories

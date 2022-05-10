@@ -215,11 +215,12 @@ $app->GET('/detection/foreignkey/{companyColumn}', function (Application $app, R
 
 /**
  *
- * GET ZIP
+ * CREATE ZIP
  *
  * */
-$app->GET('/detection/createzip/{detection}', function (Application $app, Request $request, $detection) {
+$app->POST('/detection/createzip/{detection}', function (Application $app, Request $request, $detection) {
 
+    session_write_close();
     $result = DetectionApiLogic::CreateZip($detection);
     if ($result->result) {
         $resp = new Response(json_encode($result));
@@ -234,7 +235,7 @@ $app->GET('/detection/createzip/{detection}', function (Application $app, Reques
 
 /**
  *
- * CREATE ZIP
+ * GET ZIP
  *
  * */
 $app->GET('/detection/download/{detection}', function (Application $app, Request $request, $detection) {
@@ -253,8 +254,6 @@ $app->GET('/detection/download/{detection}', function (Application $app, Request
 $app->POST('/detection/zip/cancel', function (Application $app, Request $request) {
 
     $result = DetectionApiLogic::ResetZip();
-    shell_exec("echo prima di response >> /freeture/err.txt");
-
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
@@ -262,6 +261,57 @@ $app->POST('/detection/zip/cancel', function (Application $app, Request $request
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(403);
     }
+    return $resp;
+});
+
+/**
+ *
+ * GET VIDEO
+ *
+ * */
+$app->GET('/detection/downloadvideo/{detection}', function (Application $app, Request $request, $detection) {
+
+    $result = DetectionApiLogic::GetVideo($detection);
+    $resp = new BinaryFileResponse($result);
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
+/**
+ *
+ * CANCEL VIDEO
+ *
+ * */
+$app->POST('/detection/video/cancel', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::ResetVideo();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * CREATE VIDEO
+ *
+ * */
+$app->POST('/detection/createvideo/{detection}', function (Application $app, Request $request, $detection) {
+    
+    session_write_close();
+    $result = DetectionApiLogic::CreateVideo($detection);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    $resp->setStatusCode(200);
     return $resp;
 });
 

@@ -117,6 +117,7 @@
                                         <th><center><?php echo (_('Anteprima')) ?></center></th>
                                 <th><center><?php echo (_('DirMap')) ?></center></th>
                                 <th><center><?php echo (_('GeMap')) ?></center></th>
+                                <th><center><?php echo (_('Video')) ?></center></th>
                                 <th><center><?php echo (_('Zip')) ?></center></th>
                                 </tr>
                                 </thead>
@@ -140,7 +141,7 @@
                         <div class='col-md-12 col-sm-12 col-xs-12'>
                             <h5 id="last-detection-description"></h5>
                         </div>
-                        
+
                         <div class='col-md-12 col-sm-12 col-xs-12'>
                             <!--<video>
                                 <source src="/lib/detection/V2/detection/preview/lastdetection" type="video/webm">

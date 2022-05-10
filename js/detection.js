@@ -11,9 +11,11 @@ var isPreviewEnabled = false;
 var table1 = null;
 var table2 = null;
 var isProcessingZip = false;
+var isProcessingVideo = false;
 var zipRow = null;
-var stopZip = false;
+var videoRow = null;
 var createZipXhr = null;
+var createVideoXhr = null;
 
 $(function () {
     disableForm(inafdetection);
@@ -71,7 +73,6 @@ $("#enable-detection-preview").on('change', function (event) {
     isPreviewEnabled = $("#enable-detection-preview").is(":checked");
     $('#DetectionList').dataTable().fnDraw();
 });
-
 // Show modal with detection preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
@@ -99,86 +100,94 @@ function geMap(row) {
     $('#detection-preview-modal-body').html(body);
 }
 
-// Download detection zip
-function download(row) {
+// Create detection zip
+function getZip(row) {
     var data = table2.rows(row).data()[0];
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
     isProcessingZip = true;
     zipRow = row;
     $('#DetectionList').dataTable().fnDraw();
 
-    /*
-     $.when($.ajax("/lib/detection/V2/detection/createzip/" + data[6])).done(function (json) {
-     var data = JSON.parse(json).data;
-     window.location.href = "/lib/detection/V2/detection/download/" + data;
-     });*/
-
-    //$.when(createZip(data[6])).done(downloadZip);
-
-    //createZip(data[6]).done(downloadZip);
-
     createZipXhr = $.ajax({
         url: "/lib/detection/V2/detection/createzip/" + data[6],
         async: true,
         global: false,
+        method: 'POST',
         success: function (json) {
             downloadZip(json);
-        },
-        error: function (jqXHR, error, errorThrown) {
-            $.ajax({
-                async: true,
-                type: "POST",
-                global: false,
-                url: "/lib/detection/V2/detection/zip/cancel",
-                success: function (json) {
-                    defaultError("Zip annullato");
-                }
-            });
-            isProcessingZip = false;
-            zipRow = null;
-            $('#DetectionList').dataTable().fnDraw();
         }
     });
-
 }
 
-/*
- function createZip(data) {
- createZipXhr = $.ajax({
- url: "/lib/detection/V2/detection/createzip/" + data,
- global: false,
- async: true
- });
- return createZipXhr;
- }*/
+// Create detection video
+function getVideo(row) {
+    var data = table2.rows(row).data()[0];
+    defaultSuccess("Il download del video inizierà tra qualche minuto");
+    isProcessingVideo = true;
+    videoRow = row;
+    $('#DetectionList').dataTable().fnDraw();
+    
+    createVideoXhr = $.ajax({
+        url: "/lib/detection/V2/detection/createvideo/" + data[6],
+        async: true,
+        global: false,
+        method: 'POST',
+        success: function (json) {
+            downloadVideo(json);
+        }
+    });
+}
 
+// Download detection video
+function downloadVideo(json) {
+    isProcessingVideo = false;
+    videoRow = null;
+    $('#DetectionList').dataTable().fnDraw();
+    var data = JSON.parse(json).data;
+    window.location.href = "/lib/detection/V2/detection/downloadvideo/" + data;
+}
+
+// Download detection zip
 function downloadZip(json) {
     isProcessingZip = false;
     zipRow = null;
     $('#DetectionList').dataTable().fnDraw();
-    // if (!stopZip) {
     var data = JSON.parse(json).data;
     window.location.href = "/lib/detection/V2/detection/download/" + data;
-    // }
 }
 
+// Abort detection zip
 function cancelZip() {
     createZipXhr.abort();
-    stopZip = true;
-    /*
-     isProcessingZip = false;
-     
-     zipRow = null;
-     $('#DetectionList').dataTable().fnDraw();
+    isProcessingZip = false;
+    zipRow = null;
      $.ajax({
-     async: true,
-     type: "POST",
-     global: false,
-     url: "/lib/detection/V2/detection/zip/cancel",
-     success: function (json) {
-     defaultError("Zip annullato");
-     }        
-     });*/
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/zip/cancel",
+        success: function (json) {
+            defaultError("Zip annullato");
+        }
+    });
+    $('#DetectionList').dataTable().fnDraw();
+}
+
+// Abort detection video
+function cancelVideo() {
+    createVideoXhr.abort();
+    isProcessingVideo = false;
+    videoRow = null;
+    $.ajax({
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/video/cancel",
+        success: function (json) {
+            defaultError("Video annullato");
+        }
+    });
+    $('#DetectionList').dataTable().fnDraw();
 
 }
 
@@ -199,7 +208,6 @@ $(document).ready(function () {
             "sEmptyTable": "Nessun risultato",
             "sLengthMenu": "Mostra _MENU_ elementi"
         },
-
         columnDefs: [
             {
                 "targets": "_all",
@@ -215,10 +223,8 @@ $(document).ready(function () {
                 "targets": [-1]
             }
         ],
-
         responsive: true,
         dom: 'lfrt<t>ip',
-
         "fnServerParams": function (aoData) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
@@ -229,7 +235,6 @@ $(document).ready(function () {
             if ($("." + $.md5('folder')).is(":visible"))
                 aoData.push({"name": "folder", "value": $('#F_folder').val()});
         },
-
         "drawCallback": function (settings) {
             if (table1.data().count()) {
                 var folder = table1.row(':eq(0)').data()[2];
@@ -237,7 +242,6 @@ $(document).ready(function () {
                 initDetectionsDatatable(folder);
             }
         },
-
         "iDisplayLength": 10,
         "iDisplayStart": 0,
         "pageLength": 10,
@@ -251,7 +255,7 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-
+    
     // Get last detection image and its timestamp
     $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
         var data = JSON.parse(json).data;
@@ -259,11 +263,9 @@ $(document).ready(function () {
         $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
         $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-
+    
     // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
-
-
 });
 
 // Create datatable with detections of selected day
@@ -291,19 +293,22 @@ function initDetectionsDatatable(folder) {
             {
                 "width": "10%",
                 "className": "dt-center",
-                "targets": [-1, -2, -3, -4]
+                "targets": [-1, -2, -3, -4, -5]
             },
             {
-                "targets": [-7],
+                "targets": [-8],
                 render: function (data, type, row, meta) {
                     if (isProcessingZip && meta.row === zipRow) {
                         return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Scaricamento zip in corso...</div>";
+                    }
+                    if (isProcessingVideo && meta.row === videoRow) {
+                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Scaricamento video in corso...</div>";
                     }
                     return data;
                 }
             },
             {
-                "targets": [-4],
+                "targets": [-5],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -315,7 +320,7 @@ function initDetectionsDatatable(folder) {
                 }
             },
             {
-                "targets": [-3],
+                "targets": [-4],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -327,7 +332,7 @@ function initDetectionsDatatable(folder) {
                 }
             },
             {
-                "targets": [-2],
+                "targets": [-3],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -335,6 +340,23 @@ function initDetectionsDatatable(folder) {
                     }
                     return "<center>" +
                             "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-globe'></i></button>" +
+                            "</center>";
+                }
+            },
+            {
+                "targets": [-2],
+                render: function (data, type, row, meta) {
+                    if (isProcessingVideo && meta.row === videoRow) {
+                        return "<center>" +
+                                "<button class='btn btn-danger' onclick='cancelVideo()'><i class='fa fa-close'></i></button>" +
+                                "</center>";
+                    }
+                    var disabled = "";
+                    if (isProcessingVideo || isProcessingZip) {
+                        disabled = "disabled";
+                    }
+                    return "<center>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'getVideo(" + meta.row + ")'><i class='fa fa-video-camera'></i></button>" +
                             "</center>";
                 }
             },
@@ -347,11 +369,11 @@ function initDetectionsDatatable(folder) {
                                 "</center>";
                     }
                     var disabled = "";
-                    if (isProcessingZip) {
+                    if (isProcessingZip || isProcessingVideo) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick= 'download(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'getZip(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
                             "</center>";
                 }
             },
@@ -380,8 +402,7 @@ function initDetectionsDatatable(folder) {
             startRender: function (rows, group) {
                 var info = group.split(":");
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="6">' + info[0] + ' (' + info[1] + ' detection)' + '</td></tr>');
-
+                        .append('<td colspan="7">' + info[0] + ' (' + info[1] + ' detection)' + '</td></tr>');
             },
             endRender: null,
             dataSrc: groupColumn
@@ -402,7 +423,6 @@ function initDetectionsDatatable(folder) {
         "searching": false
     }
     );
-
     // Change detections displayed by click on corresponding day
     $('#DetectionDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
@@ -411,7 +431,6 @@ function initDetectionsDatatable(folder) {
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
     });
-
     // Hide preview column and enable preview toggle if media not enabled
     $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
         var data = JSON.parse(json).data;
