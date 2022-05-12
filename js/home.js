@@ -11,6 +11,16 @@ var latitude = 0;
 var longitude = 0;
 var isPreviewEnabled = false;
 var table = null;
+var isProcessingZip = false;
+var isProcessingVideo = false;
+var zipRow = null;
+var videoRow = null;
+var createZipXhr = null;
+var createVideoXhr = null;
+var zipName = null;
+var zipDownload = false;
+var videoName = null;
+var videoDownload = false;
 
 function setIndexToShow() {
     indexToShow = inafdetection.id;
@@ -48,16 +58,60 @@ function geMap(row) {
     $('#detection-preview-modal-body').html(body);
 }
 
-// Download detection zip
-function download(value) {
-
+// Create detection zip
+function getZip(row) {
+    var data = table2.rows(row).data()[0];
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
-    $.ajax({
-        url: "/lib/detection/V2/detection/createzip/" + value,
-        success: function (data) {
-            window.location.href = "/lib/detection/V2/detection/download/" + data;
+    isProcessingZip = true;
+    zipRow = row;
+    $('#DetectionList').dataTable().fnDraw();
+
+    createZipXhr = $.ajax({
+        url: "/lib/detection/V2/detection/createzip/" + data[6],
+        async: true,
+        global: false,
+        method: 'POST',
+        success: function (json) {
+            downloadZip(json);
         }
     });
+}
+
+// Create detection video
+function getVideo(row) {
+    var data = table2.rows(row).data()[0];
+    defaultSuccess("Il download del video inizierà tra qualche minuto");
+    isProcessingVideo = true;
+    videoRow = row;
+    $('#DetectionList').dataTable().fnDraw();
+
+    createVideoXhr = $.ajax({
+        url: "/lib/detection/V2/detection/createvideo/" + data[6],
+        async: true,
+        global: false,
+        method: 'POST',
+        success: function (json) {
+            downloadVideo(json);
+        }
+    });
+}
+
+// Download detection video
+function downloadVideo(json) {
+    isProcessingVideo = false;
+    videoRow = null;
+    videoDownload = true;
+    videoName = JSON.parse(json).data;
+    $('#DetectionList').dataTable().fnDraw();
+}
+
+// Download detection zip
+function downloadZip(json) {
+    isProcessingZip = false;
+    zipRow = null;
+    zipDownload = true;
+    zipName = JSON.parse(json).data;
+    $('#DetectionList').dataTable().fnDraw();
 }
 
 // Refresh every 5 seconds storage info (cpu, ram, disk)
@@ -159,15 +213,39 @@ function initDetectionsDatatable(folder) {
             "sEmptyTable": "Nessun risultato",
             "sLengthMenu": "Mostra _MENU_ elementi"
         },
-
         columnDefs: [
             {
                 "targets": "_all",
                 "orderable": false
             },
-            {"width": "10%",
+            {
+                "width": "10%",
                 "className": "dt-center",
-                "targets": [-1, -2, -3, -4]
+                "targets": [-1, -2, -3, -4, -5]
+            },
+            {
+                "targets": [-8],
+                render: function (data, type, row, meta) {
+                    if (isProcessingZip && meta.row === zipRow) {
+                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>";
+                    }
+                    if (isProcessingVideo && meta.row === videoRow) {
+                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>";
+                    }
+                    return data;
+                }
+            },
+            {
+                "targets": [-5],
+                render: function (data, type, row, meta) {
+                    var disabled = "";
+                    if (!isPreviewEnabled) {
+                        disabled = "disabled";
+                    }
+                    return "<center>" +
+                            "<button class='btn btn-success' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-eye'></i></button>" +
+                            "</center>";
+                }
             },
             {
                 "targets": [-4],
@@ -177,7 +255,7 @@ function initDetectionsDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'dirMap(" + meta.row + ")'><i class='fa fa-map-marker'></i></button>" +
                             "</center>";
                 }
             },
@@ -189,27 +267,41 @@ function initDetectionsDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick= 'dirMap(" + meta.row + ")'><i class='fa fa-map'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-area-chart'></i></button>" +
                             "</center>";
                 }
             },
             {
                 "targets": [-2],
                 render: function (data, type, row, meta) {
+                    if (isProcessingVideo && meta.row === videoRow) {
+                        return "<center>" +
+                                "<button class='btn btn-danger' onclick='cancelVideo()'><i class='fa fa-close'></i></button>" +
+                                "</center>";
+                    }
                     var disabled = "";
-                    if (!isPreviewEnabled) {
+                    if (isProcessingVideo || isProcessingZip) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-globe'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'getVideo(" + meta.row + ")'><i class='fa fa-video-camera'></i></button>" +
                             "</center>";
                 }
             },
             {
                 "targets": [-1],
                 render: function (data, type, row, meta) {
+                    if (isProcessingZip && meta.row === zipRow) {
+                        return "<center>" +
+                                "<button class='btn btn-danger' onclick='cancelZip()'><i class='fa fa-close'></i></button>" +
+                                "</center>";
+                    }
+                    var disabled = "";
+                    if (isProcessingZip || isProcessingVideo) {
+                        disabled = "disabled";
+                    }
                     return "<center>" +
-                            "<button class='btn btn-success' onclick= 'download(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'getZip(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
                             "</center>";
                 }
             },
@@ -218,10 +310,8 @@ function initDetectionsDatatable(folder) {
                 "targets": groupColumn
             }
         ],
-
         responsive: true,
         dom: 'lfrt<t>ip',
-
         "fnServerParams": function (aoData) {
             // Show page with passed index
             aoData.push({"name": "searchPageById", "value": indexToShow});
@@ -240,12 +330,23 @@ function initDetectionsDatatable(folder) {
             startRender: function (rows, group) {
                 var info = group.split(":");
                 return $('<tr class="group" style="background-color:#C6CAD4;">')
-                        .append('<td colspan="6">' + info[0] + ' (' + info[1] + ' detection)' + '</td>')
+                        .append('<td colspan="7">' + info[0] + ' (' + info[1] + ' detection)' + '</td></tr>');
             },
             endRender: null,
             dataSrc: groupColumn
         },
-
+        "drawCallback": function (oSettings) {
+            if (zipDownload) {
+                window.location.href = "/lib/detection/V2/detection/download/" + zipName;
+                zipName = null;
+                zipDownload = false;
+            }
+            if (videoDownload) {
+                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + zipName;
+                videoName = null;
+                videoDownload = false;
+            }
+        },
         "order": [[groupColumn, 'desc']],
         "iDisplayLength": 10,
         "iDisplayStart": 0,
@@ -260,7 +361,8 @@ function initDetectionsDatatable(folder) {
         "ordering": true,
         "info": true,
         "searching": false
-    });
+    }
+    );
 
 }
 

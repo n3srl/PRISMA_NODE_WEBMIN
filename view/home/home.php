@@ -129,6 +129,7 @@
                                             <th><center><?php echo (_('Anteprima')) ?></center></th>
                                     <th><center><?php echo (_('DirMap')) ?></center></th>
                                     <th><center><?php echo (_('GeMap')) ?></center></th>
+                                    <th><center><?php echo (_('Video')) ?></center></th>
                                     <th><center><?php echo (_('Zip')) ?></center></th>
                                     </tr>
                                     </thead>

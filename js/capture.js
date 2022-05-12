@@ -198,7 +198,7 @@ function initCapturesDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success btn-capture-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
+                            "<button class='btn btn-success btn-capture-preview' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-eye'></i></button>" +
                             "</center>";
                 }
             },

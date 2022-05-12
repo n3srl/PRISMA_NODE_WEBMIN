@@ -16,6 +16,10 @@ var zipRow = null;
 var videoRow = null;
 var createZipXhr = null;
 var createVideoXhr = null;
+var zipName = null;
+var zipDownload = false;
+var videoName = null;
+var videoDownload = false;
 
 $(function () {
     disableForm(inafdetection);
@@ -73,6 +77,7 @@ $("#enable-detection-preview").on('change', function (event) {
     isPreviewEnabled = $("#enable-detection-preview").is(":checked");
     $('#DetectionList').dataTable().fnDraw();
 });
+
 // Show modal with detection preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
@@ -126,7 +131,7 @@ function getVideo(row) {
     isProcessingVideo = true;
     videoRow = row;
     $('#DetectionList').dataTable().fnDraw();
-    
+
     createVideoXhr = $.ajax({
         url: "/lib/detection/V2/detection/createvideo/" + data[6],
         async: true,
@@ -142,18 +147,18 @@ function getVideo(row) {
 function downloadVideo(json) {
     isProcessingVideo = false;
     videoRow = null;
+    videoDownload = true;
+    videoName = JSON.parse(json).data;
     $('#DetectionList').dataTable().fnDraw();
-    var data = JSON.parse(json).data;
-    window.location.href = "/lib/detection/V2/detection/downloadvideo/" + data;
 }
 
 // Download detection zip
 function downloadZip(json) {
     isProcessingZip = false;
     zipRow = null;
+    zipDownload = true;
+    zipName = JSON.parse(json).data;
     $('#DetectionList').dataTable().fnDraw();
-    var data = JSON.parse(json).data;
-    window.location.href = "/lib/detection/V2/detection/download/" + data;
 }
 
 // Abort detection zip
@@ -161,7 +166,7 @@ function cancelZip() {
     createZipXhr.abort();
     isProcessingZip = false;
     zipRow = null;
-     $.ajax({
+    $.ajax({
         async: true,
         type: "POST",
         global: false,
@@ -255,7 +260,7 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
-    
+
     // Get last detection image and its timestamp
     $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
         var data = JSON.parse(json).data;
@@ -263,7 +268,7 @@ $(document).ready(function () {
         $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
         $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
     });
-    
+
     // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
 });
@@ -299,10 +304,10 @@ function initDetectionsDatatable(folder) {
                 "targets": [-8],
                 render: function (data, type, row, meta) {
                     if (isProcessingZip && meta.row === zipRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Scaricamento zip in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>";
                     }
                     if (isProcessingVideo && meta.row === videoRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Scaricamento video in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>";
                     }
                     return data;
                 }
@@ -315,7 +320,7 @@ function initDetectionsDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-file'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick='preview(" + meta.row + ")' ><i class='fa fa-eye'></i></button>" +
                             "</center>";
                 }
             },
@@ -327,7 +332,7 @@ function initDetectionsDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick= 'dirMap(" + meta.row + ")'><i class='fa fa-map'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'dirMap(" + meta.row + ")'><i class='fa fa-map-marker'></i></button>" +
                             "</center>";
                 }
             },
@@ -339,7 +344,7 @@ function initDetectionsDatatable(folder) {
                         disabled = "disabled";
                     }
                     return "<center>" +
-                            "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-globe'></i></button>" +
+                            "<button class='btn btn-success' " + disabled + " onclick= 'geMap(" + meta.row + ")'><i class='fa fa-area-chart'></i></button>" +
                             "</center>";
                 }
             },
@@ -407,6 +412,18 @@ function initDetectionsDatatable(folder) {
             endRender: null,
             dataSrc: groupColumn
         },
+        "drawCallback": function (oSettings) {
+            if (zipDownload) {
+                window.location.href = "/lib/detection/V2/detection/download/" + zipName;
+                zipName = null;
+                zipDownload = false;
+            }
+            if (videoDownload) {
+                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + zipName;
+                videoName = null;
+                videoDownload = false;
+            }
+        },
         "order": [[groupColumn, 'desc']],
         "iDisplayLength": 10,
         "iDisplayStart": 0,
@@ -423,6 +440,7 @@ function initDetectionsDatatable(folder) {
         "searching": false
     }
     );
+
     // Change detections displayed by click on corresponding day
     $('#DetectionDayList tbody').on('click', 'tr', function () {
         var rowData = table1.row(this).data();
@@ -431,6 +449,7 @@ function initDetectionsDatatable(folder) {
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
     });
+
     // Hide preview column and enable preview toggle if media not enabled
     $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
         var data = JSON.parse(json).data;
