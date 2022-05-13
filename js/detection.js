@@ -81,8 +81,9 @@ $("#enable-detection-preview").on('change', function (event) {
 // Show modal with detection preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("Detection del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("Detection del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -90,8 +91,9 @@ function preview(row) {
 // Show modal with detection dirmap and timestamp
 function dirMap(row) {
     var data = table2.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("DirMap del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("DirMap del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[4] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -99,8 +101,9 @@ function dirMap(row) {
 // Show modal with detection gemap and timestamp
 function geMap(row) {
     var data = table2.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("GeMap del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("GeMap del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[5] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -193,7 +196,6 @@ function cancelVideo() {
         }
     });
     $('#DetectionList').dataTable().fnDraw();
-
 }
 
 $(document).ready(function () {

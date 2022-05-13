@@ -38,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <div id="status-ovpn-panel" class='x_panel'>
                     <div class='x_title no-padding-lr'>
@@ -56,14 +56,6 @@
                             <h4 id="status-ovpn-description"></h4>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            
-            
-            <div class='col-md-12 col-sm-12 col-xs-12'>
-                <div class='x_panel'>
-
                 </div>
             </div>
         </div>

@@ -66,8 +66,9 @@ function setIndexToShow() {
 // Show modal with stack preview and timestamp
 function preview(row) {
     var data = table2.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#stack-preview-modal').modal('show');
-    $('#stack-preview-modal-label').html("Stack del " + data[1] + " (" + data[2] + ")");
+    $('#stack-preview-modal-label').html("Stack del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#stack-preview-modal-body').html(body);
 }

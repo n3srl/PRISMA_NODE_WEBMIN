@@ -34,8 +34,9 @@ $("#enable-detection-preview").on('change', function (event) {
 // Show modal with detection preview and timestamp
 function preview(row) {
     var data = table.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("Detection del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("Detection del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -43,8 +44,9 @@ function preview(row) {
 // Show modal with detection dirmap and timestamp
 function dirMap(row) {
     var data = table.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("DirMap del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("DirMap del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[4] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -52,15 +54,16 @@ function dirMap(row) {
 // Show modal with detection gemap and timestamp
 function geMap(row) {
     var data = table.rows(row).data()[0];
+    var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("GeMap del " + data[1] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html("GeMap del " + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[5] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
 
 // Create detection zip
 function getZip(row) {
-    var data = table2.rows(row).data()[0];
+    var data = table.rows(row).data()[0];
     defaultSuccess("Il tuo download inizierà tra qualche minuto");
     isProcessingZip = true;
     zipRow = row;
@@ -79,7 +82,7 @@ function getZip(row) {
 
 // Create detection video
 function getVideo(row) {
-    var data = table2.rows(row).data()[0];
+    var data = table.rows(row).data()[0];
     defaultSuccess("Il download del video inizierà tra qualche minuto");
     isProcessingVideo = true;
     videoRow = row;
@@ -111,6 +114,40 @@ function downloadZip(json) {
     zipRow = null;
     zipDownload = true;
     zipName = JSON.parse(json).data;
+    $('#DetectionList').dataTable().fnDraw();
+}
+
+// Abort detection zip
+function cancelZip() {
+    createZipXhr.abort();
+    isProcessingZip = false;
+    zipRow = null;
+    $.ajax({
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/zip/cancel",
+        success: function (json) {
+            defaultError("Zip annullato");
+        }
+    });
+    $('#DetectionList').dataTable().fnDraw();
+}
+
+// Abort detection video
+function cancelVideo() {
+    createVideoXhr.abort();
+    isProcessingVideo = false;
+    videoRow = null;
+    $.ajax({
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/video/cancel",
+        success: function (json) {
+            defaultError("Video annullato");
+        }
+    });
     $('#DetectionList').dataTable().fnDraw();
 }
 
@@ -446,9 +483,6 @@ $(document).ready(function () {
     loadStationInfoValues();
 
     storageInfo();
-
-
-
 });
 
 

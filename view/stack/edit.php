@@ -1,7 +1,7 @@
 <?php // /* @var $Stack Stack */                ?> 
 <!-- Modal -->
 <div class="modal fade" id="stack-preview-modal" tabindex="-1" role="dialog" aria-labelledby="stack-preview-modal-label" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="stack-preview-modal-label"></h5>

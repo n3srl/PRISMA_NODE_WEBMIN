@@ -1,1 +1,1 @@
-Cartella destinata a contenere file multimediali provvisori, come video e anteprime
+Cartella destinata a contenere file multimediali provvisori (video, zip e file png)
