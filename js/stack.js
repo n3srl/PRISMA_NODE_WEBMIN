@@ -152,9 +152,11 @@ $(document).ready(function () {
     // Get last stack image and its timestamp
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
-        var info = data[1].split(":");
-        $('#last-stack-description').html("Stack del " + info[0] + " (" + data[2] + ")");
-        $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        if (data) {
+            var info = data[1].split(":");
+            $('#last-stack-description').html("Stack del " + info[0] + " (" + data[2] + ")");
+            $('#last-stack-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        }
     });
 
     // Set toggle switch unchecked 

@@ -266,9 +266,11 @@ $(document).ready(function () {
     // Get last detection image and its timestamp
     $.get("/lib/detection/V2/detection/preview/lastdetection", function (json) {
         var data = JSON.parse(json).data;
-        var info = data[1].split(":");
-        $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
-        $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        if (data) {
+            var info = data[1].split(":");
+            $('#last-detection-description').html("Detection del " + info[0] + " (" + data[2] + ")");
+            $('#last-detection-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        }
     });
 
     // Set toggle switch unchecked 

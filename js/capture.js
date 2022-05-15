@@ -152,9 +152,11 @@ $(document).ready(function () {
     // Get last capture image and its timestamp
     $.get("/lib/capture/V2/capture/preview/lastcapture", function (json) {
         var data = JSON.parse(json).data;
-        var info = data[1].split(":");
-        $('#last-capture-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
-        $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        if (data) {
+            var info = data[1].split(":");
+            $('#last-capture-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+            $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        }
     });
 
     // Set toggle switch unchecked 
