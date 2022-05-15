@@ -648,9 +648,7 @@ class DetectionApiLogic {
             $frame_png = str_replace(".fit", ".png", $frame);
             $frame_path = $detection_dir . "fits2D/" . $frame;
             shell_exec("fitspng -o " . $frames_dir . $frame_png . " " . $frame_path);
-            shell_exec("echo fitspng -o " . $frames_dir . $frame . ".png " . $frame_path . " >> /freeture/video.txt");
         }
-        shell_exec("ls $frames_dir >> /freeture/video.txt");
         shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
         shell_exec("rm -r $frames_dir");
         return $video_name . ".mkv";
