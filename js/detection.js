@@ -421,7 +421,7 @@ function initDetectionsDatatable(folder) {
                 zipDownload = false;
             }
             if (videoDownload) {
-                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + zipName;
+                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + videoName;
                 videoName = null;
                 videoDownload = false;
             }
