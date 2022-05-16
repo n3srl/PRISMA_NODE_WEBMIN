@@ -10,6 +10,7 @@ var indexToShow = null;
 var isPreviewEnabled = false;
 var table1 = null;
 var table2 = null;
+var folder = null;
 
 $(function () {
     disableForm(inafstack);
@@ -129,9 +130,13 @@ $(document).ready(function () {
 
         "drawCallback": function (settings) {
             if (table1.data().count()) {
-                var folder = table1.row(':eq(0)').data()[2];
+                folder = table1.row(':eq(0)').data()[2];
                 $('#StackDayList tbody tr:eq(0)').addClass('selected');
-                initStacksDatatable(folder);
+                if (table2) {
+                    $('#StackList').dataTable().fnDraw();
+                } else {
+                    initStacksDatatable();
+                }
             }
         },
 
@@ -164,7 +169,7 @@ $(document).ready(function () {
 });
 
 // Create datatable with captures of selected day
-function initStacksDatatable(folder) {
+function initStacksDatatable() {
     var groupColumn = 1;
     var collapsedGroups = {};
     table2 = $('#StackList').DataTable({

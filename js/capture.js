@@ -10,6 +10,7 @@ var indexToShow = null;
 var isPreviewEnabled = false;
 var table1 = null;
 var table2 = null;
+var folder = null;
 
 $(function () {
     disableForm(inafcapture);
@@ -129,9 +130,13 @@ $(document).ready(function () {
 
         "drawCallback": function (settings) {
             if (table1.data().count()) {
-                var folder = table1.row(':eq(0)').data()[2];
+                folder = table1.row(':eq(0)').data()[2];
                 $('#CaptureDayList tbody tr:eq(0)').addClass('selected');
-                initCapturesDatatable(folder);
+                if (table2) {
+                    $('#CaptureList').dataTable().fnDraw();
+                } else {
+                    initCapturesDatatable();
+                }
             }
         },
 
@@ -165,7 +170,7 @@ $(document).ready(function () {
 });
 
 // Create datatable with captures of selected day
-function initCapturesDatatable(folder) {
+function initCapturesDatatable() {
     var groupColumn = 1;
     var collapsedGroups = {};
     table2 = $('#CaptureList').DataTable({

@@ -87,8 +87,9 @@ function loadValues() {
                     case "STATION_NAME":
                         $('#station-name').val(obj.value);
                         break;
-                    case "ACQ_REGULAR_PRFX":
-                        $('#station-code').val(obj.value);
+                    case "DATA_PATH":
+                        var data = obj.value.split("/");
+                        $('#station-code').val(data[2]);
                         break;
                     case "OBSERVER":
                         $('#observer').val(obj.value);
@@ -106,7 +107,6 @@ function loadValues() {
                         break;
                 }
             });
-
         });
     });
 }

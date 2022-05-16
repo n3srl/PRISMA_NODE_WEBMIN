@@ -20,6 +20,7 @@ var zipName = null;
 var zipDownload = false;
 var videoName = null;
 var videoDownload = false;
+var folder = null;
 
 $(function () {
     disableForm(inafdetection);
@@ -244,9 +245,13 @@ $(document).ready(function () {
         },
         "drawCallback": function (settings) {
             if (table1.data().count()) {
-                var folder = table1.row(':eq(0)').data()[2];
+                folder = table1.row(':eq(0)').data()[2];
                 $('#DetectionDayList tbody tr:eq(0)').addClass('selected');
-                initDetectionsDatatable(folder);
+                if (table2) {
+                    $('#DetectionList').dataTable().fnDraw();
+                } else {
+                    initDetectionsDatatable();
+                }
             }
         },
         "iDisplayLength": 10,
@@ -278,7 +283,7 @@ $(document).ready(function () {
 });
 
 // Create datatable with detections of selected day
-function initDetectionsDatatable(folder) {
+function initDetectionsDatatable() {
     var groupColumn = 1;
     table2 = $('#DetectionList').DataTable({
         "oLanguage": {
