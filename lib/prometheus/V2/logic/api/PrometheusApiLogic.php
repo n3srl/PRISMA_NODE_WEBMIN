@@ -24,9 +24,11 @@ class PrometheusApiLogic {
             return false;
         }
         
+        /*
         if(!move_uploaded_file($ob, $prometheusConf)){
             return false;
         }
+        */
 
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
@@ -36,7 +38,7 @@ class PrometheusApiLogic {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
                
-                //ssh2_scp_send($session, $ob, _PROMETHEUS_);
+                ssh2_scp_send($session, $ob, $prometheusConf);
 
                 $stream = ssh2_exec($session, "sudo /bin/systemctl restart prometheus");
                 
