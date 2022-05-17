@@ -9,8 +9,6 @@ require_once _EXTLIB_ . 'sylex/vendor/autoload.php';
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Silex\Application;
 
 $app = new Silex\Application();
@@ -337,6 +335,24 @@ $app->GET('/freeturefinal/media/preview', function (Application $app, Request $r
 $app->POST('/freeturefinal/storage/clean', function (Application $app, Request $request) {
 
     $result = FreetureFinalApiLogic::CleanMediaStorage();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET NUMBER OF CORES
+ *
+ * */
+$app->GET('/freeturefinal/storage/cores', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetNumberOfCores();
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);

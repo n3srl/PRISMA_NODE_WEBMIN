@@ -151,8 +151,34 @@ function cancelVideo() {
     $('#DetectionList').dataTable().fnDraw();
 }
 
-// Refresh every 5 seconds storage info (cpu, ram, disk)
+// Show data usage progress bars
 function storageInfo() {
+    $.ajax({
+        url: "/lib/ft/V2/freeturefinal/storage/cores",
+        type: "GET",
+        dataType: "json",
+        success: function (res) {
+            var cores = res.data;
+            var cpuHtml = "";
+            for (let i = 0; i < cores; i++) {
+                cpuHtml += '<div class="col-md-12 col-sm-12 col-xs-12">' +
+                        '<label>CPU ' + i + '</label>' +
+                        '</div>' +
+                        '<div class="col-md-12 col-sm-12 col-xs-12">' +
+                        '<div class="progress">' +
+                        '<div class="progress-bar progress-bar-success" id="cpu' + i + '" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+            }
+            $("#cores").html(cpuHtml);
+        }
+    });
+    updateDataUsage();
+}
+
+// Refresh every 5 seconds storage info (cpu, ram, disk)
+function updateDataUsage() {
     setTimeout(function () {
         $.ajax({
             url: "/lib/ft/V2/freeturefinal/storage/info",
@@ -160,18 +186,23 @@ function storageInfo() {
             dataType: "json",
             global: false,
             timeout: 5000,
-            complete: storageInfo,
+            complete: updateDataUsage,
             success: function (res) {
                 var info = res.data;
-                $("#cpu-percentage").attr("aria-valuenow", info[0]);
                 $("#ram-percentage").attr("aria-valuenow", info[1]);
                 $("#disk-percentage").attr("aria-valuenow", info[2]);
-                $("#cpu-percentage").attr("style", "width:" + info[0] + "%");
                 $("#ram-percentage").attr("style", "width:" + info[1] + "%");
                 $("#disk-percentage").attr("style", "width:" + info[2] + "%");
-                $("#cpu-percentage").html(Math.round(info[0]) + "%");
                 $("#ram-percentage").html(Math.round(info[1]) + "%");
                 $("#disk-percentage").html(Math.round(info[2]) + "%");
+                var cores = info[0];
+                i = 0;
+                cores.forEach(core => {
+                    $("#cpu" + i).attr("aria-valuenow", core);
+                    $("#cpu" + i).attr("style", "width:" + core + "%");
+                    $("#cpu" + i).html(Math.round(core) + "%");
+                    i++;
+                });
             }
         });
     }, 5000);
@@ -381,7 +412,7 @@ function initDetectionsDatatable(folder) {
                 zipDownload = false;
             }
             if (videoDownload) {
-                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + zipName;
+                window.location.href = "/lib/detection/V2/detection/downloadvideo/" + videoName;
                 videoName = null;
                 videoDownload = false;
             }

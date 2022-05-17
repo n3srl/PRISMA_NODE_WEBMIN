@@ -303,6 +303,17 @@ class FreetureFinalApiLogic {
         return CoreLogic::GenerateResponse($res, $ob);
     }
 
+    public static function GetNumberOfCores() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = substr_count((string) file_get_contents('/proc/cpuinfo'), "\nprocessor") + 1;
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
     // Clean string 
     public static function countFreetureValues() {
         $freetureConf = _FREETURE_;
@@ -664,8 +675,16 @@ class FreetureFinalApiLogic {
     public static function getStoragePercentage() {
         $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
 
-        $cpu_cmd = "cat /proc/stat |grep cpu |tail -1|awk '{print ($5*100)/($2+$3+$4+$5+$6+$7+$8+$9+$10)}'|awk '{print 100-$1}'";
-        $cpu = (float)str_replace("\n", "", shell_exec($cpu_cmd));
+        $cpu = array();
+        $i = 0;
+        while (true) {
+            $core = shell_exec("mpstat -P $i 1 1 | awk 'FNR==4{print($3+$4+$5+$6+$7+$8+$9+$10+$11)}'");
+            if (is_null($core)) {
+                break;
+            }
+            $cpu[] = (float) str_replace("\n", "", $core);
+            $i++;
+        }
 
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);
