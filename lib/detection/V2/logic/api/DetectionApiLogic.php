@@ -631,6 +631,7 @@ class DetectionApiLogic {
 
         $media_dir = _WEBROOTDIR_ . "tmp-media/";
         $frames_dir = $media_dir . "tmp-video/";
+        $logo_path = _WEBROOTDIR_ . "img/watermark.png";
         mkdir($frames_dir);
 
         // Convert each frame to png
@@ -649,8 +650,12 @@ class DetectionApiLogic {
             $frame_path = $detection_dir . "fits2D/" . $frame;
             shell_exec("fitspng -o " . $frames_dir . $frame_png . " " . $frame_path);
         }
-        shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - " . $media_dir . $video_name . ".mkv");
+        $video_path = $media_dir . $video_name . ".mkv" ;
+        $video_path_tmp = $media_dir . $video_name . "_tmp.mkv";
+        shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - $video_path_tmp");
+        shell_exec("ffmpeg -i $video_path_tmp -i $logo_path -filter_complex 'overlay=W-w-5:H-h-5' $video_path");
         shell_exec("rm -r $frames_dir");
+        shell_exec("rm $video_path_tmp");
         return $video_name . ".mkv";
     }
 

@@ -153,26 +153,28 @@ function cancelVideo() {
 
 // Refresh every 5 seconds storage info (cpu, ram, disk)
 function storageInfo() {
-    $.ajax({
-        url: "/lib/ft/V2/freeturefinal/storage/info",
-        type: "GET",
-        dataType: "json",
-        global: false,
-        timeout: 5000,
-        complete: storageInfo,
-        success: function (res) {
-            var info = res.data;
-            $("#cpu-percentage").attr("aria-valuenow", info[0]);
-            $("#ram-percentage").attr("aria-valuenow", info[1]);
-            $("#disk-percentage").attr("aria-valuenow", info[2]);
-            $("#cpu-percentage").attr("style", "width:" + info[0] + "%");
-            $("#ram-percentage").attr("style", "width:" + info[1] + "%");
-            $("#disk-percentage").attr("style", "width:" + info[2] + "%");
-            $("#cpu-percentage").html(Math.round(info[0]) + "%");
-            $("#ram-percentage").html(Math.round(info[1]) + "%");
-            $("#disk-percentage").html(Math.round(info[2]) + "%");
-        }
-    });
+    setTimeout(function () {
+        $.ajax({
+            url: "/lib/ft/V2/freeturefinal/storage/info",
+            type: "GET",
+            dataType: "json",
+            global: false,
+            timeout: 5000,
+            complete: storageInfo,
+            success: function (res) {
+                var info = res.data;
+                $("#cpu-percentage").attr("aria-valuenow", info[0]);
+                $("#ram-percentage").attr("aria-valuenow", info[1]);
+                $("#disk-percentage").attr("aria-valuenow", info[2]);
+                $("#cpu-percentage").attr("style", "width:" + info[0] + "%");
+                $("#ram-percentage").attr("style", "width:" + info[1] + "%");
+                $("#disk-percentage").attr("style", "width:" + info[2] + "%");
+                $("#cpu-percentage").html(Math.round(info[0]) + "%");
+                $("#ram-percentage").html(Math.round(info[1]) + "%");
+                $("#disk-percentage").html(Math.round(info[2]) + "%");
+            }
+        });
+    }, 5000);
 }
 
 
