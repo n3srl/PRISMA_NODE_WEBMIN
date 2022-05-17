@@ -143,6 +143,7 @@
                                     <th><?php echo (_('Valore')) ?></th>
                                     <th><?php echo (_('Descrizione')) ?></th>
                                     <th><?php echo (_('Show')) ?></th>
+                                    <th><?php echo (_('ID')) ?></th>
                                     <th></th>
                                 </tr>
                             </thead>

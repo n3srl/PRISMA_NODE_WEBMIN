@@ -533,7 +533,7 @@ function saveClass(objClass, ...callBack) {
             callBack.forEach(s => s.apply());
         };
         let safe = false;
-        if (objClass.id > 0) {
+        if (objClass.id >= 0) {
             safe = true;
         }
         if (safe) {

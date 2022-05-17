@@ -373,7 +373,7 @@ class PersonApiLogic {
             //Parse config file line by line
             foreach ($contents as $line) {
                 $array = explode(" ", $line);
-                $user[] = array($array[0], $array[1], $array[2], $array[3], $array[4], str_replace("\n", "", $array[5]));
+                $user[] = array($array[1], $array[2], $array[3], $array[4], str_replace("\n", "", $array[5]), $array[0]);
             }
         }
         return $user;

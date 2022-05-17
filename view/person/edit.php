@@ -83,12 +83,12 @@
                         <table id='PersonList' class='table table-striped table-bordered' style='width: 100%; '>
                             <thead>
                                 <tr>
-                                    <th><?php echo (_('ID')) ?></th>
                                     <th><?php echo (_('Username')) ?></th>
                                     <th><?php echo (_('Password')) ?></th>
                                     <th><?php echo (_('Timezone')) ?></th>
                                     <th><?php echo (_('Erased')) ?></th>
                                     <th><?php echo (_('Level')) ?></th>
+                                    <th><?php echo (_('ID')) ?></th>
                                 </tr>
                             </thead>
                             <tbody>

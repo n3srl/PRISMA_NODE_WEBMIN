@@ -86,7 +86,7 @@ $(document).ready(function () {
         },
         "columnDefs": [
             {
-                "targets": [-1, -2],
+                "targets": [-1, -2, -3],
                 "visible": false
             }],
         responsive: true,

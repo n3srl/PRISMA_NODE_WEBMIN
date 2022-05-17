@@ -20,7 +20,6 @@ function editObj(id) {
     $("input[type=password]").each(function (key, value) {
         $(this).addClass("required");
         $(this).removeClass("optional");
-        //$(this).addClass("optional");
     });
 
     core_person.new_password = null;
@@ -32,7 +31,6 @@ function editObj(id) {
 }
 
 function allowEditObj() {
-    //enableForm(core_person, false);
     enableForm(core_person,false);
 }
 
@@ -94,11 +92,11 @@ $(document).ready(function () {
             "sLengthMenu": "Mostra _MENU_ elementi"
         },
         "columnDefs": [{
-                "targets": [-2, -3],
+                "targets": "_all",
                 "orderable": false
             },
             {
-                "targets": [-1],
+                "targets": [-2],
                 render: function (data, type, row, meta) { 
                     if(data === "1"){
                         return "Admin";
@@ -108,7 +106,7 @@ $(document).ready(function () {
                 }
             },
             {
-                "targets": [-2, -4],
+                "targets": [-1, -3, -4, -5],
                 "visible": false
             }
         ],

@@ -76,6 +76,7 @@ class FreetureFinalApiLogic {
             $ob->value = $tmp["value"];
 
             $res = self::updateValue($ob);
+            self::restartFreeture();
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -525,7 +526,7 @@ class FreetureFinalApiLogic {
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     //Update the requested param
-                    if ($i === $ob->id) {
+                    if ("$i" === $ob->id) {
                         $reply .= $ob->key . " = " . $ob->value . "\n";
                     } else {
                         $reply .= $line;
