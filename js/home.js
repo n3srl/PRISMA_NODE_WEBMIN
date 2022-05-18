@@ -208,7 +208,6 @@ function updateDataUsage() {
     }, 5000);
 }
 
-
 // Show modal with freeture mask
 $("#btn-show-mask").click(function () {
     $('#mask-preview-modal').modal('show');

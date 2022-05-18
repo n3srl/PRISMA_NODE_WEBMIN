@@ -512,7 +512,6 @@ class FreetureFinalApiLogic {
         $freetureConf = _FREETURE_;
         $reply = "";
         $i = 0;
-        $descr = "no description";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
 

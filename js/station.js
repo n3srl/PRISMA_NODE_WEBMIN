@@ -111,44 +111,6 @@ function loadValues() {
     });
 }
 
-// Load new mask
-function uploadMask() {
-    if ($("#station-mask-upload").get(0).files.length !== 0) { // Check if user uploaded a file
-        var file = $("#station-mask-upload").get(0).files[0];
-        if (file)
-            var formData = new FormData();
-        formData.append("mask", file);
-
-        // Make a POST request to update mask file
-        $.ajax({
-            url: "/lib/ft/V2/freeturefinal/editmask",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                $("#uploadmaskbtn").attr('disabled', true);
-                $('#form-mask').val('');
-            }
-        });
-
-        // Make a POST request to enable mask
-        $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
-            var id = JSON.parse(json1).data;
-            $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
-                var obj = JSON.parse(json2).data;
-                var ft = new FreetureFinalModel('V2');
-                ft.id = obj.id;
-                ft.key = obj.key;
-                ft.value = obj.value;
-                ft.description = obj.description;
-                freetureObjects.push(ft);
-            });
-
-        });
-    }
-}
-
 function undoStation() {
     var f = function () {
         editStation();

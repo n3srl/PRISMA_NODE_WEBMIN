@@ -199,6 +199,27 @@ function cancelVideo() {
     $('#DetectionList').dataTable().fnDraw();
 }
 
+$(window).bind('beforeunload', function () {
+    if (isProcessingZip || isProcessingVideo) {
+        return 'Se lasci o ricarichi la pagina i download correnti verranno interrotti. Vuoi continuare lo stesso?';
+    }
+});
+
+$(window).unload(function () {
+    $.ajax({
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/video/cancel"
+    });
+    $.ajax({
+        async: true,
+        type: "POST",
+        global: false,
+        url: "/lib/detection/V2/detection/zip/cancel"
+    });
+});
+
 $(document).ready(function () {
 
     // Create days datatable

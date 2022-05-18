@@ -133,8 +133,23 @@ $(document).ready(function () {
         "info": true,
         "searching": false
     });
+    
+    // Get freeture mask image base64 encoded
+    $.get("/lib/ft/V2/freeturefinal/preview/mask", function (json) {
+        var data = JSON.parse(json).data;
+        if (data) {
+            $('#mask-preview-modal-body').html("<img class='img-responsive' src='" + data + "'/>");
+            $('#download-mask').attr('href', data);
+        } else {
+            $('#btn-show-mask').hide();
+        }
+    });
 
+});
 
+// Show modal with freeture mask
+$("#btn-show-mask").click(function () {
+    $('#mask-preview-modal').modal('show');
 });
 
 // Enable upload button if user has chosen a file 
@@ -146,13 +161,12 @@ $("#form-ftcfg").on('change', function (event) {
 });
 
 // Enable upload button if user has chosen a file 
-/*
 $("#form-mask").on('change', function (event) {
     filename = $(this).val();
     if (filename !== '') {
         $("#uploadmaskbtn").attr('disabled', false);
     }
-});*/
+});
 
 // Upload new freeture configuration
 $("#ftCfgFileForm").on("submit", function (e) {
@@ -178,13 +192,13 @@ $("#ftCfgFileForm").on("submit", function (e) {
 });
 
 // Upload new freeture mask
-/*
 $("#maskFileForm").on("submit", function (e) {
     e.preventDefault();
     var file = $("#form-mask")[0].files[0];
     var formData = new FormData();
     formData.append("mask", file);
 
+    // Make a POST request to update mask file
     $.ajax({
         url: "/lib/ft/V2/freeturefinal/editmask",
         type: "POST",
@@ -199,8 +213,22 @@ $("#maskFileForm").on("submit", function (e) {
         }
     });
 
-});*/
+    // Make a POST request to enable mask
+    $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
+        var id = JSON.parse(json1).data;
+        $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
+            var obj = JSON.parse(json2).data;
+            //var ft = new FreetureFinalModel('V2');
+            inaffreeturefinal.id = obj.id.toString();
+            inaffreeturefinal.key = obj.key;
+            inaffreeturefinal.value = "true";
+            inaffreeturefinal.description = obj.description;
+            inaffreeturefinal.insert(reloadAllDatatable);
+        });
 
+    });
+
+});
 
 $(function () {
     initFilters();

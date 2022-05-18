@@ -1,4 +1,31 @@
 <?php /* @var $Station Station */ ?> 
+<!-- Mask Modal -->
+<div class="modal fade" id="mask-preview-modal" tabindex="-1" role="dialog" aria-labelledby="detection-preview-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-lr">
+                    <div class="col-md-8 col-sm-8 col-xs-8">
+                        <h5 class="modal-title" id="mask-preview-modal-label">Mask</h5>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
+                        <a download="default.bmp" id="download-mask">
+                            <button type="button" class="btn btn-success pull-right">Download</button>
+                        </a>
+                    </div>
+                    <div class="col-md-1 col-sm-1 col-xs-1 no-padding-r">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body" id="mask-preview-modal-body">
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class='right_col' role='main' >
     <div class=''>
         <div class='page-title'>
@@ -35,6 +62,23 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                <div class="mb-3">
+                                    <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                        <h5><?= _('Carica nuova maschera (esempio: default.bmp)') ?></h5>
+                                    </div>
+                                    <div class='clearfix'>
+                                        <form id="maskFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
+                                            <div class='col-md-10 no-padding'>
+                                                <input class="form-control" name="mask" type="file" accept=".bmp" id="form-mask">
+                                            </div>
+                                            <div class='col-md-2 no-padding'>
+                                                <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadmaskbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -66,14 +110,6 @@
                             <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
                                 <div class='col-md-12 col-sm-12 col-xs-12'>
                                     <div class='col-md-6 col-sm-12 col-xs-12'>
-                                        <div class='col-md-12 col-sm-12 col-xs-12'>
-                                            <div class='item form-group'>
-                                                <div class='col-xs-12'>
-                                                    <small class='text-muted'><?= _('Carica nuova maschera (esempio: default.bmp)') ?></small>
-                                                    <input id="station-mask-upload" class="form-control input-disabled" name="mask" type="file" accept=".bmp" id="form-mask">
-                                                </div>
-                                            </div>
-                                        </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('station-name') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
@@ -127,7 +163,7 @@
                                         <div class='col-md-12 col-sm-12 col-xs-12'>
                                             <div class='col-xs-12'>
                                                 <small class='text-muted'><?php echo ( _('Indica le coordinate')) ?> </small>
-                                                <div id="location-picker" style="height: 390px"></div>
+                                                <div id="location-picker" style="height: 325px"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -151,10 +187,12 @@
                     <div class='x_panel'>
                         <div class='x_title no-padding-lr'>
                             <div class='clearfix'>
-                                <div class='col-md-6 no-padding-l'>
+                                <div class='col-md-8 no-padding-l'>
                                     <h2><?= _('Configurazione Manuale') ?></h2>
                                 </div>
-
+                                <div class='col-md-4 no-padding'>
+                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                </div>
                             </div>
                         </div>
                         <div class='x_content'>
