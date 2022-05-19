@@ -477,11 +477,11 @@ $(document).ready(function () {
     $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {
         var id1 = JSON.parse(json1).data;
         $.get("/lib/ft/V2/freeturefinal/" + id1, function (json2) {
-            var lat = parseInt(JSON.parse(json2).data.value);
+            var lat = Number(JSON.parse(json2).data.value);
             $.get("/lib/ft/V2/freeturefinal/id/SITELONG", function (json3) {
                 var id2 = JSON.parse(json3).data;
                 $.get("/lib/ft/V2/freeturefinal/" + id2, function (json4) {
-                    var lng = parseInt(JSON.parse(json4).data.value);
+                    var lng = Number(JSON.parse(json4).data.value);
                     latitude = lat;
                     longitude = lng;
                     initMap();
