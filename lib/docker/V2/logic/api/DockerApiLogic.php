@@ -284,7 +284,7 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker start " . $ob);
+                $stream = ssh2_exec($session, "docker start " . $ob);
                 $result = true;
             }
             unset($session);
@@ -300,7 +300,7 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker restart " . $ob);
+                $stream = ssh2_exec($session, "docker restart " . $ob);
                 $result = true;
             }
             unset($session);
@@ -316,7 +316,7 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker stop " . $ob);
+                $stream = ssh2_exec($session, "docker stop " . $ob);
                 $result = true;
             }
             unset($session);
