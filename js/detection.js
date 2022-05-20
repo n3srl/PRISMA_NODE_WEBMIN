@@ -480,16 +480,22 @@ function initDetectionsDatatable() {
         $(this).addClass('selected');
     });
 
-    // Hide preview column and enable preview toggle if media not enabled
+    // Hide preview columns and enable preview toggle if media preview not enabled
     $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
         var data = JSON.parse(json).data;
         table2.column(3).visible(data);
         table2.column(4).visible(data);
         table2.column(5).visible(data);
-        table2.column(6).visible(data);
         if (!data) {
             $("#enable-detection-preview-box").hide();
         }
+    });
+
+    // Hide zip and video column and enable preview toggle if media processing not enabled
+    $.get("/lib/ft/V2/freeturefinal/media/processing", function (json) {
+        var data = JSON.parse(json).data;
+        table2.column(6).visible(data);
+        table2.column(7).visible(data);
     });
 }
 
