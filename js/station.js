@@ -22,9 +22,8 @@ function allowEditStation() {
 
 // For each element to change assign the new value and send a post request
 function saveStation() {
-    var f = function () {
-        disableStationForm();
-    };
+
+    disableStationForm();
 
     freetureObjects.forEach(ft => {
         switch (ft.key) {
@@ -62,11 +61,20 @@ function saveStation() {
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/log/";
                 break;
         }
-        ft.insert();
     });
+    
+    updateValues();
+}
 
-    uploadMask();
+async function updateValues() {
+    await Promise.all([
+        freetureObjects.forEach(ft => {
+            ft.insert();
+        })
+    ]);
 
+    reloadAllDatatable();
+    loadValues();
 }
 
 // For each field load the actual value and creates the objects
@@ -78,7 +86,7 @@ function loadValues() {
             $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
                 var obj = JSON.parse(json2).data;
                 var ft = new FreetureFinalModel('V2');
-                ft.id = obj.id;
+                ft.id = obj.id.toString();
                 ft.key = obj.key;
                 ft.value = obj.value;
                 ft.description = obj.description;
