@@ -269,7 +269,7 @@ class FreetureFinalApiLogic {
         return CoreLogic::GenerateResponse($res, $ob);
     }
 
-    public static function GetMediaVisibility() {
+    public static function GetMediaPreview() {
         try {
             $Person = CoreLogic::VerifyPerson();
             $ob = self::isMediaPreviewEnabled();
@@ -280,12 +280,36 @@ class FreetureFinalApiLogic {
         return CoreLogic::GenerateResponse($res, $ob);
     }
 
-    public static function UpdateMediaVisibility($request) {
+    public static function UpdateMediaPreview($request) {
         try {
             $Person = CoreLogic::VerifyPerson();
             $tmp = $request->get("mediaPreview");
             $enable_preview = $tmp === 'true' ? true : false;
-            $ob = self::updateMediaPreview($enable_preview);
+            $ob = self::setMediaPreview($enable_preview);
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+    
+    public static function GetMediaProcessing() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::isMediaProcessingEnabled();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function UpdateMediaProcessing($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $tmp = $request->get("mediaProcessing");
+            $enable_processing = $tmp === 'true' ? true : false;
+            $ob = self::setMediaProcessing($enable_processing);
             $res = true;
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -706,7 +730,7 @@ class FreetureFinalApiLogic {
         return $media_usage;
     }
 
-    // Get if media preview and download is enabled
+    // Get if media preview is enabled
     public static function isMediaPreviewEnabled() {
         $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
         $strJsonFileContents = file_get_contents($media_info);
@@ -715,12 +739,31 @@ class FreetureFinalApiLogic {
         return $media_preview;
     }
 
-    // Get if media preview and download is enabled
-    public static function updateMediaPreview($previewEnabled) {
+    // Set media preview enabled or disabled
+    public static function setMediaPreview($previewEnabled) {
         $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
         $jsonString = file_get_contents($media_info);
         $data = json_decode($jsonString, true);
         $data['mediaPreview'] = $previewEnabled;
+        $newJsonString = json_encode($data);
+        return file_put_contents($media_info, $newJsonString);
+    }
+    
+    // Get if media processing is enabled
+    public static function isMediaProcessingEnabled() {
+        $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
+        $strJsonFileContents = file_get_contents($media_info);
+        $array = json_decode($strJsonFileContents, true);
+        $media_preview = $array["mediaProcessing"];
+        return $media_preview;
+    }
+
+    // Set media processing enabled or disabled
+    public static function setMediaProcessing($processingEnabled) {
+        $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
+        $jsonString = file_get_contents($media_info);
+        $data = json_decode($jsonString, true);
+        $data['mediaProcessing'] = $processingEnabled;
         $newJsonString = json_encode($data);
         return file_put_contents($media_info, $newJsonString);
     }

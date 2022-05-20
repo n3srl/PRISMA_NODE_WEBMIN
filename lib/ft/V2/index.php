@@ -298,7 +298,7 @@ $app->GET('/freeturefinal/media/info', function (Application $app, Request $requ
  * */
 $app->POST('/freeturefinal/media/preview', function (Application $app, Request $request) {
 
-    $result = FreetureFinalApiLogic::UpdateMediaVisibility($request);
+    $result = FreetureFinalApiLogic::UpdateMediaPreview($request);
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
@@ -316,7 +316,43 @@ $app->POST('/freeturefinal/media/preview', function (Application $app, Request $
  * */
 $app->GET('/freeturefinal/media/preview', function (Application $app, Request $request) {
 
-    $result = FreetureFinalApiLogic::GetMediaVisibility();
+    $result = FreetureFinalApiLogic::GetMediaPreview();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * UPDATE MEDIA PREVIEW
+ *
+ * */
+$app->POST('/freeturefinal/media/processing', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::UpdateMediaProcessing($request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+/**
+ *
+ * GET MEDIA PREVIEW
+ *
+ * */
+$app->GET('/freeturefinal/media/processing', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetMediaProcessing();
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);

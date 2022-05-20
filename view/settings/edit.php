@@ -19,14 +19,27 @@
                             </div>
                         </div>
                         <div class='x_content'>
-                            <div class='col-md-8'>
-                                <label style="font-size:14px;">Abilita possibilità di visualizzare anteprima, video e scaricamento di file e zip</label>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class='col-md-8'>
+                                    <label style="font-size:14px;">Abilita possibilità di visualizzare le anteprime</label>
+                                </div>
+                                <div class='col-md-4'>
+                                    <label class='switch pull-right' style='vertical-align: middle;'>
+                                        <input type='checkbox' id='enable-media-preview'>
+                                        <span class='slider round'></span>
+                                    </label>
+                                </div>
                             </div>
-                            <div class='col-md-4'>
-                                <label class='switch pull-right' style='vertical-align: middle;'>
-                                    <input type='checkbox' id='enable-media-preview'>
-                                    <span class='slider round'></span>
-                                </label>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div class='col-md-8'>
+                                    <label style="font-size:14px;">Abilita possibilità di scaricare video e zip</label>
+                                </div>
+                                <div class='col-md-4'>
+                                    <label class='switch pull-right' style='vertical-align: middle;'>
+                                        <input type='checkbox' id='enable-media-processing'>
+                                        <span class='slider round'></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>

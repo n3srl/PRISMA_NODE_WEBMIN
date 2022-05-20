@@ -30,7 +30,7 @@ function loadMediaStorageInfo() {
 }
 
 // Get if media preview is enabled
-function checkIfMediaEnabled() {
+function checkIfMediaPreviewIsEnabled() {
     $.get("/lib/ft/V2/freeturefinal/media/preview", function (json) {
         var data = JSON.parse(json).data;
         // Set toggle switch unchecked or checked
@@ -47,9 +47,28 @@ $("#enable-media-preview").on('change', function (event) {
             });
 });
 
+// Get if media preview is enabled
+function checkIfMediaProcessingIsEnabled() {
+    $.get("/lib/ft/V2/freeturefinal/media/processing", function (json) {
+        var data = JSON.parse(json).data;
+        // Set toggle switch unchecked or checked
+        $("#enable-media-processing").attr("checked", data);
+    });
+}
+
+// Enable detections previews
+$("#enable-media-processing").on('change', function (event) {
+    var enableProcessing = $("#enable-media-preview").is(":checked");
+    $.post('/lib/ft/V2/freeturefinal/media/processing', {mediaProcessing: enableProcessing},
+            function (data) {
+                loadMediaStorageInfo();
+            });
+});
+
 $(document).ready(function () {
     loadMediaStorageInfo();
-    checkIfMediaEnabled();
+    checkIfMediaPreviewIsEnabled();
+    checkIfMediaProcessingIsEnabled();
 });
 
 
