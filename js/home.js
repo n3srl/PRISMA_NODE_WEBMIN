@@ -185,7 +185,6 @@ function updateDataUsage() {
             type: "GET",
             dataType: "json",
             global: false,
-            timeout: 5000,
             complete: updateDataUsage,
             success: function (res) {
                 var info = res.data;

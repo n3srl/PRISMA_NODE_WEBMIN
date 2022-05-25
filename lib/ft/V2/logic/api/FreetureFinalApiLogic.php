@@ -709,7 +709,7 @@ class FreetureFinalApiLogic {
             $cpu[] = (float) str_replace("\n", "", $core);
             $i++;
         }
-
+        
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);
         $free_arr = explode("\n", $free2);
