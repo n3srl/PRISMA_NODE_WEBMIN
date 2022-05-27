@@ -497,9 +497,11 @@ class DetectionApiLogic {
         $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getDetectionPrefix() . "/";
         $reply = array();
-
+        // If there isn't data for this day returns an empty array
+        if (!is_dir($data_dir)) {
+            return $reply;
+        }
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
-
         foreach ($dirs as $day_dir) {
 
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/events/*");
@@ -650,7 +652,7 @@ class DetectionApiLogic {
             $frame_path = $detection_dir . "fits2D/" . $frame;
             shell_exec("fitspng -o " . $frames_dir . $frame_png . " " . $frame_path);
         }
-        $video_path = $media_dir . $video_name . ".mkv" ;
+        $video_path = $media_dir . $video_name . ".mkv";
         $video_path_tmp = $media_dir . $video_name . "_tmp.mkv";
         shell_exec("cat " . $frames_dir . "*.png | ffmpeg -f image2pipe -i - $video_path_tmp");
         shell_exec("ffmpeg -i $video_path_tmp -i $logo_path -filter_complex 'overlay=W-w-5:H-h-5' $video_path");

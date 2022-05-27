@@ -358,7 +358,7 @@ class CaptureApiLogic {
         // Day directory with captures /freeture/PREFIX/PREFIX_DATE/captures
         $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/captures";
         $reply = array();
-        // If there isn't data for this day return an empty array
+        // If there isn't data for this day returns an empty array
         if (!is_dir($data_dir)) {
             return $reply;
         }

@@ -159,7 +159,7 @@ class StackApiLogic {
     }
 
     /* FILESYSTEM OPERATIONS */
-    
+
     // Get list of all stacks in a day
     public static function GetFilesListDatatable($request) {
         $reply = array();
@@ -301,14 +301,14 @@ class StackApiLogic {
     // Get station code string, images prefix
     public static function getStackPrefix() {
         $freetureConf = _FREETURE_;
-        $stationName = "NO_NAME";
-        
+        $stationName = "NO_TELESCOP";
+
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
-            
+
             //Parse config file line by line
             foreach ($contents as $line) {
-                
+
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
                     if (self::getKey($line) === "TELESCOP") {
@@ -334,18 +334,18 @@ class StackApiLogic {
     public static function processStack($file, $data_dir) {
         $png_dir = _WEBROOTDIR_ . "tmp-media/";
         $logo_path = _WEBROOTDIR_ . "img/watermark.png";
-        
+
         // Convert fit to png by Fitspng, save in webroot temporary directory
         $png_name_tmp = str_replace(".fit", "-tmp.png", $file);
         $png_path_tmp = $png_dir . $png_name_tmp;
         $fit_path = $data_dir . "/" . $file;
         shell_exec("fitspng -o $png_path_tmp $fit_path");
-        
+
         // Apply watermark by Imagemagick
         $png_name = str_replace(".fit", ".png", $file);
         $png_path = $png_dir . $png_name;
         shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
-        
+
         $base64 = self::encodeStack($png_path);
         shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
         return $base64;
@@ -365,7 +365,7 @@ class StackApiLogic {
         $n_day_files = self::getDirectoryFilesCount($data_dir . "/*.fit");
         $files = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($files as $file) {
-            
+
             if ($i < $start) {
                 $i++;
                 continue;
@@ -379,11 +379,10 @@ class StackApiLogic {
             if ('..' === $file) {
                 continue;
             }
-            
+
             $name = explode("_", $file);
-            
+
             if (isset($name[1])) { // Check if file name is correct
-                
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
@@ -401,11 +400,15 @@ class StackApiLogic {
         // Main directory with days /freeture/PREFIX/
         $data_dir = _FREETURE_DATA_ . self::getStackPrefix() . "/";
         $reply = array();
+        // If there isn't data for this day returns an empty array
+        if (!is_dir($data_dir)) {
+            return $reply;
+        }
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
-            
+
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/stacks/*.fit");
-            
+
             if ($i < $start) {
                 $i++;
                 continue;
@@ -419,11 +422,11 @@ class StackApiLogic {
             if ('..' === $day_dir) {
                 continue;
             }
-            
+
             $name = explode("_", $day_dir);
-            
+
             if (isset($name[1])) {
-                
+
                 $datetime = date_create($name[1]);
                 $day = $datetime->format('Y-m-d');
                 $reply[] = array($day, $n_day_files, $day_dir);

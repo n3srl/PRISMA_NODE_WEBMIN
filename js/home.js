@@ -492,9 +492,11 @@ $(document).ready(function () {
     // Get last image base64 encoded and its timestamp (last stack)
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
         var data = JSON.parse(json).data;
-        var info = data[1].split(":");
-        $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
-        $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        if (data) {
+            var info = data[1].split(":");
+            $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
+            $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
+        }
     });
 
     // Set toggle switch unchecked 

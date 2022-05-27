@@ -96,6 +96,34 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-r">
+                    <div class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-8 no-padding'>
+                                    <h2><?= _('Dati stazione') ?></h2>
+                                </div>
+                                <div class='col-md-4 no-padding'>
+                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <table id='StationInfo' class='table table-striped table-bordered noclick' style='width: 100%; '>
+                                    <thead>
+                                        <tr>
+                                            <th><?php echo (_('Parametro')) ?></th>
+                                            <th><?php echo (_('Valore')) ?></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id='StationInfoBody'>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class='col-md-12 col-sm-12 col-xs-12 no-padding-r'>
                     <div id='list' class='x_panel'>
                         <div class='x_title no-padding-lr'>
@@ -140,6 +168,28 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="col-md-6 col-sm-12 col-xs-12 no-padding-lr">
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Ultima immagine rilevata') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <h5 id="last-image-description"></h5>
+                            </div>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div id='last-image-preview'>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-md-12 col-sm-12 col-xs-12 no-padding-r">
                     <div class='x_panel'>
                         <div class='x_title no-padding-lr'>
@@ -170,56 +220,6 @@
                                     <div class="progress-bar progress-bar-danger" id="disk-percentage" role="progressbar" aria-valuenow="0"
                                          aria-valuemin="0" aria-valuemax="100" style="width:0%">
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-sm-12 col-xs-12 no-padding-lr">
-                <div class="col-md-12 col-sm-12 col-xs-12">
-                    <div class='x_panel'>
-                        <div class='x_title no-padding-lr'>
-                            <div class='clearfix'>
-                                <div class='col-md-8 no-padding'>
-                                    <h2><?= _('Dati stazione') ?></h2>
-                                </div>
-                                <div class='col-md-4 no-padding'>
-                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class='x_content'>
-                            <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <table id='StationInfo' class='table table-striped table-bordered noclick' style='width: 100%; '>
-                                    <thead>
-                                        <tr>
-                                            <th><?php echo (_('Parametro')) ?></th>
-                                            <th><?php echo (_('Valore')) ?></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id='StationInfoBody'>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12 col-sm-12 col-xs-12">
-                    <div class='x_panel'>
-                        <div class='x_title no-padding-lr'>
-                            <div class='clearfix'>
-                                <div class='col-md-6 no-padding-l'>
-                                    <h2><?= _('Ultima immagine rilevata') ?></h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class='x_content'>
-                            <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <h5 id="last-image-description"></h5>
-                            </div>
-                            <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <div id='last-image-preview'>
                                 </div>
                             </div>
                         </div>
