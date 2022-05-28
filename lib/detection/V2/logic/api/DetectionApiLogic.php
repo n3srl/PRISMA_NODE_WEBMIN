@@ -447,7 +447,7 @@ class DetectionApiLogic {
     // Get the value from the line
     public static function getValue(String $raw) {
         $value1 = explode("=", $raw)[1];
-        return self::trim(self::cleanComments($value1));
+        return self::trimValue(self::cleanComments($value1));
     }
 
     // Get the key from the line
@@ -459,6 +459,11 @@ class DetectionApiLogic {
     // Clean string 
     public static function trim(String $raw) {
         return str_replace(array(" ", "\n", "\r"), "", $raw);
+    }
+    
+    // Clean string 
+    public static function trimValue(String $raw) {
+        return str_replace(array("\n", "\r"), "", $raw);
     }
 
     // Clean comments in the end of the string

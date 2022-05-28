@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title>
-            Orma
+            <?php echo CoreLogic::GetStationCode() ?>
 
         </title>
         <script type="text/javascript" src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/actions.js<?= _VERSION_ ?>"></script>

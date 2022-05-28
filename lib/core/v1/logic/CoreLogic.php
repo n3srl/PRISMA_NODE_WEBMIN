@@ -331,5 +331,59 @@ class CoreLogic {
         }
         return $user;
     }
+    
+     // Get the value from the line
+    public static function getValue(String $raw) {
+        $value1 = explode("=", $raw)[1];
+        return self::trimValue(self::cleanComments($value1));
+    }
+
+    // Get the key from the line
+    public static function getKey(String $raw) {
+        $key1 = explode("=", $raw)[0];
+        return self::trim($key1);
+    }
+
+    // Clean string 
+    public static function trim(String $raw) {
+        return str_replace(array(" ", "\n", "\r"), "", $raw);
+    }
+    
+    // Clean string 
+    public static function trimValue(String $raw) {
+        return str_replace(array("\n", "\r"), "", $raw);
+    }
+
+    // Clean comments in the end of the string
+    public static function cleanComments(String $raw) {
+        if (!strpos($raw, "#") === false) {
+            return substr($raw, 0, strpos($raw, "#")) . "\n";
+        } else {
+            return $raw;
+        }
+    }
+
+    // Get the station code parsing freeture configuration file
+    public static function GetStationCode() {
+        $freetureConf = _FREETURE_;
+        $stationCode = "NO_NAME";
+
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+
+            //Parse config file line by line
+            foreach ($contents as $line) {
+
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === "DATA_PATH") {
+                        $tmp = self::getValue($line);
+                        $stationCode = explode("/", $tmp)[2];
+                    }
+                }
+            }
+        }
+        return $stationCode;
+    }
 
 }
