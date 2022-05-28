@@ -170,7 +170,7 @@ class CaptureApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
             $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
-            $directory = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/captures/*";
+            $directory = self::getDataPath() . $day_dir . "/captures/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getCapturesFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
@@ -209,7 +209,7 @@ class CaptureApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . Self::getStationPrefix() . "/*";
+        $directory = self::getDataPath() . "*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -251,7 +251,7 @@ class CaptureApiLogic {
     // Get fit file path from given file info
     // File info given is 
     public static function GetFitFile($file) {
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
+        $data_dir = self::getDataPath();
         $file_info = explode("_", $file);
         $day = $file_info[0] . "_" . $file_info[1];
         $fit_name = $file_info[2] . "_" . $file_info[3] . "_" . $file_info[4];
@@ -298,8 +298,8 @@ class CaptureApiLogic {
         }
     }
 
-    // Get station code string, images prefix
-    public static function getStationPrefix() {
+    // Get captures prefix string
+    public static function getCapturePrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
         
@@ -318,6 +318,29 @@ class CaptureApiLogic {
             }
         }
         return $stationName;
+    }
+    
+    // Get the data path parsing freeture configuration file
+    public static function getDataPath() {
+        $freetureConf = _FREETURE_;
+        $dataPath = _FREETURE_DATA_ . "/NO_NAME/";
+
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+
+            //Parse config file line by line
+            foreach ($contents as $line) {
+
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === "DATA_PATH") {
+                        $tmp = self::getValue($line);
+                        $dataPath = _FREETURE_DATA_ . explode("/", $tmp)[2] . "/";
+                    }
+                }
+            }
+        }
+        return $dataPath;
     }
 
     // Encode image to base64
@@ -356,7 +379,7 @@ class CaptureApiLogic {
     public static function getCapturesFiles($start, $end, $day_dir, $enablePreview = false) {
         $i = 0;
         // Day directory with captures /freeture/PREFIX/PREFIX_DATE/captures
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/" . $day_dir . "/captures";
+        $data_dir = self::getDataPath() . $day_dir . "/captures";
         $reply = array();
         // If there isn't data for this day returns an empty array
         if (!is_dir($data_dir)) {
@@ -399,7 +422,7 @@ class CaptureApiLogic {
     public static function getCapturesDays($start, $end) {
         $i = 0;
         // Main directory with days /freeture/PREFIX/
-        $data_dir = _FREETURE_DATA_ . self::getStationPrefix() . "/";
+        $data_dir = self::getDataPath();
         $reply = array();
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {

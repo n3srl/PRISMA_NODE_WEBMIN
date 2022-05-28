@@ -170,7 +170,7 @@ class DetectionApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
             $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
-            $directory = _FREETURE_DATA_ . self::getDetectionPrefix() . "/" . $day_dir . "/events/*";
+            $directory = _FREETURE_DATA_ . self::getStationCode() . "/" . $day_dir . "/events/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
@@ -212,7 +212,7 @@ class DetectionApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getDetectionPrefix() . "/*";
+        $directory = _FREETURE_DATA_ . "/" . self::getStationCode() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -327,7 +327,7 @@ class DetectionApiLogic {
             $Person = CoreLogic::VerifyPerson();
             $now = new DateTime();
             $date_dir = self::getDetectionPrefix() . "_" . $now->format('Ymd');
-            $path = _FREETURE_DATA_ . self::getDetectionPrefix() . "/" . $date_dir . "/events/*";
+            $path = _FREETURE_DATA_ . self::getStationCode() . "/" . $date_dir . "/events/*";
             $n_files = self::getDirectoryFilesCount($path);
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -350,7 +350,7 @@ class DetectionApiLogic {
     public static function GetAllDetectionNumber() {
         try {
             $Person = CoreLogic::VerifyPerson();
-            $path = _FREETURE_DATA_ . self::getDetectionPrefix() . "/";
+            $path = _FREETURE_DATA_ . self::getStationCode() . "/";
             $n_files = self::getAllDaysFilesCount($path);
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -360,7 +360,7 @@ class DetectionApiLogic {
 
     // Compute number of detection of current month
     public static function getLastMonthTotal() {
-        $path = _FREETURE_DATA_ . self::getDetectionPrefix() . "/";
+        $path = _FREETURE_DATA_ . self::getStationCode() . "/";
         $now = new DateTime();
         $month1 = $now->format('m');
         $n_files = 0;
@@ -436,7 +436,7 @@ class DetectionApiLogic {
 
     // Get base path to passed detection files
     public static function getDetectionBasePath($detection) {
-        $data_dir = _FREETURE_DATA_ . self::getDetectionPrefix() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/";
         $detection_info = explode("_", $detection);
         $day = $detection_info[0] . "_" . $detection_info[1];
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
@@ -470,7 +470,7 @@ class DetectionApiLogic {
         }
     }
 
-    // Get the station name parsing freeture configuration file
+    // Get the detection prefix parsing freeture configuration file
     public static function getDetectionPrefix() {
         $freetureConf = _FREETURE_;
         $stationName = "NO_NAME";
@@ -490,6 +490,29 @@ class DetectionApiLogic {
             }
         }
         return $stationName;
+    }
+    
+    // Get the station code parsing freeture configuration file
+    public static function getStationCode() {
+        $freetureConf = _FREETURE_;
+        $stationCode = "NO_NAME";
+
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            $contents = file($freetureConf);
+
+            //Parse config file line by line
+            foreach ($contents as $line) {
+
+                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                        (strlen($line) - 1) !== substr_count($line, " ")) {
+                    if (self::getKey($line) === "DATA_PATH") {
+                        $tmp = self::getValue($line);
+                        $stationCode = explode("/", $tmp)[2];
+                    }
+                }
+            }
+        }
+        return $stationCode;
     }
 
     // Get all days and compute number of detections in that day
