@@ -212,7 +212,7 @@ class DetectionApiLogic {
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
-        $directory = _FREETURE_DATA_ . "/" . self::getStationCode() . "/*";
+        $directory = _FREETURE_DATA_ . self::getStationCode() . "/*";
         $iTotal = self::getDirectoryFilesCount($directory);
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
@@ -523,7 +523,7 @@ class DetectionApiLogic {
     // Get all days and compute number of detections in that day
     public static function getDetectionsDays($start, $end) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getDetectionPrefix() . "/";
+        $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/";
         $reply = array();
         // If there isn't data for this day returns an empty array
         if (!is_dir($data_dir)) {
@@ -564,7 +564,7 @@ class DetectionApiLogic {
     // Scan filesystem to get events folder
     public static function getDetectionsFiles($start, $end, $date_dir, $enablePreview = false) {
         $i = 0;
-        $data_dir = _FREETURE_DATA_ . self::getDetectionPrefix() . "/" . $date_dir . "/events";
+        $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/" . $date_dir . "/events";
         $reply = array();
 
         if (!is_dir($data_dir)) {
