@@ -203,7 +203,8 @@
                                         <th><?php echo (_('Valore')) ?></th>
                                         <th><?php echo (_('Descrizione')) ?></th>
                                         <th><?php echo (_('Show')) ?></th>
-                                        <th></th>
+                                        <th><?php echo (_('Erased')) ?></th>
+                                        <th><?php echo (_('ID')) ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>

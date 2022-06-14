@@ -292,7 +292,7 @@ class FreetureFinalApiLogic {
         }
         return CoreLogic::GenerateResponse($res, $ob);
     }
-    
+
     public static function GetMediaProcessing() {
         try {
             $Person = CoreLogic::VerifyPerson();
@@ -366,16 +366,11 @@ class FreetureFinalApiLogic {
     public static function trim(String $raw) {
         return str_replace(array(" ", "\n", "\r"), "", $raw);
     }
-    
-    // Clean string 
-    public static function trimValue(String $raw) {
-        return str_replace(array("\n", "\r"), "", $raw);
-    }
 
     // Get the value from the line
     public static function getValue(String $raw) {
         $value1 = explode("=", $raw)[1];
-        return self::trimValue(self::cleanComments($value1));
+        return trim(self::cleanComments($value1));
     }
 
     // Get the key from the line
@@ -714,7 +709,7 @@ class FreetureFinalApiLogic {
             $cpu[] = (float) str_replace("\n", "", $core);
             $i++;
         }
-        
+
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);
         $free_arr = explode("\n", $free2);
@@ -753,7 +748,7 @@ class FreetureFinalApiLogic {
         $newJsonString = json_encode($data);
         return file_put_contents($media_info, $newJsonString);
     }
-    
+
     // Get if media processing is enabled
     public static function isMediaProcessingEnabled() {
         $media_info = _WEBROOTDIR_ . "info-media/info_media.json";
