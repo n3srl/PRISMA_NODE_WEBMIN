@@ -28,7 +28,7 @@
                     <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
                         <li><a href="/person/edit"><i class="fa fa-user"></i>Utenti</a></li>
                         <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i>Configurazione OpenVPN</a></li>
-                        <li><a href="/prometheus/edit"><i class="fa fa-fire"></i>Configurazione Prometheus</a></li>
+                        <li><a href="/prometheus/edit"><i class="fa fa-fire"></i>Stato node_exporter</a></li>
                         <li><a href="/docker/edit"><i class="fa fa-suitcase"></i>Stato Containers</a></li>
                     <?php } ?>
                     <li><a href="/station/edit"><i class="fa fa-building"></i>Configurazione Freeture</a></li>

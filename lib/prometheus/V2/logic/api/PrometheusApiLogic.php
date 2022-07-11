@@ -40,7 +40,7 @@ class PrometheusApiLogic {
                
                 ssh2_scp_send($session, $ob, $prometheusConf);
 
-                $stream = ssh2_exec($session, "sudo /bin/systemctl restart prometheus");
+                $stream = ssh2_exec($session, "sudo /bin/systemctl restart node_exporter");
                 
                 unset($session);
                 $result = true;
