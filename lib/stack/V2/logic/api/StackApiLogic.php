@@ -368,6 +368,10 @@ class StackApiLogic {
         $png_name = str_replace(".fit", ".png", $file);
         $png_path = $png_dir . $png_name;
         shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
+       
+        //apply file name fo image
+        $stamp = str_replace(".png","",$png_name);
+        shell_exec("convert $png_path_tmp -gravity NorthWest -pointsize 22 -fill white -annotate 0 \"$stamp\" $png_path_tmp $png_path");
 
         $base64 = self::encodeStack($png_path);
         shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
