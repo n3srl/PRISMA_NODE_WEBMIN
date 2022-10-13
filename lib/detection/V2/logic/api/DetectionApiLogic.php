@@ -633,7 +633,15 @@ class DetectionApiLogic {
         $gemap_path = $data_dir . "/" . $detection . "/GeMap.bmp";
         $dirmap_path = $data_dir . "/" . $detection . "/DirMap.bmp";
 
-        $preview_base64 = self::encodeDetection($png_path);
+        
+        //apply file name fo image
+        $stamp = str_replace(".png","",$png_name);
+        $named_png_name = "named_".$png_name;
+        $png_named_path = $tmp_png_dir .$named_png_name;
+        shell_exec("convert $png_path -gravity NorthWest -pointsize 22 -fill white -annotate 0 \"$stamp\" $png_named_path");
+              
+        
+        $preview_base64 = self::encodeDetection($png_named_path);
         $gemap_base64 = self::encodeDetection($gemap_path, "bmp");
         $dirmap_base64 = self::encodeDetection($dirmap_path, "bmp");
 

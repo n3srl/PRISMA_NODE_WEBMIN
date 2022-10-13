@@ -369,7 +369,13 @@ class CaptureApiLogic {
         $png_path = $png_dir . $png_name;
         shell_exec("composite -gravity SouthEast $logo_path $png_path_tmp $png_path");
         
-        $base64 = self::encodeCapture($png_path);
+        //apply file name fo image
+        $stamp = str_replace(".png","",$png_name);
+        $named_png_name = "named_".$png_name;
+        $png_named_path = $png_dir .$named_png_name;
+        shell_exec("convert $png_path -gravity NorthWest -pointsize 22 -fill white -annotate 0 \"$stamp\" $png_named_path");
+                
+        $base64 = self::encodeCapture($png_named_path);
         shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
         return $base64;
     }
