@@ -7,7 +7,7 @@ $(document).ready(function () {
 // Show Prometheus status
 function showStatus() {
     
-    $.getJSON('http://' + window.location.hostname + '/prometheus/node_exporter', function(res) {
+    $.getJSON('http://' + window.location.hostname + '/lib/prometheus/V2/prometheus/node_exporter', function(res) {
             var node_exporter_metrics = "";
             
             if(node_exporter_metrics === '') {
