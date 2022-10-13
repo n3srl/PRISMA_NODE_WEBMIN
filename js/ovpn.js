@@ -56,3 +56,16 @@ function showStatus() {
 
 }
 
+// Show network status
+function showStatus() {
+    $.ajax({
+        url: "/lib/ovpn/V2/ovpn/net_status",
+        type: "GET",
+        success: function (res) {
+            var vpnStatus = JSON.parse(res).data;
+            $('#status-network-description').text(vpnStatus);
+        }
+    });
+
+}
+

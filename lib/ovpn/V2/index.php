@@ -64,5 +64,18 @@ $app->GET('/ovpn/status', function(Application $app, Request $request) {
 	return $resp;
 });
 
+$app->GET('/ovpn/net_status', function(Application $app, Request $request) {
+
+	$result = OvpnApiLogic::GetNetStatus();
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
 $app->run();
 
