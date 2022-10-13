@@ -108,7 +108,7 @@ $app->PATCH('/prometheus', function(Application $app, Request $request) {
 *
 **/
 
-$app->GET('/prometheus/{prometheusId}', function(Application $app, Request $request, $prometheusId) {
+/*$app->GET('/prometheus/{prometheusId}', function(Application $app, Request $request, $prometheusId) {
 
 	$result = PrometheusApiLogic::Get($prometheusId);
 	if ($result->result) {
@@ -120,6 +120,16 @@ $app->GET('/prometheus/{prometheusId}', function(Application $app, Request $requ
 	}
 	return $resp;
 });
+*/
+
+$app->GET('/prometheus/node_exporter', function(Application $app, Request $request) {
+
+	$result = PrometheusApiLogic::NodeExporter();
+        
+        echo $result;
+        die;
+});
+
 
 /**
 *

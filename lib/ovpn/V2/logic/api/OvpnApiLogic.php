@@ -26,6 +26,17 @@ class OvpnApiLogic {
         return CoreLogic::GenerateResponse($res, $ob);
     }
     
+    public static function GetNetStatus() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getNetworkStatus();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+    
     // Update ovpn configuration file with given file
     public static function updateConfigurationFile($ob) {
 
@@ -94,7 +105,32 @@ class OvpnApiLogic {
             unset($session);
         }
 
+        $text2 = str_replace("\n", "</br>",$text2);
         return $text2;
     }
 
+        
+    // Get network status 
+    public static function getNetworkStatus() {
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+        $text2 = "";
+
+        if ($session) {
+
+            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+
+                    $stream2 = ssh2_exec($session, "ip address show eno2");
+                    stream_set_blocking($stream2, true);
+                    $stream_out2 = ssh2_fetch_stream($stream2, SSH2_STREAM_STDIO);
+                    $text2 = stream_get_contents($stream_out2);
+            }
+
+            unset($session);
+        }
+        
+        $text2 = str_replace("\n", "</br>",$text2);
+        return $text2;
+    }
 }

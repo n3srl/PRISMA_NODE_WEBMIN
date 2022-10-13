@@ -15,6 +15,21 @@ class PrometheusApiLogic {
         return CoreLogic::GenerateResponse($res);
     }
     
+    
+    public static function NodeExporter()
+    {
+        $metrics_URL = 'http://localhost:9100/metrics';
+        
+        //get content of port 9100
+        $ch_session = curl_init();
+        curl_setopt($ch_session, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch_session, CURLOPT_URL, $metrics_URL);
+
+        $metrics = curl_exec($ch_session);
+        
+        return $metrics;
+    }
+    
     // Update prometheus configuration file with given file
     public static function updateConfigurationFile($ob) {
 
@@ -40,7 +55,7 @@ class PrometheusApiLogic {
                
                 ssh2_scp_send($session, $ob, $prometheusConf);
 
-                $stream = ssh2_exec($session, "sudo /bin/systemctl restart prometheus");
+                $stream = ssh2_exec($session, "sudo /bin/systemctl restart node_exporter");
                 
                 unset($session);
                 $result = true;

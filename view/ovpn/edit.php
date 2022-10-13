@@ -55,6 +55,9 @@
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                             <h4 id="status-ovpn-description"></h4>
                         </div>
+                        <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                            <h4 id="status-network-description"></h4>
+                        </div>
                     </div>
                 </div>
             </div>
