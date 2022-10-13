@@ -372,9 +372,10 @@ class StackApiLogic {
         //apply file name fo image
         $stamp = str_replace(".png","",$png_name);
         $named_png_name = "named_".$png_name;
-        shell_exec("convert $png_name -gravity NorthWest -pointsize 22 -fill white -annotate 0 \"$stamp\" $named_png_name");
-        
         $png_named_path = $png_dir .$named_png_name;
+
+        shell_exec("convert $png_name -gravity NorthWest -pointsize 22 -fill white -annotate 0 \"$stamp\" $png_named_path");
+        
         $base64 = self::encodeStack($png_named_path);
         //shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
         return $base64;
