@@ -46,7 +46,7 @@ function saveStation() {
                 ft.value = $('#station-name').val().toUpperCase();
                 break;
             case "ACQ_REGULAR_PRFX":
-                ft.value = $('#station-name').val().toUpperCase();
+                ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "ACQ_MASK_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/default.bmp";
