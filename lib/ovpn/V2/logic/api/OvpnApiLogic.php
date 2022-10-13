@@ -105,6 +105,7 @@ class OvpnApiLogic {
             unset($session);
         }
 
+        $text2 = str_replace("\n", "</br>",$text2);
         return $text2;
     }
 
@@ -128,7 +129,8 @@ class OvpnApiLogic {
 
             unset($session);
         }
-
+        
+        $text2 = str_replace("\n", "</br>",$text2);
         return $text2;
     }
 }
