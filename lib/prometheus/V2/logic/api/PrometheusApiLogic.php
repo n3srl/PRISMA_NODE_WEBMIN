@@ -19,10 +19,11 @@ class PrometheusApiLogic {
     public static function NodeExporter()
     {
         //get content of port 9100
-        $ch = curl_init('http://prismanode.local:9100/metrics');
+        $ch = curl_init('http://localhost:9100/metrics');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $metrics = $result = curl_exec($ch);
-        
+        $metrics = curl_exec($ch);
+        var_dump($metrics);
+        die;
         return $metrics;
     }
     
