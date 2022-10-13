@@ -125,14 +125,8 @@ $app->PATCH('/prometheus', function(Application $app, Request $request) {
 $app->GET('/prometheus/node_exporter', function(Application $app, Request $request, $prometheusId) {
 
 	$result = PrometheusApiLogic::NodeExporter();
-	if ($result->result) {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(200);
-	} else {
-		$resp = new Response(json_encode($result));
-		$resp->setStatusCode(403);
-	}
-	return $resp;
+        echo $result;
+        die;
 });
 
 
