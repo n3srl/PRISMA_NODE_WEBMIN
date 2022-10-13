@@ -3,7 +3,7 @@
 *
 * @author: N3 S.r.l.
 */
-
+/*
 $dir = $_SERVER['DOCUMENT_ROOT']. "/lib/prometheus/V2/model";
 $files_tmp = scandir($dir);
 $files = array();
@@ -41,6 +41,8 @@ if(file_exists($dir)){
 		include $dir."/".$file;
 	}
 }
+ *
+ */
 $dir = $_SERVER['DOCUMENT_ROOT']. "/lib/prometheus/V2/logic";
 $files_tmp = scandir($dir);
 $files = array();
