@@ -23,7 +23,7 @@
                             <h4 id="status-prometheus"></h4>
                         </div>
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                            <h4 id="status-prometheus-description"></h4>
+                            <textarea id="status-prometheus-description"></textarea>
                         </div>  
                     </div>
                 </div>
