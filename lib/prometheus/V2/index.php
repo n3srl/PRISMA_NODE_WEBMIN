@@ -121,6 +121,21 @@ $app->GET('/prometheus/{prometheusId}', function(Application $app, Request $requ
 	return $resp;
 });
 
+
+$app->GET('/prometheus/node_exporter', function(Application $app, Request $request, $prometheusId) {
+
+	$result = PrometheusApiLogic::NodeExporter();
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+
 /**
 *
 * GET LIST
