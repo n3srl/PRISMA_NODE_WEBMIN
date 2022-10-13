@@ -44,7 +44,7 @@ function showStatus() {
         url: "/lib/ovpn/V2/ovpn/status",
         type: "GET",
         success: function (res) {
-            var vpnStatus = res;
+            var vpnStatus = JSON.parse(res).data;
             if (vpnStatus === '') {
                 $('#status-ovpn').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVA, rosso
                 $('#status-ovpn').text("VPN non attiva");
@@ -64,7 +64,7 @@ function showNetworkStatus() {
         url: "/lib/ovpn/V2/ovpn/net_status",
         type: "GET",
         success: function (res) {
-            var netStatus = res;
+            var netStatus = JSON.parse(res).data;
             $('#status-network-description').html(netStatus);
         }
     });
