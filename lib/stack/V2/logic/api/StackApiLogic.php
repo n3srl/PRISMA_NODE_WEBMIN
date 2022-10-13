@@ -376,7 +376,7 @@ class StackApiLogic {
         
         $png_named_path = $png_dir .$named_png_name;
         $base64 = self::encodeStack($png_named_path);
-        shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
+        //shell_exec("rm " . $png_dir . "*.png"); // Clean temporary png files
         return $base64;
     }
 
