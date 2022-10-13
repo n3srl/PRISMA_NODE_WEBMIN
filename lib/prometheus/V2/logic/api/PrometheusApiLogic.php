@@ -18,12 +18,15 @@ class PrometheusApiLogic {
     
     public static function NodeExporter()
     {
+        $metrics_URL = 'http://localhost:9100/metrics';
+        
         //get content of port 9100
-        $ch = curl_init('http://localhost:9100/metrics');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $metrics = curl_exec($ch);
-        var_dump($metrics);
-        die;
+        $ch_session = curl_init();
+        curl_setopt($ch_session, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch_session, CURLOPT_URL, $metrics_URL);
+
+        $metrics = curl_exec($ch_session);
+        
         return $metrics;
     }
     
