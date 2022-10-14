@@ -3,15 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/xampp/htdocs/lib/ft/V2/logic/api/FreetureFinalApiLogic.php</file>
-            <file>file:/C:/xampp/htdocs/view/station/edit.php</file>
-            <file>file:/C:/xampp/htdocs/js/freetureFinal.js</file>
-            <file>file:/C:/xampp/htdocs/js/docker.js</file>
-            <file>file:/C:/xampp/htdocs/lib/stack/V2/logic/api/StackApiLogic.php</file>
-            <file>file:/C:/xampp/htdocs/view/docker/edit.php</file>
-            <file>file:/C:/xampp/htdocs/lib/detection/V2/logic/api/DetectionApiLogic.php</file>
-            <file>file:/C:/xampp/htdocs/lib/capture/V2/logic/api/CaptureApiLogic.php</file>
-            <file>file:/C:/xampp/htdocs/js/person.js</file>
+            <file>file:/E:/RepositoryGIT/PRISMA_NODE_WEBMIN/view/ovpn/edit.php</file>
+            <file>file:/E:/RepositoryGIT/PRISMA_NODE_WEBMIN/lib/ovpn/V2/logic/api/OvpnApiLogic.php</file>
+            <file>file:/E:/RepositoryGIT/PRISMA_NODE_WEBMIN/js/ovpn.js</file>
         </group>
     </open-files>
 </project-private>
