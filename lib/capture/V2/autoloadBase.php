@@ -16,14 +16,16 @@ foreach ($files_tmp as $key => $value)
 }
 //Includo le classi singole senza factory.php
 foreach ($files as $file){
-	if (strpos($file, 'Factory.php') !== false)
+	if (strpos($file, 'Factory.php') !== false){
 		continue;
-	include $dir."/".$file;
+        }
+	include_once $dir."/".$file;
 }
 //Includo le factory
 foreach ($files as $file){
-	if (strpos($file, 'Factory.php') !== false)
-		include $dir."/".$file;
+	if (strpos($file, 'Factory.php') !== false){
+		include_once $dir."/".$file;
+        }
 }
 
 $dir = $_SERVER['DOCUMENT_ROOT']. "/lib/capture/V2/model/view";
@@ -38,7 +40,7 @@ if(file_exists($dir)){
 		}
 	}
 	foreach ($files as $file){
-		include $dir."/".$file;
+		include_once $dir."/".$file;
 	}
 }
 $dir = $_SERVER['DOCUMENT_ROOT']. "/lib/capture/V2/logic";
@@ -53,8 +55,9 @@ foreach ($files_tmp as $key => $value)
 }
 //Includo le logic
 foreach ($files as $file){
-	if (strpos($file, 'Logic.php') !== false)
-		include $dir."/".$file;
+	if (strpos($file, 'Logic.php') !== false){
+		include_once $dir."/".$file;
+        }
 }
 
 $dir = $_SERVER['DOCUMENT_ROOT']. "/lib/capture/V2/logic/api";
@@ -69,7 +72,7 @@ if(file_exists($dir)){
 		}
 	}
 	foreach ($files as $file){
-		include $dir."/".$file;
+		include_once $dir."/".$file;
 	}
 }
 
