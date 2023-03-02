@@ -370,7 +370,12 @@ class FreetureFinalApiLogic {
     // Get the value from the line
     public static function getValue(String $raw) {
         $value1 = explode("=", $raw)[1];
-        return trim(self::cleanComments($value1));
+        if (!is_null($value1))
+        {
+            return trim(self::cleanComments($value1));
+        }
+        
+        return "";
     }
 
     // Get the key from the line
