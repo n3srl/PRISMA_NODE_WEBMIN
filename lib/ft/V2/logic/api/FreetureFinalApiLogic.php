@@ -579,6 +579,7 @@ class FreetureFinalApiLogic {
         $freetureConf = _FREETURE_;
         if (!empty($ob)) {
             $result = move_uploaded_file($ob, $freetureConf);
+            self::cleanConfiguration();
             self::restartFreeture();
             return $result;
         }
@@ -681,6 +682,21 @@ class FreetureFinalApiLogic {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
                 $stream = ssh2_exec($session, "sudo docker restart freeture");
+                return true;
+            }
+            unset($session);
+        }
+        return false;
+    }
+
+    public static function cleanConfiguration() {
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+
+        if ($session) {
+            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+                $stream = ssh2_exec($session, "docker exec prisma-orma bash /freeture/cleanconfig.sh");
                 return true;
             }
             unset($session);

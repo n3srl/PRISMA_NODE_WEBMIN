@@ -365,21 +365,25 @@ class DetectionApiLogic {
         $month1 = $now->format('m');
         $n_files = 0;
 
-        if ($handle = opendir($path)) {
+        try {
+            if ($handle = opendir($path)) {
 
-            while (false !== ($day = readdir($handle))) {
-                $name2 = explode("_", $day);
-                $datetime2 = date_create($name2[1]);
-                $month2 = $datetime2->format('m');
-
-                // Find folder of the right month
-                if ($month1 === $month2) {
-                    $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
-                } else if (intval($month1) < intval($month2)) {
-                    break;
+                while (false !== ($day = readdir($handle))) {
+                    $name2 = explode("_", $day);
+                    $datetime2 = date_create($name2[1]);
+                    $month2 = $datetime2->format('m');
+    
+                    // Find folder of the right month
+                    if ($month1 === $month2) {
+                        $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
+                    } else if (intval($month1) < intval($month2)) {
+                        break;
+                    }
                 }
+                closedir($handle);
             }
-            closedir($handle);
+        } catch(Exception $e) {
+            // DO nothing
         }
         return $n_files;
     }
@@ -695,11 +699,15 @@ class DetectionApiLogic {
     // Count number of files in 2-level directories
     public static function getAllDaysFilesCount($path) {
         $n_files = 0;
-        if ($handle = opendir($path)) {
-            while (false !== ($day = readdir($handle))) {
-                $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
+        try {
+            if ($handle = opendir($path)) {
+                while (false !== ($day = readdir($handle))) {
+                    $n_files += self::getDirectoryFilesCount($path . $day . "/events/*");
+                }
+                closedir($handle);
             }
-            closedir($handle);
+        } catch(Exception $e) {
+            // DO nothing prevent print warning on stdout
         }
         return $n_files;
     }

@@ -339,7 +339,7 @@ $app->GET('/detection/preview/lastdetection', function (Application $app, Reques
  *
  * */
 $app->GET('/detection/counter/lastday', function (Application $app, Request $request) {
-
+    error_reporting(E_ERROR | E_PARSE);
     $result = DetectionApiLogic::GetLastDayDetectionNumber();
     if ($result->result) {
         $resp = new Response(json_encode($result));
@@ -357,7 +357,7 @@ $app->GET('/detection/counter/lastday', function (Application $app, Request $req
  *
  * */
 $app->GET('/detection/counter/lastmonth', function (Application $app, Request $request) {
-
+    error_reporting(E_ERROR | E_PARSE);
     $result = DetectionApiLogic::GetLastMonthDetectionNumber();
     if ($result->result) {
         $resp = new Response(json_encode($result));
@@ -375,7 +375,7 @@ $app->GET('/detection/counter/lastmonth', function (Application $app, Request $r
  *
  * */
 $app->GET('/detection/counter/all', function (Application $app, Request $request) {
-
+    error_reporting(E_ERROR | E_PARSE);
     $result = DetectionApiLogic::GetAllDetectionNumber();
     if ($result->result) {
         $resp = new Response(json_encode($result));
