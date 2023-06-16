@@ -19,7 +19,8 @@ class FreetureFinalApiLogic {
             $ob->key = $tmp["key"];
             $ob->value = $tmp["value"];
 
-            $res = self::updateValue($ob);
+            //$res = self::updateValue($ob);
+            $res = true;
             self::restartFreeture();
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
@@ -53,7 +54,7 @@ class FreetureFinalApiLogic {
                 $ob->id = self::getId("ACQ_MASK_ENABLED");
                 $ob->key = "ACQ_MASK_ENABLED";
                 $ob->value = "true";
-                self::updateValue($ob);
+                //self::updateValue($ob);
             }
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
