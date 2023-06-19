@@ -250,5 +250,24 @@ $app->POST('/docker/stop/{dockerName}', function(Application $app, Request $requ
 	return $resp;
 });
 
+/**
+*
+* FREETURE LOGS
+*
+**/
+
+$app->GET('/docker/freeture/log', function(Application $app, Request $request) {
+
+	$result = DockerApiLogic::FreetureLog();
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
 $app->run();
 

@@ -324,4 +324,42 @@ class DockerApiLogic {
         return CoreLogic::GenerateResponse($result, $ob);
     }
 
+    public static function sshFreetureLog() {
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+
+        $cmd_out = "";
+        $result = false;
+        if ($session) {
+            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+                $stream = ssh2_exec($session, "docker logs freeture");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+                $result = true;
+            }
+            
+        }
+        unset($session);
+        return array(
+            "res" => $result,
+            "data" => $cmd_out
+        );
+    }
+
+    public static function FreetureLog() {
+
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = self::sshFreetureLog();
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res['res'], $res['data']);
+    }
+
 }

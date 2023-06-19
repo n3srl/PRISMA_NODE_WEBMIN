@@ -87,7 +87,7 @@ class CameraApiLogic {
 
             $Person = CoreLogic::VerifyPerson();
 
-            $res = CameraLogic::Values();
+            $res = CameraLogic::Cmd($cmd);
 
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();

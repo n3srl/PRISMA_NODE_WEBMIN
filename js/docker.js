@@ -119,7 +119,51 @@ function stop(value) {
     });
 }
 
+function getFreetureLogs()
+{
+    $.get(
+        "/lib/docker/V2/docker/freeture/log",
+        function(json) {
+            var data = JSON.parse(json);
+            if(data)
+            {
+                $("#freeture-log").val(data.data);
+                var txt = $("#freeture-log");
+                txt.scrollTop(txt[0].scrollHeight);
+            }
+        }
+
+    );
+}
+
+function downloadFreetureLog()
+{
+    var logs = $("#freeture-log").val();
+    const blob = new Blob([logs], { type: 'text/plain'});
+
+    const url = URL.createObjectURL(blob);
+    const $a = $('<a>').attr({
+        href: url,
+        download: 'freeturelog.log'
+    });
+
+    $('body').append($a);
+    $a[0].click();
+
+    $a.remove();
+
+    URL.revokeObjectURL(url);
+}
+
 $(document).ready(function () {
+
+    // Docker freeture logs
+    getFreetureLogs();
+
+    $("#freeture-log-download").click(function() {
+        downloadFreetureLog();
+    });
+    //
     table = $('#DockerList').DataTable({
         "oLanguage": {
             "sZeroRecords": "Nessun risultato",
