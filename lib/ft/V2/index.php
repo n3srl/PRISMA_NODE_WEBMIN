@@ -32,7 +32,6 @@ $app->before(function (Request $request) {
  *
  * */
 $app->POST('/freeturefinal/editconfiguration', function (Application $app, Request $request) {
-
     $result = FreetureFinalApiLogic::EditConfiguration($request->files->get('configuration'));
     if ($result->result) {
         $resp = new Response(json_encode($result));
@@ -399,5 +398,8 @@ $app->GET('/freeturefinal/storage/cores', function (Application $app, Request $r
     return $resp;
 });
 
+
 $app->run();
+
+
 

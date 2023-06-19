@@ -30,6 +30,7 @@
                         <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i>Configurazione OpenVPN</a></li>
                         <li><a href="/prometheus/edit"><i class="fa fa-fire"></i>Stato node_exporter</a></li>
                         <li><a href="/docker/edit"><i class="fa fa-suitcase"></i>Stato Containers</a></li>
+                        <li><a href="/camera/control"><i class="fa fa-camera"></i>Camera Control</a></li>
                     <?php } ?>
                     <li><a href="/station/edit"><i class="fa fa-building"></i>Configurazione Freeture</a></li>
                     <li><a href="/capture/edit"><i class="fa fa-camera"></i>Calibrazioni</a></li>

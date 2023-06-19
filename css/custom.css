@@ -5936,3 +5936,18 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+/* Camera control */
+
+.camera-control-function {
+    font-size: 20px;
+    width: 100%;
+    margin-right: 30px;
+    background-color: #4B5368;
+    border-color: #4B5368;
+}
+
+.camera-control-function:hover {
+    border-color: #707b99;
+    background-color: #707b99;
+}
