@@ -124,12 +124,20 @@ function getFreetureLogs()
     $.get(
         "/lib/docker/V2/docker/freeture/log",
         function(json) {
-            var data = JSON.parse(json);
-            if(data)
+            try 
             {
-                $("#freeture-log").val(data.data);
-                var txt = $("#freeture-log");
-                txt.scrollTop(txt[0].scrollHeight);
+                var data = JSON.parse(json);
+                if(data)
+                {
+                    $("#freeture-log").val(data.data);
+                    var txt = $("#freeture-log");
+                    txt.scrollTop(txt[0].scrollHeight);
+                }   
+            } catch(error)
+            {
+                $("#freeture-log").val(json);
+                    var txt = $("#freeture-log");
+                    txt.scrollTop(txt[0].scrollHeight);
             }
         }
 
@@ -155,10 +163,16 @@ function downloadFreetureLog()
     URL.revokeObjectURL(url);
 }
 
+setInterval(function() {
+    getFreetureLogs();
+}, 2000);
+
 $(document).ready(function () {
 
     // Docker freeture logs
     getFreetureLogs();
+
+    
 
     $("#freeture-log-download").click(function() {
         downloadFreetureLog();
