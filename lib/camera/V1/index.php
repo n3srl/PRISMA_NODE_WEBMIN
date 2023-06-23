@@ -20,7 +20,7 @@ $app->before(function (Request $request) {
     }
 });
 
-$app->GET('/camera/list', function (Application $app, Request $request) {
+$app->POST('/camera/list', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::List($request);
     if ($result->result) {
@@ -33,7 +33,7 @@ $app->GET('/camera/list', function (Application $app, Request $request) {
     return $resp;
 });
 
-$app->GET('/camera/reset', function (Application $app, Request $request) {
+$app->POST('/camera/reset', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::Reset($request);
     if ($result->result) {
@@ -46,7 +46,7 @@ $app->GET('/camera/reset', function (Application $app, Request $request) {
     return $resp;
 });
 
-$app->GET('/camera/freset', function (Application $app, Request $request) {
+$app->POST('/camera/freset', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::FactoryReset($request);
     if ($result->result) {
@@ -59,7 +59,7 @@ $app->GET('/camera/freset', function (Application $app, Request $request) {
     return $resp;
 });
 
-$app->GET('/camera/features', function (Application $app, Request $request) {
+$app->POST('/camera/features', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::Features($request);
     if ($result->result) {
@@ -72,7 +72,7 @@ $app->GET('/camera/features', function (Application $app, Request $request) {
     return $resp;
 });
 
-$app->GET('/camera/values', function (Application $app, Request $request) {
+$app->POST('/camera/values', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::Values($request);
     if ($result->result) {
@@ -85,7 +85,7 @@ $app->GET('/camera/values', function (Application $app, Request $request) {
     return $resp;
 });
 
-$app->GET('/camera/cmd/{command}', function (Application $app, Request $request, $command) {
+$app->POST('/camera/cmd/{command}', function (Application $app, Request $request, $command) {
 
     $result = CameraApiLogic::Cmd($command);
     if ($result->result) {

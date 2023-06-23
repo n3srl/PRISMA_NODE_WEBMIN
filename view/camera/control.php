@@ -28,8 +28,19 @@
                 <div class='x_panel'>
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
-                            <div class='col-md-4 col-sm-4 col-xs-12 no-padding'>
+                            <div class='col-md-8 col-sm-8 col-xs-10 no-padding'>
                                 <h2><?= _('Funzioni') ?></h2>
+                            </div>
+                            <div class='col-md-4 col-sm-4 col-xs-2 no-padding'>
+                                <div hidden id = "camera-list-container-multiple" class = "pull-right">
+                                    <select id = "camera-select" class = "pull-right">
+
+                                    </select>
+                                </div>
+                                <div hidden id = "camera-list-container-single" class = "pull-right">
+                                    <h5 id = "camera-name"></h5>
+                                    <input hidden id = "camera-ip" value = ""/>
+                                </div>
                             </div>
                             <div class='col-md-8 col-sm-8 col-xs-12 no-padding' id='enable-capture-preview-box'>
                                 <div class='pull-right'>
@@ -75,10 +86,10 @@
                     <br>
                     <div class='x_content'>
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <h3>Custom command</h3><small>[without arv-tool-0.8]</small>
+                            <h3>Comando custom</h3><small>[inserisci il comando senza scrivere arv-tool-0.8]</small>
                             <textarea rows="5" style="min-width:500px; width:100%;" id="camera-control-in"></textarea>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-send">
-                                Send command
+                                Invia comando
                             </div>
                         </div>
                     </div>
@@ -96,6 +107,25 @@
                     <div class='x_content'>
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                             <textarea rows="30" style="min-width:500px; width:100%;" id="camera-control-out"></textarea>
+                        </div>  
+                        <div class='col-md-12 col-sm-12 col-xs-12' id='last-capture-preview'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class='col-md-12 col-sm-12 col-xs-12'>
+                <div class='x_panel'>
+                    <div class='x_title no-padding-lr'>
+                        <div class='clearfix'>
+                            <div class='col-md-6 no-padding-l'>
+                                <h2><?= _('Output') ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='x_content'>
+                        <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                            <textarea rows="30" style="min-width:500px; width:100%;" id=""></textarea>
                         </div>  
                         <div class='col-md-12 col-sm-12 col-xs-12' id='last-capture-preview'>
                         </div>

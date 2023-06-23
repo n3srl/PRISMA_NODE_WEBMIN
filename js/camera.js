@@ -33,15 +33,21 @@ $(document).ready(function () {
         executeCustomCommand(cmd);
     });
 
+    getAllCameras();
+
 });
 
 function executeCommand(command)
 {
     var baseUrl = "/lib/camera/V1/camera/";
 
-    $.get(
-        baseUrl+command, 
-        function(json)
+    $.ajax({
+        url: baseUrl+command, 
+        type: 'POST',
+        data: {
+            ip : $("#camera-ip").val()
+        },
+        success: function(json)
         {
             var data = JSON.parse(json);
             if(data)
@@ -49,15 +55,19 @@ function executeCommand(command)
                 $("#camera-control-out").val(data.data);
             }
         }
-    );
+    });
 }
 
 function executeCustomCommand(command)
 {
     var baseUrl = "/lib/camera/V1/camera/cmd/";
-    $.get(
-        baseUrl+command, 
-        function(json)
+    $.ajax({
+        url: baseUrl+command, 
+        type: 'POST',
+        data: {
+            ip : $("#camera-ip").val()
+        },
+        success: function(json)
         {
             var data = JSON.parse(json);
             if(data)
@@ -65,6 +75,64 @@ function executeCustomCommand(command)
                 $("#camera-control-out").val(data.data);
             }
         }
-    );
+    });
+}
+
+function getAllCameras()
+{
+    var baseUrl = "/lib/camera/V1/camera/list";
+    $.ajax({
+        url: baseUrl, 
+        type: 'POST',
+        success: function(json)
+        {
+            try {
+                var data = JSON.parse(json);
+                if(data)
+                {
+                    var cameras = data.data.split('\n');
+                    if(cameras.length == 0) {
+                        $("#camera-name").html("Nessuna camera disponibile");
+                        return;
+                    }
+                    if(cameras.length > 2)
+                    {
+                        
+                        var camera_select = Array();
+
+                        for(var i = 0; i < cameras.length - 1; i++)
+                        {
+                            var ip = cameras[i].split('(')[1].split(')')[0];
+                            camera_select.push(
+                                {
+                                    "id" : ip,
+                                    "text" : cameras[i]
+                                }
+                            );
+                        }   
+                        var options = {
+                            "results" : camera_select
+                        }
+                        $("#camera-select").select2({
+                            data: camera_select
+                        })
+
+                        $("#camera-list-container-multiple").show();
+                    } else 
+                    {
+                        var ip = cameras[0].split('(')[1].split(')')[0];
+                        $("#camera-name").html(cameras[0]);
+                        $("#camera-list-container-single").show();
+                    }
+                    var ip = cameras[0].split('(')[1].split(')')[0];
+                    $("#camera-ip").val(ip);
+                }
+            } catch(error)
+            {
+                console.log("Error");
+                console.error(error);
+            }
+        }
+    });
 }
 

@@ -414,8 +414,8 @@ class StackApiLogic {
 
             if (isset($name[1])) { // Check if file name is correct
                 $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
-                $hour = $datetime->format('H:i:s');
+                $day = date('Y-m-d', strtotime($name[1]));
+                $hour = date('H:i:s', strtotime($name[1]));
                 $base64 = $enablePreview ? self::processStack($file, $data_dir) : "";
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $day_dir . "_" . $file);
                 $i++;
@@ -458,7 +458,7 @@ class StackApiLogic {
             if (isset($name[1])) {
 
                 $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
+                $day = date('Y-m-d', strtotime($name[1]));
                 $reply[] = array($day, $n_day_files, $day_dir);
                 $i++;
             }

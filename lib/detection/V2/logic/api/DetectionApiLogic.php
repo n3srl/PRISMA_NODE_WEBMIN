@@ -367,11 +367,11 @@ class DetectionApiLogic {
 
         try {
             if ($handle = opendir($path)) {
-
+                
                 while (false !== ($day = readdir($handle))) {
                     $name2 = explode("_", $day);
                     $datetime2 = date_create($name2[1]);
-                    $month2 = $datetime2->format('m');
+                    $month2 = date('m', strtotime($name2[1]));
     
                     // Find folder of the right month
                     if ($month1 === $month2) {
@@ -551,7 +551,7 @@ class DetectionApiLogic {
 
             if (isset($name[1])) {
                 $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
+                $day = date('Y-m-d', strtotime($name[1]));
                 $reply[] = array($day, $n_day_files, $day_dir);
                 $i++;
             }
@@ -593,8 +593,8 @@ class DetectionApiLogic {
 
             if (isset($name[1])) {
                 $datetime = date_create($name[1]);
-                $day = $datetime->format('Y-m-d');
-                $hour = $datetime->format('H:i:s');
+                $day = date('Y-m-d', strtotime($name[1]));
+                $hour = date('H:i:s', strtotime($name[1]));
 
                 $processedFiles = $enablePreview ? self::processDetection($detection, $data_dir) : array("", "", "");
 
