@@ -8,8 +8,9 @@ class CameraController extends Controller
 {
 	public function controlOperation() {
 		parent::securityCheck();
-		global $Capture;
+		global $CameraCalibration;
 		global $params;
+
 	}
 
 

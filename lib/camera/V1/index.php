@@ -85,6 +85,32 @@ $app->POST('/camera/values', function (Application $app, Request $request) {
     return $resp;
 });
 
+$app->POST('/camera/bounds', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::Bounds($request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+$app->POST('/camera/calibration', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::Calibration($request);
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
 $app->POST('/camera/cmd/{command}', function (Application $app, Request $request, $command) {
 
     $result = CameraApiLogic::Cmd($command);

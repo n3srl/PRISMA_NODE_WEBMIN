@@ -96,4 +96,34 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function Bounds($cmd)
+    {
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = CameraLogic::Bounds($cmd);
+
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
+    public static function Calibration()
+    {
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = CameraLogic::Calibration();
+
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
 }

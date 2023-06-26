@@ -9,6 +9,9 @@ $(document).ready(function () {
     var features = $("#camera-control-features");
     var values = $("#camera-control-values");
     var send = $("#camera-control-send");
+    var camera_calibration = $("#camera_calibration");
+
+    var camera_select = $("#camera-select");
 
     list.click(function() {
         executeCommand("list");
@@ -31,6 +34,17 @@ $(document).ready(function () {
             alert("Devi inviare un comando");
         }
         executeCustomCommand(cmd);
+    });
+    camera_select.on('change', function()
+    {
+        var ip = this.value;
+        var name = $(this).find("option:selected").text();
+        $("#camera-ip").val(ip);
+        $("#camera-name_d").val(name);
+        get_camera_bounds();
+    });
+    camera_calibration.click(function() {
+        run_camera_calibration();
     });
 
     getAllCameras();
@@ -77,6 +91,7 @@ function executeCustomCommand(command)
         }
     });
 }
+
 
 function getAllCameras()
 {
@@ -126,12 +141,74 @@ function getAllCameras()
                     }
                     var ip = cameras[0].split('(')[1].split(')')[0];
                     $("#camera-ip").val(ip);
+                    $("#camera-name_d").val(cameras[0]);
                 }
+                // Now for the camera in first position get gain bounds
+                get_camera_bounds();
             } catch(error)
             {
                 console.log("Error");
                 console.error(error);
             }
+        }
+    });
+}
+
+function get_camera_bounds()
+{
+    var baseUrl = "/lib/camera/V1/camera/bounds";
+    $.ajax({
+        url: baseUrl, 
+        type: 'POST',
+        data: {
+            ip : $("#camera-ip").val(),
+            camera : $("#camera-name_d").val().split("(")[0],
+            feature : 'Gain'
+        },
+        success: function(json)
+        {
+            try
+            {
+                var data = JSON.parse(json);
+                if(data)
+                {
+                    var gains = data.data.split(',');
+                    $("#minGain").html(gains[0]);
+                    $("#maxGain").html(gains[1]);
+                }           
+            } catch (err)
+            {
+                alert(json);
+            }
+        }
+    });
+}
+
+function run_camera_calibration()
+{
+    var baseUrl = "/lib/camera/V1/camera/calibration";
+
+    minGain = $("#minGain").html();
+    maxGain = $("#maxGain").html();
+    exposure = $("#calExposure").val();
+
+    if(minGain == "" || maxGain == "" || exposure == "")
+    {
+        alert("Gain o exposure non sono validi");
+        return;
+    }
+
+    $.ajax({
+        url: baseUrl, 
+        type: 'POST',
+        data: {
+            minGain : minGain,
+            maxGain : maxGain,
+            exposure : 500000,
+        },
+        success: function(json)
+        {
+            alert("Calibrazione completata");
         }
     });
 }
