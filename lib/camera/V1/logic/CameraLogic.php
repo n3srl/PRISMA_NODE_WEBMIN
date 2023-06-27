@@ -257,6 +257,12 @@ class CameraLogic
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
+                $command = "docker start freeture";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
                 $command = "rm -rf /home/prisma/calibration.sh";
                 $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
