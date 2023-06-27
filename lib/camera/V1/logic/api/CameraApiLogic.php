@@ -126,4 +126,49 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function CanCalibrate()
+    {
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = CameraLogic::CanRunCalibration();
+
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
+    public static function GetCalibration()
+    {
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = CameraLogic::GetCameraCalibrations();
+
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
+    public static function DeleteCalibration($request)
+    {
+        try {
+
+            $Person = CoreLogic::VerifyPerson();
+
+            $res = CameraLogic::DeleteCalibration($request);
+
+        } catch (ApiException $a) {
+            CoreLogic::rollbackTransaction();
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
 }
