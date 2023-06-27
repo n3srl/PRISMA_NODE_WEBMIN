@@ -16,6 +16,8 @@ $(document).ready(function () {
 
     var camera_select = $("#camera-select");
 
+    $("#calibration_freeture").select2();
+
     list.click(function() {
         executeCommand("list");
     });
@@ -237,6 +239,8 @@ function run_camera_calibration()
     minGain = $("#calibration_minGain").val();
     maxGain = $("#calibration_maxGain").val();
     exposure = $("#calExposure").val();
+    step = $("#calibration_step").val();
+    image = $("#calibration_freeture").val();
 
     if(minGain == "" || maxGain == "" || exposure == "")
     {
@@ -257,15 +261,24 @@ function run_camera_calibration()
             minGain : minGain,
             maxGain : maxGain,
             exposure : $("#calibration_exp").val(),
-            camera : $("#camera-name_d").val().split("(")[0] 
+            camera : $("#camera-name_d").val().split("(")[0],
+            step : step,
+            image : image
         },
         success: function(json)
         {
-            var data = JSON.parse(json);
-            if(data)
+            try {
+                var data = JSON.parse(json);
+                if(data)
+                {
+                    $("#calibration_form").hide();
+                    $("#calibration_notice").show();
+                    alert(data.data);
+                }
+            } catch (error)
             {
-                alert(data.data);
-            }  
+                alert(json);
+            }
         }
     });
 }

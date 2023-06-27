@@ -142,7 +142,17 @@
                                     <small class = "text-muted">MaxGain</small>
                                     <input type = 'number' id = "calibration_maxGain" class = "form-control col-md-7 col-xs-12" value = "">
                                 </div>
-                                
+                                <div class='col-md-2 no-padding-l'>
+                                    <small class = "text-muted">GainStep</small>
+                                    <input type = 'number' id = "calibration_step" class = "form-control col-md-7 col-xs-12" value = "1">
+                                </div>
+                                <div class='col-md-2 no-padding-l'>
+                                    <small class = "text-muted">Freeture</small>
+                                    <select id = "calibration_freeture" class = "form-control col-md-7 col-xs-12">
+                                        <option selected value = 'n3srl/freeture13'>Freeture13</option>
+                                        <option value = 'n3srl/freeture'>Freeture</option>
+                                    </select>
+                                </div>
                                 
                             </div>
                         </div>
