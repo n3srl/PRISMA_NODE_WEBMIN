@@ -147,6 +147,7 @@ class CameraLogic
         $print = ssh2_fingerprint($session);
         $cmd_out = "";
         $host = "";
+        $step = $_POST['step'];
 
         $command_count = $_POST['maxGain'] - $_POST['minGain'];
         $cam = $_POST['camera'];
@@ -166,7 +167,7 @@ class CameraLogic
 
         $cmd_seq = array();
         
-        for($gain = $_POST['minGain'];$gain <= $_POST['maxGain']; $gain++)
+        for($gain = $_POST['minGain'];$gain <= $_POST['maxGain']; $gain += $step)
         {
             
             $params = "-m 4 -e $exp -g $gain --id $cam --fits --savepath /usr/local/share/freeture/calibration/";
