@@ -36,3 +36,6 @@ define('_DOCKER_IP_', '127.0.0.1');
 define('_DOCKER_PORT_', '22');
 define('_DOCKER_SSH_PRI_', '/keys/chiave');
 define('_DOCKER_SSH_PUB_', '/keys/chiave.pub');
+
+// Utils
+define('_CALIBRATION_PATH_','/var/www/html/calibration/');

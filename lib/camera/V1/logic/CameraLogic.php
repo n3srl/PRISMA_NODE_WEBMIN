@@ -118,15 +118,16 @@ class CameraLogic
 
     public static function Calibration() {
 
-        DockerApiLogic::sshContainerStop("freeture");
+        DockerApiLogic::sshContainerStop("freeture"); i, 
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $cmd_out = "";
         $host = "";
 
         $command_count = $_POST['maxGain'] - $_POST['minGain'];
+        $cam = $_POST['camera'];
 
-        $now = date("dmy", time());
+        $now = date("dmY", time());
         $exp = $_POST['exposure'];
         $cam = 1;
 
@@ -147,7 +148,7 @@ class CameraLogic
             $cmd_seq[] = $cmd;
         }
 
-
+        
         if($session)
         {
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk"))
@@ -163,6 +164,8 @@ class CameraLogic
                 // Now create zip
             }
         }
+
+        
 
         unset($session);
 
@@ -185,15 +188,20 @@ class CameraLogic
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
+                $command = "cd /prismadata/freeture-conf/calibration/ && zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip .";
+                $stream = ssh2_exec($session, $command);
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
 
-                // Now create zip
+                
+                $command = "rm -rf /prismadata/freeture-conf/calibration";
+                $stream = ssh2_exec($session, $command);
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
             }
         }
-
-        
-
-        // Now create zip and clean
-
 
         
         DockerApiLogic::sshContainerStart("freeture");
@@ -206,10 +214,68 @@ class CameraLogic
 
     public static function GetCameraCalibrations()
     {
-        if(true)
+        $path = _CALIBRATION_PATH_;
+        $files = glob($path. "/*");
+
+        $count = count($files);
+
+        if($count == 0)
         {
-            return "<tr><td>Nessuna calibrazione recente</td></tr>";
+            $data = "<tr><td>Nessuna calibrazione recente</td></tr>";
+        } else 
+        {
+            $data = "";
+            foreach($files as $f)
+            {
+                
+                $calibration = basename($f);
+                $date = explode("-", $calibration)[2];
+                $date = substr($date, 0, -4);
+                $day = substr($date, 0, 2);
+                $month = substr($date, 2, 2);
+                $year = substr($date, 4, 4);
+                $date = $day . "/" . $month . "/" . $year;  
+
+                $data .= "<tr><td>$calibration</td><td>$date</td><td><a style = 'font-size:22px;color:black; text-decoration:none' href = '/calibration/$calibration'><i class='fa fa-download'></i></a></td><td><span name = '$calibration' class = 'calibration_delete'><i style = 'cursor:pointer;font-size:22px' class='fa fa-trash'></i></span></td></tr>";
+                
+            }
         }
+        
+
+        return array(
+            "res" => true,
+            "data" => $data
+        );
+    }
+
+    public static function DeleteCalibration($request)
+    {
+
+        $calibration = $request->query->get('calibration');
+
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        $print = ssh2_fingerprint($session);
+        $cmd_out = "";
+
+        $command = "rm -rf /prismadata/orma-src/calibration/$calibration";
+
+        if($session)
+        {
+            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk"))
+            {
+                $stream = ssh2_exec($session, $command);
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+            }
+        }
+
+        unset($session);
+
+        return array(
+            "res" => true,
+            "data" => $cmd_out
+        );
     }
 
 }

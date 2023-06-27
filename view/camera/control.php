@@ -120,16 +120,44 @@
                 <div class='x_panel'>
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
-                            <div class='col-md-10 no-padding-l'>
+                            <div class='col-md-8 no-padding-l'>
                                 <h4><?= _('Esegui calibrazione con tutti i possibili valori di Gain [') ?><span style = 'color: black' id = 'minGain'></span>,<span style = 'color: black' id = 'maxGain'></span>]</h4>
                                 
                             </div>
-                            <div class='col-md-2 col-sm-2 col-xs-2 no-padding'>
-                            <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera_calibration">
-                                    Calibrazione
-                                </div>
-                            </div>
                         </div>
+                    </div>
+                    <div class = 'x_content'>
+                        
+                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                <div class='col-md-2 no-padding-l'>
+                                    <small class = "text-muted">Esposizione per la calibrazione</small>
+                                    <input type = 'number' id = "calibration_exp" class = "form-control col-md-7 col-xs-12" value = "1000">
+                                </div>
+                                <div class='col-md-2 no-padding-l'>
+                                    <small class = "text-muted">MinGain</small>
+                                    <input type = 'number' id = "calibration_minGain" class = "form-control col-md-7 col-xs-12" value = "">
+                                </div>
+                                <div class='col-md-2 no-padding-l'>
+                                    <small class = "text-muted">MaxGain</small>
+                                    <input type = 'number' id = "calibration_maxGain" class = "form-control col-md-7 col-xs-12" value = "">
+                                </div>
+                                
+                                
+                            </div>
+                    </div>
+
+                    <div class = 'x_content'>
+                        
+                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                
+                                <div class='col-md-2 no-padding-l'>
+                                    <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera_calibration">
+                                        Calibrazione
+                                    </div>
+                                </div>
+                                
+                                
+                            </div>
                     </div>
                     <div class='x_content'>
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
@@ -137,12 +165,13 @@
                                 <table class = "table table-striped table-bordered dataTable no-footer dtr-inline">
                                     <thead>
                                         <tr>
-                                            <th>Camera</th>
+                                            <th>Calibrazione</th>
                                             <th>Data calibrazione</th>
-                                            <th>Download</th>
+                                            <th></th>
+                                            <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id = "calibration_table">
                                         
                                     </tbody>
                                 </table>
