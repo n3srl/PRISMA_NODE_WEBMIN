@@ -124,6 +124,19 @@ $app->GET('/camera/calibration', function (Application $app, Request $request) {
     return $resp;
 });
 
+$app->GET('/camera/cancalibrate', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::CanCalibrate();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
 $app->DELETE('/camera/calibration', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::DeleteCalibration($request);

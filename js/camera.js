@@ -86,8 +86,10 @@ $(document).ready(function () {
         }
     });
 
+    can_calibrate();
     getAllCameras();
     get_all_calibration();
+    
 
 });
 
@@ -259,8 +261,11 @@ function run_camera_calibration()
         },
         success: function(json)
         {
-            alert("Calibrazione completata");
-            get_all_calibration();
+            var data = JSON.parse(json);
+            if(data)
+            {
+                alert(data.data);
+            }  
         }
     });
 }
@@ -308,6 +313,33 @@ function delete_calibration(name)
         success: function(json)
         {
             get_all_calibration();
+        }
+    });
+}
+
+function can_calibrate()
+{
+    var baseUrl = "/lib/camera/V1/camera/cancalibrate";
+    $.ajax({
+        url: baseUrl, 
+        type: 'GET',
+        success: function(json)
+        {
+            try
+            {
+                var data = JSON.parse(json);
+                if(data)
+                {
+                    if(!data.data)
+                    {
+                        $("#calibration_form").hide();
+                        $("#calibration_notice").show();
+                    }
+                }  
+            } catch (error)
+            {
+                console.error(error);
+            }
         }
     });
 }

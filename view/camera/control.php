@@ -126,8 +126,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class = 'x_content'>
-                        
+                    <div id = 'calibration_form'>
+                        <div class = 'x_content'>
+                            
                             <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                                 <div class='col-md-2 no-padding-l'>
                                     <small class = "text-muted">Esposizione per la calibrazione</small>
@@ -144,21 +145,41 @@
                                 
                                 
                             </div>
+                        </div>
+
+                        <div class = 'x_content'>
+                            
+                                <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                    
+                                    <div class='col-md-2 no-padding-l'>
+                                        <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera_calibration">
+                                            Calibrazione
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                </div>
+                        </div>
                     </div>
 
-                    <div class = 'x_content'>
-                        
+
+
+                    <div id = 'calibration_notice' hidden>
+                        <div class = 'x_content'>
+                            
                             <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                
-                                <div class='col-md-2 no-padding-l'>
-                                    <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera_calibration">
-                                        Calibrazione
-                                    </div>
+                                <div class='col-md-4 alert alert-success'>
+                                    Una calibrazione e gia in corso
                                 </div>
                                 
-                                
                             </div>
+                        </div>
+
+                        
                     </div>
+
+
+
                     <div class='x_content'>
                         <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                             <div class = "calibration-download-table">

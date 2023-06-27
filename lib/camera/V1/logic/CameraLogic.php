@@ -48,6 +48,16 @@ class CameraLogic
         return $out;
 	}
 
+    public static function CanRunCalibration() {
+
+        $can = self::CanCalibrate();
+
+        return array(
+            "res" => true,
+            "data" => $can
+        );
+	}
+
     private static function ExecuteArvCommand($cmd = "") {
 
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
@@ -116,9 +126,23 @@ class CameraLogic
         );
 	}
 
+    public static function CanCalibrate()
+    {
+        if(file_exists("/var/www/html/calibration/calibrationstarted.txt")) return false;
+        return true;
+    }
+
     public static function Calibration() {
 
-        DockerApiLogic::sshContainerStop("freeture"); i, 
+        if(!self::CanCalibrate())
+        {
+            return array(
+                "res" => true,
+                "data" => "Una calibrazione e gia in corso"
+            );
+        }
+
+        DockerApiLogic::sshContainerStop("freeture");
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
         $cmd_out = "";
@@ -133,10 +157,14 @@ class CameraLogic
 
         $v1 = "-v /prismadata/freeture-conf/configuration.cfg:/usr/local/share/freeture/configuration.cfg";
         $v2 = "-v /prismadata/freeture-conf/calibration:/usr/local/share/freeture/calibration/";
-        $image = "n3srl/freeture";
+        $image = "n3srl/freeture13";
+
+        if(isset($_POST['image']))
+        {
+            $image = $_POST['image'];
+        }
 
         $cmd_seq = array();
-        $_POST['maxGain'] = 2;
         
         for($gain = $_POST['minGain'];$gain <= $_POST['maxGain']; $gain++)
         {
@@ -153,9 +181,26 @@ class CameraLogic
         {
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk"))
             {
+                $stream = ssh2_exec($session, "touch /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $command = "chmod +x /home/prisma/calibration.sh";
+                $stream = ssh2_exec($session, $command);
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $command = "touch /prismadata/orma-src/calibration/calibrationstarted.txt";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
                 foreach($cmd_seq as $command)
                 {
-                    $stream = ssh2_exec($session, $command);
+                    $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
                     stream_set_blocking($stream, true);
                     $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                     $cmd_out = stream_get_contents($stream_out);
@@ -169,6 +214,8 @@ class CameraLogic
 
         unset($session);
 
+        
+
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
 
@@ -176,40 +223,59 @@ class CameraLogic
         {
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk"))
             {
+
                 $command = "docker exec prisma-orma chown -R 1000:www-data /usr/local/share/freeture";
-                $stream = ssh2_exec($session, $command);
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
-                $command = "docker exec -it prisma-orma chmod -R 770 /freeture";
-                $stream = ssh2_exec($session, $command);
+                $command = "docker exec prisma-orma chmod -R 770 /freeture";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
                 $command = "cd /prismadata/freeture-conf/calibration/ && zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip .";
-                $stream = ssh2_exec($session, $command);
+                //$command = "zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip /prismadata/freeture-conf/calibration/";
+                $stream = ssh2_exec($session,"echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
                 
                 $command = "rm -rf /prismadata/freeture-conf/calibration";
-                $stream = ssh2_exec($session, $command);
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
+
+                $command = "rm /prismadata/orma-src/calibration/calibrationstarted.txt";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $command = "rm -rf /home/prisma/calibration.sh";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $command = "nohup /home/prisma/calibration.sh > out.txt";
+                $stream = ssh2_exec($session, $command);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                
             }
         }
 
-        
-        DockerApiLogic::sshContainerStart("freeture");
-
         return array(
             "res" => true,
-            "data" => $cmd_out
+            "data" => "Calibrazione iniziata, presto disponibile"
         );
+
 	}
 
     public static function GetCameraCalibrations()
@@ -229,6 +295,9 @@ class CameraLogic
             {
                 
                 $calibration = basename($f);
+
+                if($calibration == "calibrationstarted.txt") continue;  
+
                 $date = explode("-", $calibration)[2];
                 $date = substr($date, 0, -4);
                 $day = substr($date, 0, 2);
@@ -257,7 +326,7 @@ class CameraLogic
         $print = ssh2_fingerprint($session);
         $cmd_out = "";
 
-        $command = "rm -rf /prismadata/orma-src/calibration/$calibration";
+        $command = "rm /prismadata/orma-src/calibration/$calibration";
 
         if($session)
         {
