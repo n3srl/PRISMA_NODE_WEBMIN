@@ -238,7 +238,6 @@ class CameraLogic
                 $cmd_out = stream_get_contents($stream_out);
 
                 $command = "cd /prismadata/freeture-conf/calibration/ && zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip .";
-                //$command = "zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip /prismadata/freeture-conf/calibration/";
                 $stream = ssh2_exec($session,"echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
@@ -262,6 +261,12 @@ class CameraLogic
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
+                
+                $command = "bash /home/prisma/permissions.sh";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
 
                 $command = "rm -rf /home/prisma/calibration.sh";
                 $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
@@ -269,7 +274,7 @@ class CameraLogic
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
-                $command = "nohup /home/prisma/calibration.sh > out.txt";
+                $command = "nohup /home/prisma/calibration.sh > /prismadata/freeture-conf/calibration/calibration.log";
                 $stream = ssh2_exec($session, $command);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
