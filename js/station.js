@@ -181,35 +181,40 @@ $('#StationForm').submit(function (e) {
 var map;
 var marker = false;
 
-
+var isMapOK = true;
 // Init location picker
 function initMap() {
 
-    var centerOfMap = new google.maps.LatLng(0, 0);
+    try {
+        var centerOfMap = new google.maps.LatLng(0, 0);
 
-    var options = {
-        center: centerOfMap,
-        zoom: 7
-    };
+        var options = {
+            center: centerOfMap,
+            zoom: 7
+        };
 
-    map = new google.maps.Map(document.getElementById('location-picker'), options);
+        map = new google.maps.Map(document.getElementById('location-picker'), options);
 
-    google.maps.event.addListener(map, 'click', function (event) {
-        var clickedLocation = event.latLng;
-        if (marker === false) { // Create marker if it doesn't exist yet
-            marker = new google.maps.Marker({
-                position: clickedLocation,
-                map: map,
-                draggable: true
-            });
-            google.maps.event.addListener(marker, 'dragend', function (event) {
-                markerLocation();
-            });
-        } else {
-            marker.setPosition(clickedLocation);
-        }
-        markerLocation();
-    });
+        google.maps.event.addListener(map, 'click', function (event) {
+            var clickedLocation = event.latLng;
+            if (marker === false) { // Create marker if it doesn't exist yet
+                marker = new google.maps.Marker({
+                    position: clickedLocation,
+                    map: map,
+                    draggable: true
+                });
+                google.maps.event.addListener(marker, 'dragend', function (event) {
+                    markerLocation();
+                });
+            } else {
+                marker.setPosition(clickedLocation);
+            }
+            markerLocation();
+        });
+    } catch {
+        isMapOK = false;
+        alert("Impossibile caricare la mappa")
+    }
 }
 
 
@@ -223,6 +228,7 @@ function markerLocation() {
 
 // Handle location picking
 function changeMarkerLocation() {
+    if(!isMapOK) return;
     lat = Number($('#latitude-observatory').val());
     lng = Number($('#longitude-observatory').val());
     station = {lat: lat, lng: lng};

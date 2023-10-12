@@ -56,7 +56,7 @@ $(document).ready(function () {
     {
         if ($("#maxGain").html() == "") 
         {
-            $(this).val("");
+            //$(this).val("");
             return;
         }
 
@@ -64,7 +64,7 @@ $(document).ready(function () {
         if(newvalue > $("#maxGain").html()) 
         {
             newvalue = $("#maxGain").html();
-            $(this).val(newvalue);
+           // $(this).val(newvalue);
             return;
         }
 
@@ -75,7 +75,7 @@ $(document).ready(function () {
     {
         if ($("#minGain").html() == "") 
         {
-            $(this).val("");
+            //$(this).val("");
             return;
         }
 
@@ -83,7 +83,7 @@ $(document).ready(function () {
         if(newvalue < $("#minGain").html()) 
         {
             newvalue = $("#minGain").html();
-            $(this).val(newvalue);
+            //$(this).val(newvalue);
             return;
         }
     });
@@ -211,6 +211,11 @@ function get_camera_bounds()
         },
         success: function(json)
         {
+            $("#minGain").html(1);
+            $("#maxGain").html(32);
+
+            $("#calibration_minGain").val(0);
+            $("#calibration_maxGain").val(32);
             try
             {
                 var data = JSON.parse(json);
@@ -223,7 +228,10 @@ function get_camera_bounds()
 
                     $("#calibration_minGain").val(gains[0]);
                     $("#calibration_maxGain").val(gains[1]);
-                }           
+                } else 
+                {
+                    
+                }          
             } catch (err)
             {
                 alert(json);
@@ -304,6 +312,7 @@ function get_all_calibration()
                 $(".calibration_delete").on('click', function(event)
                 {
                     calibration = $(this).attr('name');
+                    alert("Elimino " + calibration);
                     delete_calibration(calibration);
                 });
             } catch (error)
@@ -316,10 +325,10 @@ function get_all_calibration()
 
 function delete_calibration(name)
 {
-    var baseUrl = "/lib/camera/V1/camera/calibration";
+    var baseUrl = "/lib/camera/V1/camera/deletecalibration";
     $.ajax({
         url: baseUrl, 
-        type: 'DELETE',
+        type: 'GET',
         data: {
             calibration : name
         },

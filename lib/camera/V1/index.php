@@ -137,7 +137,7 @@ $app->GET('/camera/cancalibrate', function (Application $app, Request $request) 
     return $resp;
 });
 
-$app->DELETE('/camera/calibration', function (Application $app, Request $request) {
+$app->GET('/camera/deletecalibration', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::DeleteCalibration($request);
     if ($result->result) {

@@ -131,19 +131,19 @@
                             
                             <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">Esposizione per la calibrazione</small>
+                                    <small class = "text-muted">Esposizione per la calibrazione [ms]</small>
                                     <input type = 'number' id = "calibration_exp" class = "form-control col-md-7 col-xs-12" value = "1000">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">MinGain</small>
+                                    <small class = "text-muted">Start Gain</small>
                                     <input type = 'number' id = "calibration_minGain" class = "form-control col-md-7 col-xs-12" value = "">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">MaxGain</small>
+                                    <small class = "text-muted">End Gain</small>
                                     <input type = 'number' id = "calibration_maxGain" class = "form-control col-md-7 col-xs-12" value = "">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">GainStep</small>
+                                    <small class = "text-muted">Gain Step</small>
                                     <input type = 'number' id = "calibration_step" class = "form-control col-md-7 col-xs-12" value = "1">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>

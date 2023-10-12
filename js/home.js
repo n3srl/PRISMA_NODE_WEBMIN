@@ -212,17 +212,25 @@ $("#btn-show-mask").click(function () {
     $('#mask-preview-modal').modal('show');
 });
 
+var isMapOK = 1;
+
 // Create map to locate the station
 function initMap() {
-    const station = {lat: latitude, lng: longitude};
-    const map = new google.maps.Map(document.getElementById("station-map"), {
-        zoom: 6,
-        center: station
-    });
-    const marker = new google.maps.Marker({
-        position: station,
-        map: map
-    });
+    try {
+        const station = {lat: latitude, lng: longitude};
+        const map = new google.maps.Map(document.getElementById("station-map"), {
+            zoom: 6,
+            center: station
+        });
+        const marker = new google.maps.Marker({
+            position: station,
+            map: map
+        });
+    }
+    catch {
+        alert("Impossibile caricare la mappa")
+        isMapOK = 0;
+    }
 }
 
 // Create table with station info values
@@ -473,21 +481,26 @@ $(document).ready(function () {
     });
 
     // Get station latitude and longitude to create map
-    $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {
-        var id1 = JSON.parse(json1).data;
-        $.get("/lib/ft/V2/freeturefinal/" + id1, function (json2) {
-            var lat = Number(JSON.parse(json2).data.value);
-            $.get("/lib/ft/V2/freeturefinal/id/SITELONG", function (json3) {
-                var id2 = JSON.parse(json3).data;
-                $.get("/lib/ft/V2/freeturefinal/" + id2, function (json4) {
-                    var lng = Number(JSON.parse(json4).data.value);
-                    latitude = lat;
-                    longitude = lng;
-                    initMap();
+    try {
+        $.get("/lib/ft/V2/freeturefinal/id/SITELAT", function (json1) {
+            var id1 = JSON.parse(json1).data;
+            $.get("/lib/ft/V2/freeturefinal/" + id1, function (json2) {
+                var lat = Number(JSON.parse(json2).data.value);
+                $.get("/lib/ft/V2/freeturefinal/id/SITELONG", function (json3) {
+                    var id2 = JSON.parse(json3).data;
+                    $.get("/lib/ft/V2/freeturefinal/" + id2, function (json4) {
+                        var lng = Number(JSON.parse(json4).data.value);
+                        latitude = lat;
+                        longitude = lng;
+                        initMap();
+                    });
                 });
             });
         });
-    });
+    } catch
+    {
+        alert("Problemi con il caricamento delle mappe")
+    }
 
     // Get last image base64 encoded and its timestamp (last stack)
     $.get("/lib/stack/V2/stack/preview/laststack", function (json) {

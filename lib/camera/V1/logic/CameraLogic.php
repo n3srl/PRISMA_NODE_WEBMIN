@@ -153,6 +153,7 @@ class CameraLogic
         $cam = $_POST['camera'];
 
         $now = date("dmY", time());
+        $ttime = time();
         $exp = $_POST['exposure'];
         $cam = 1;
 
@@ -165,12 +166,14 @@ class CameraLogic
             $image = $_POST['image'];
         }
 
+        //$image = "n3srl/freeture13dev";
+
         $cmd_seq = array();
         
         for($gain = $_POST['minGain'];$gain <= $_POST['maxGain']; $gain += $step)
         {
             
-            $params = "-m 4 -e $exp -g $gain --id $cam --fits --savepath /usr/local/share/freeture/calibration/";
+            $params = "-m 4 -f 1 -e $exp -g $gain --width 2040 --height 1530 --startx 4 --starty 4 --id $cam --fits --savepath /usr/local/share/freeture/calibration/";
             $name = "calibration-g".$gain."e".$exp."-".$now;
             $cmd = "docker run --rm --network host $v1 $v2 $image $params --filename  $name";
 
@@ -194,7 +197,12 @@ class CameraLogic
                 $cmd_out = stream_get_contents($stream_out);
 
                 $command = "touch /prismadata/orma-src/calibration/calibrationstarted.txt";
-                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                $stream = ssh2_exec($session, "echo '$command' > /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $stream = ssh2_exec($session, "echo 'docker stop freeture' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
@@ -237,7 +245,13 @@ class CameraLogic
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
-                $command = "cd /prismadata/freeture-conf/calibration/ && zip -r /prismadata/orma-src/calibration/calibration-e$exp-$now.zip .";
+                $command = "cp /prismadata/freeture-conf/calibration.log /prismadata/freeture-conf/calibration/calibration.log";
+                $stream = ssh2_exec($session, "echo '$command' >> /home/prisma/calibration.sh");
+                stream_set_blocking($stream, true);
+                $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+                $cmd_out = stream_get_contents($stream_out);
+
+                $command = "cd /prismadata/freeture-conf/calibration/ && zip -r /prismadata/orma-src/calibration/calibration$ttime-e$exp-$now.zip .";
                 $stream = ssh2_exec($session,"echo '$command' >> /home/prisma/calibration.sh");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
@@ -274,7 +288,7 @@ class CameraLogic
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
 
-                $command = "nohup /home/prisma/calibration.sh > /prismadata/freeture-conf/calibration/calibration.log";
+                $command = "nohup /home/prisma/calibration.sh > /prismadata/freeture-conf/calibration.log";
                 $stream = ssh2_exec($session, $command);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);
@@ -309,6 +323,7 @@ class CameraLogic
                 $calibration = basename($f);
 
                 if($calibration == "calibrationstarted.txt") continue;  
+                if($calibration == "plch.txt") continue;  
 
                 $date = explode("-", $calibration)[2];
                 $date = substr($date, 0, -4);
@@ -332,7 +347,7 @@ class CameraLogic
     public static function DeleteCalibration($request)
     {
 
-        $calibration = $request->query->get('calibration');
+        $calibration = $_GET['calibration'];
 
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
@@ -355,7 +370,7 @@ class CameraLogic
 
         return array(
             "res" => true,
-            "data" => $cmd_out
+            "data" => $command
         );
     }
 
