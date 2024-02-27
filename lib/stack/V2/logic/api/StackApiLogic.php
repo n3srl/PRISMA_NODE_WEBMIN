@@ -437,6 +437,16 @@ class StackApiLogic {
         $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
         foreach ($dirs as $day_dir) {
 
+			if (!is_dir($data_dir."/" .$day_dir))
+				continue;
+			
+			if ('.' === $day_dir) {
+                continue;
+            }
+            if ('..' === $day_dir) {
+                continue;
+            }
+			
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/stacks/*.fit");
 
             if ($i < $start) {
@@ -446,13 +456,7 @@ class StackApiLogic {
             if ($i > $end) {
                 return $reply;
             }
-            if ('.' === $day_dir) {
-                continue;
-            }
-            if ('..' === $day_dir) {
-                continue;
-            }
-
+          
             $name = explode("_", $day_dir);
 
             if (isset($name[1])) {
