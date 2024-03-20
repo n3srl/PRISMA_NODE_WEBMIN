@@ -301,7 +301,7 @@ class StackApiLogic {
     // Get stacks prefix string
     public static function getStackPrefix() {
         $freetureConf = _FREETURE_;
-        $stationName = "NO_TELESCOP";
+        $stationName = "TELESCOPE";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -323,7 +323,7 @@ class StackApiLogic {
     // Get the data path parsing freeture configuration file
     public static function getDataPath() {
         $freetureConf = _FREETURE_;
-        $dataPath = _FREETURE_DATA_ . "/NO_NAME/";
+        $dataPath = _FREETURE_DATA_ . "/DEFAULT/";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -333,9 +333,9 @@ class StackApiLogic {
 
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "DATA_PATH") {
+                    if (self::getKey($line) === "STATION_CODE") {
                         $tmp = self::getValue($line);
-                        $dataPath = _FREETURE_DATA_ . explode("/", $tmp)[2] . "/";
+                        $dataPath = _FREETURE_DATA_ . $tmp . "/";
                     }
                 }
             }
