@@ -36,12 +36,11 @@ $(document).ajaxStart(function (event, xhr, options) {
     }
     
 }).ajaxSuccess(function () {
-    //console.log( "Triggered ajaxSuccess handler." );
+    $.unblockUI();
 }).ajaxError(function () {
-    //console.log( "Triggered ajaxError handler." );
+    $.unblockUI();
 }).ajaxStop(function () {
-    //console.log( "Triggered ajaxStop handler." );
     $.unblockUI();
 }).ajaxComplete(function () {
-    //console.log( "Triggered ajaxComplete handler." );
+    $.unblockUI();
 });

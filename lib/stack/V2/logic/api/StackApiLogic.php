@@ -170,6 +170,7 @@ class StackApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
             $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
+		
             $directory = self::getDataPath() . $day_dir . "/stacks/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getStacksFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
@@ -211,22 +212,29 @@ class StackApiLogic {
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
         $iTotal = self::getDirectoryFilesCount($directory);
-
+	
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $reply = self::getStacksDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
-
-            $test = $reply[0];
-            if (empty($test)) {
-                $iDisplayStart = 0;
-            }
-            if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
-            } else {
-                $pageNumber = ($iDisplayStart / $iDisplayLength);
-            }
+			
+			if (!empty($array)) {
+				$test = $reply[0];
+				if (empty($test)) {
+					$iDisplayStart = 0;
+				}
+				if ($iDisplayStart < $iDisplayLength) {
+					$pageNumber = 0;
+				} else {
+					$pageNumber = ($iDisplayStart / $iDisplayLength);
+				}
+			}else {
+				$iDisplayStart = 0;
+				$pageNumber = 0;
+				$pageNumber = 0;
+			}
         }
+		
         /*
           //Ordering
           if (isset($_GET['iSortCol_0'])) {
@@ -323,7 +331,7 @@ class StackApiLogic {
     // Get the data path parsing freeture configuration file
     public static function getDataPath() {
         $freetureConf = _FREETURE_;
-        $dataPath = _FREETURE_DATA_ . "/DEFAULT/";
+        $dataPath = _FREETURE_DATA_ . "/"._DEFAULT_STATION_CODE_."/";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);

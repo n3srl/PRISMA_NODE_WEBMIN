@@ -217,15 +217,22 @@ class CaptureApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $reply = self::getCapturesDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
 
-            $test = $reply[0];
-            if (empty($test)) {
-                $iDisplayStart = 0;
-            }
-            if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
-            } else {
-                $pageNumber = ($iDisplayStart / $iDisplayLength);
-            }
+			if (!empty($reply)) {
+
+				$test = $reply[0];
+				if (empty($test)) {
+					$iDisplayStart = 0;
+				}
+				if ($iDisplayStart < $iDisplayLength) {
+					$pageNumber = 0;
+				} else {
+					$pageNumber = ($iDisplayStart / $iDisplayLength);
+				}
+			} else {
+				$iDisplayStart = 0;
+				$pageNumber = 0;
+				$pageNumber = 0;
+			}
         }
         /*
           //Ordering
@@ -301,7 +308,7 @@ class CaptureApiLogic {
     // Get captures prefix string
     public static function getCapturePrefix() {
         $freetureConf = _FREETURE_;
-        $stationCode = "DEFAULT";
+        $stationCode = _DEFAULT_STATION_CODE_;
         
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -323,7 +330,7 @@ class CaptureApiLogic {
     // Get the data path parsing freeture configuration file
     public static function getDataPath() {
         $freetureConf = _FREETURE_;
-        $dataPath = _FREETURE_DATA_ . "/DEFAULT/";
+        $dataPath = _FREETURE_DATA_ . "/"._DEFAULT_STATION_CODE_."/";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);

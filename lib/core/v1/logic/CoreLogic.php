@@ -306,7 +306,7 @@ class CoreLogic {
     public static function getUserFromUsername($username) {
         $file = _PASSWD_;
         $i = 0;
-
+		$user = "";
         if (file_exists($file) && is_file($file)) {
 
             $contents = file($file);
@@ -329,6 +329,7 @@ class CoreLogic {
                 $i++;
             }
         }
+		
         return $user;
     }
     
@@ -361,7 +362,7 @@ class CoreLogic {
     // Get the station code parsing freeture configuration file
     public static function GetStationCode() {
         $freetureConf = _FREETURE_;
-        $stationCode = "NO_NAME";
+        $stationCode = _DEFAULT_STATION_CODE_;
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -371,9 +372,8 @@ class CoreLogic {
 
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "DATA_PATH") {
-                        $tmp = self::getValue($line);
-                        $stationCode = explode("/", $tmp)[2];
+                    if (self::getKey($line) === "STATION_CODE") {
+                        $stationCode = self::getValue($line);
                     }
                 }
             }

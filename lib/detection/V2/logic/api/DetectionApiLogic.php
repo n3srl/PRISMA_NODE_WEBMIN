@@ -174,15 +174,21 @@ class DetectionApiLogic {
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
-            $test = $reply[0];
-            if (empty($test)) {
-                $iDisplayStart = 0;
-            }
-            if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
-            } else {
-                $pageNumber = ($iDisplayStart / $iDisplayLength);
-            }
+			if (!empty($reply)){
+				$test = $reply[0];
+				if (empty($test)) {
+					$iDisplayStart = 0;
+				}
+				if ($iDisplayStart < $iDisplayLength) {
+					$pageNumber = 0;
+				} else {
+					$pageNumber = ($iDisplayStart / $iDisplayLength);
+				}
+			} else {
+				$iDisplayStart = 0;
+				$pageNumber = 0;
+				$pageNumber = 0;
+			}
         }
 
         /* Ordering 
@@ -220,15 +226,21 @@ class DetectionApiLogic {
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $reply = self::getDetectionsDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
 
-            $test = $reply[0];
-            if (empty($test)) {
-                $iDisplayStart = 0;
-            }
-            if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
-            } else {
-                $pageNumber = ($iDisplayStart / $iDisplayLength);
-            }
+			if (!empty($reply)) {
+				$test = $reply[0];
+				if (empty($test)) {
+					$iDisplayStart = 0;
+				}
+				if ($iDisplayStart < $iDisplayLength) {
+					$pageNumber = 0;
+				} else {
+					$pageNumber = ($iDisplayStart / $iDisplayLength);
+				}
+			}else {
+				$iDisplayStart = 0;
+				$pageNumber = 0;
+				$pageNumber = 0;
+			}
         }
 
         /* Ordering 
@@ -477,7 +489,7 @@ class DetectionApiLogic {
     // Get the detection prefix parsing freeture configuration file
     public static function getDetectionPrefix() {
         $freetureConf = _FREETURE_;
-        $stationName = "NO_NAME";
+        $stationName = _DEFAULT_STATION_CODE_;
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -499,7 +511,7 @@ class DetectionApiLogic {
     // Get the station code parsing freeture configuration file
     public static function getStationCode() {
         $freetureConf = _FREETURE_;
-        $stationCode = "NO_NAME";
+        $stationCode = _DEFAULT_STATION_CODE_;
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -509,9 +521,8 @@ class DetectionApiLogic {
 
                 if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
                         (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "DATA_PATH") {
-                        $tmp = self::getValue($line);
-                        $stationCode = explode("/", $tmp)[2];
+                    if (self::getKey($line) === "STATION_CODE") {
+                        $stationCode = self::getValue($line);
                     }
                 }
             }

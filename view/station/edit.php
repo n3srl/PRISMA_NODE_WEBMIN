@@ -229,7 +229,7 @@
                                 </div>
                             </div>
                             <div class='x_content'>
-                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5(id) ?>'>
+                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('id') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
                                             <small class='text-muted'><?php echo ( _('id')) ?> </small>
@@ -237,7 +237,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5(key) ?>'>
+                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('key') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
                                             <small class='text-muted'><?php echo ( _('parametro')) ?> </small>
@@ -245,7 +245,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5(value) ?>'>
+                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('value') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
                                             <small class='text-muted'><?php echo ( _('valore')) ?> </small>
@@ -253,7 +253,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5(description) ?>'>
+                                <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('description') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
                                             <small class='text-muted'><?php echo ( _('descrizione')) ?> </small>
