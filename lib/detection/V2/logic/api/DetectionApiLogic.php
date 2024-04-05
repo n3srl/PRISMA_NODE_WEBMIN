@@ -219,7 +219,7 @@ class DetectionApiLogic {
         $reply = null;
         $iDisplayStart = 1;
         $directory = _FREETURE_DATA_ . self::getStationCode() . "/*";
-        $iTotal = self::getDirectoryFilesCount($directory);
+        $iTotal = count(self::getDetectionsDays(0,365,false));
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);

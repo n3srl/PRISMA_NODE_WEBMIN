@@ -211,8 +211,8 @@ class StackApiLogic {
         $reply = null;
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
-        $iTotal = self::getDirectoryFilesCount($directory);
-	
+        $iTotal = count(self::getStacksDays(0, 365, false));
+		
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
