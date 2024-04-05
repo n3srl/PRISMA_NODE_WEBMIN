@@ -235,7 +235,7 @@ function loadStationInfoValues() {
                 k = "STATION_NAME";
                 break;
             case "Station Code":
-                k = "ACQ_REGULAR_PRFX";
+                k = "STATION_CODE";
                 break;
             case "Observer":
                 k = "OBSERVER";
@@ -437,7 +437,7 @@ function initDetectionsDatatable(folder) {
 $(document).ready(function () {
 
     // Get last day folder name to get last day detections
-    $.get("/lib/ft/V2/freeturefinal/id/ACQ_REGULAR_PRFX", function (json1) {
+    $.get("/lib/ft/V2/freeturefinal/id/STATION_CODE", function (json1) {
         var id = JSON.parse(json1).data;
         $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
             var prefix = JSON.parse(json2).data.value;

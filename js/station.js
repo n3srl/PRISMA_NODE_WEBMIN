@@ -5,7 +5,7 @@
 
 $(setFreetureFinalVisibility());
 var freetureObjects = [];
-var keys = ["ACQ_REGULAR_PRFX", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
+var keys = ["STATION_CODE", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
 
 $(function () {
     disableStationForm();
@@ -45,7 +45,7 @@ function saveStation() {
             case "TELESCOP":
                 ft.value = $('#station-name').val().toUpperCase();
                 break;
-            case "ACQ_REGULAR_PRFX":
+            case "STATION_CODE":
                 ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "ACQ_MASK_PATH":
