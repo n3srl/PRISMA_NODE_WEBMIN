@@ -210,8 +210,8 @@ class CaptureApiLogic {
         $reply = null;
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
-        $iTotal = self::getDirectoryFilesCount($directory);
-
+        $iTotal = self::getCapturesDays(0, 0, false);
+		
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
@@ -228,14 +228,10 @@ class CaptureApiLogic {
 				} else {
 					$pageNumber = ($iDisplayStart / $iDisplayLength);
 				}
-				
-				$iTotal = count($reply);
-				
 			} else {
 				$iDisplayStart = 0;
 				$pageNumber = 0;
 				$pageNumber = 0;
-				$iTotal =0;
 			}
         }
         /*
