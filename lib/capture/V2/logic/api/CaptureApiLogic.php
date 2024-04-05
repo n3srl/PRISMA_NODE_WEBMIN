@@ -205,12 +205,12 @@ class CaptureApiLogic {
         );
         return $output;
     }
-
+	
     public static function GetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
-        $iTotal = self::getCapturesDays(0, 0, false);
+        $iTotal = self::getCapturesDays(0, 365, false);
 		
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
