@@ -455,6 +455,10 @@ class CaptureApiLogic {
 			
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/captures/*.fit");
             
+			if ($n_day_files === $0) {
+                continue;
+            }
+			
             if ($i < $start) {
                 $i++;
                 continue;
