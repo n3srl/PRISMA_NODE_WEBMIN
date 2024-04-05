@@ -211,7 +211,7 @@ class StackApiLogic {
         $reply = null;
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
-        $iTotal = count(self::getStacksDays(0, 365, false));
+        $iTotal = count(self::getStacksDays(0, 365));
 		
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
@@ -228,12 +228,12 @@ class StackApiLogic {
 				} else {
 					$pageNumber = ($iDisplayStart / $iDisplayLength);
 				}
-  			    $iTotal = count($reply);
+  			   
 			}else {
 				$iDisplayStart = 0;
 				$pageNumber = 0;
 				$pageNumber = 0;
-				$iTotal = 0;
+				
 			}
         }
 		
