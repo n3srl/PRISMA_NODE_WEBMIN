@@ -228,10 +228,14 @@ class CaptureApiLogic {
 				} else {
 					$pageNumber = ($iDisplayStart / $iDisplayLength);
 				}
+				
+				$iTotal = count($reply);
+				
 			} else {
 				$iDisplayStart = 0;
 				$pageNumber = 0;
 				$pageNumber = 0;
+				$iTotal =0;
 			}
         }
         /*
