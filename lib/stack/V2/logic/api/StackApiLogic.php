@@ -333,7 +333,7 @@ class StackApiLogic {
     // Get the data path parsing freeture configuration file
     public static function getDataPath() {
         $freetureConf = _FREETURE_;
-        $dataPath = _FREETURE_DATA_ . "/"._DEFAULT_STATION_CODE_."/";
+        $dataPath = _FREETURE_DATA_ . _DEFAULT_STATION_CODE_."/";
 
         if (file_exists($freetureConf) && is_file($freetureConf)) {
             $contents = file($freetureConf);
@@ -395,7 +395,7 @@ class StackApiLogic {
     // If preview enabled, convert images to base64
     public static function getStacksFiles($start, $end, $day_dir, $enablePreview = false) {
         $i = 0;
-        // Day directory with stacks /freeture/PREFIX/PREFIX_DATE/stacks
+        // Day directory with stacks /freeture/<STATION_CODE>/<PREFIX_DATE>/stacks
         $data_dir = self::getDataPath() . $day_dir . "/stacks";
         $reply = array();
         // If there isn't data for this day return an empty array
