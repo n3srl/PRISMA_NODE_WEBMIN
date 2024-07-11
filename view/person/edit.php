@@ -34,8 +34,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 b80bb7740288fda1f201890375a60c8f' hidden>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('id')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per id')) ?>'>
+                                        <small class='text-muted'><?php echo (_('ID')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per ID')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -44,8 +44,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 14c4b06b824ec593239362517f538b29'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('Username')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per Username')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Nome utente')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per nome utente')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -83,11 +83,11 @@
                         <table id='PersonList' class='table table-striped table-bordered' style='width: 100%; '>
                             <thead>
                                 <tr>
-                                    <th><?php echo (_('Username')) ?></th>
+                                    <th><?php echo (_('Nome utente')) ?></th>
                                     <th><?php echo (_('Password')) ?></th>
                                     <th><?php echo (_('Timezone')) ?></th>
-                                    <th><?php echo (_('Erased')) ?></th>
-                                    <th><?php echo (_('Level')) ?></th>
+                                    <th><?php echo (_('Rimosso')) ?></th>
+                                    <th><?php echo (_('Livello')) ?></th>
                                     <th><?php echo (_('ID')) ?></th>
                                 </tr>
                             </thead>
@@ -123,8 +123,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 b80bb7740288fda1f201890375a60c8f' hidden>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('id')) ?> </small>
-                                        <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('id')) ?> '  title=' <?php echo ( _('id')) ?> '/>
+                                        <small class='text-muted'><?php echo ( _('ID')) ?> </small>
+                                        <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('ID')) ?> '  title=' <?php echo ( _('ID')) ?> '/>
                                     </div>
                                 </div>
                             </div>                            
@@ -132,7 +132,7 @@
                                 <div class='col-md-3 col-sm-6 col-xs-12 '>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('Nuova Password*')) ?> </small>
+                                            <small class='text-muted'><?php echo ( _('Nuova Password')) ?>* </small>
                                             <input type = 'password' name='new_password' class='form-control col-md-7 col-xs-12 input-disabled optional' data-validate-linked='confirm_password' placeholder=' <?php echo ( _('Nuova Password')) ?> '  title=' <?php echo ( _('Nuova Password')) ?>' maxlength = '100' />
                                             <meter max="4" id="password-strength-meter" class="col-md-12 col-xs-12"></meter>
                                             <p id="password-strength-text"></p>
@@ -142,7 +142,7 @@
                                 <div class='col-md-3 col-sm-6 col-xs-12 5f4dcc3b5aa765d61d8327deb882cf99'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('Conferma Password*')) ?> </small>
+                                            <small class='text-muted'><?php echo ( _('Conferma Password')) ?>* </small>
                                             <input type = 'password' name='confirm_password' class='form-control col-md-7 col-xs-12 input-disabled optional' data-validate-linked='new_password' placeholder=' <?php echo ( _('Conferma Password')) ?> '  title=' <?php echo ( _('Conferma Password')) ?>' maxlength = '100'/>
                                         </div>
                                     </div>

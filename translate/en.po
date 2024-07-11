@@ -1,0 +1,716 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PRISMA Node Webmin\n"
+"POT-Creation-Date: 2024-07-11 17:23+0200\n"
+"PO-Revision-Date: 2024-07-11 17:24+0200\n"
+"Last-Translator: BSIT, Andrea Novati <andrea.novati@n-3.it>\n"
+"Language-Team: N3 S.r.l. - www.n-3.it\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: lib/capture/V2/model/CaptureFactory.php:14
+#: lib/core/v1/model/PermissionFactory.php:75
+#: lib/core/v1/model/PersonFactory.php:35
+#: lib/detection/V2/model/DetectionFactory.php:14
+#: lib/docker/V2/model/DockerFactory.php:14
+#: lib/ft/V2/model/FreetureFinalFactory.php:19
+msgid "Rimosso non numerico"
+msgstr ""
+
+#: lib/core/v1/logic/ApiLogic.php:22
+msgid "Si è verificato un errore"
+msgstr ""
+
+#: lib/core/v1/logic/ApiLogic.php:22
+msgid "Contattare l'amministratore di sistema"
+msgstr ""
+
+#: lib/core/v1/logic/ApiLogic.php:30
+msgid "Il numero documento è già in uso"
+msgstr ""
+
+#: lib/core/v1/logic/ApiLogic.php:30
+msgid "Ricarica il numero per procedere"
+msgstr ""
+
+#: lib/core/v1/logic/ApiLogic.php:34
+msgid "Il numero documento non è nel formato corretto"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:14
+msgid "ID Persona non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:18
+msgid "ID Gruppo non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:27
+msgid "Esecuzione non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:36
+msgid "Lettura non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:45
+msgid "Scrittura non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:54
+msgid "Utente attivo non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:58
+#: lib/core/v1/model/PersonFactory.php:18
+msgid "Modificato da non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:62
+#: lib/core/v1/model/PersonFactory.php:22
+msgid "Creato da non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PermissionFactory.php:66
+#: lib/core/v1/model/PersonFactory.php:26
+msgid "Assegnato non numerico"
+msgstr ""
+
+#: lib/core/v1/model/PersonFactory.php:14
+msgid "timezone non numerico"
+msgstr ""
+
+#: lib/ft/V2/model/FreetureFinalFactory.php:14
+msgid "Mostra non numerico"
+msgstr ""
+
+#: lib/stack/V2/model/StackFactory.php:14
+msgid "erased non numerico"
+msgstr ""
+
+#: model/StationFactory.php:13
+msgid "ID Camera non numerico"
+msgstr ""
+
+#: model/StationFactory.php:17
+msgid "Focale non numerico"
+msgstr ""
+
+#: model/StationFactory.php:21
+msgid "Apertura non numerico"
+msgstr ""
+
+#: model/StationFactory.php:25
+msgid "Longitudine non numerico"
+msgstr ""
+
+#: model/StationFactory.php:29
+msgid "Latitudine non numerico"
+msgstr ""
+
+#: model/StationFactory.php:33
+msgid "Altitudine non numerico"
+msgstr ""
+
+#: model/StationFactory.php:37
+msgid "ACQ_DAY_GAIN non numerico"
+msgstr ""
+
+#: model/StationFactory.php:41
+msgid "ACQ_NIGHT_GAIN non numerico"
+msgstr ""
+
+#: service/UserController.php:83
+msgid "Il nome utente inserito esiste già"
+msgstr ""
+
+#: service/UserController.php:83
+msgid "E' necessario modificarlo per poter continuare"
+msgstr ""
+
+#: view/camera/control.php:22
+msgid "Controllo camera"
+msgstr ""
+
+#: view/camera/control.php:32
+msgid "Funzioni"
+msgstr ""
+
+#: view/camera/control.php:104
+msgid "Output"
+msgstr ""
+
+#: view/camera/control.php:124
+msgid "Esegui calibrazione con tutti i possibili valori di Guadagno"
+msgstr ""
+
+#: view/capture/edit.php:22
+msgid "Calibrazioni"
+msgstr ""
+
+#: view/capture/edit.php:32 view/detection/edit.php:35 view/docker/edit.php:16
+#: view/permission/edit.php:16 view/person/edit.php:17 view/stack/edit.php:32
+msgid "Elenco"
+msgstr ""
+
+#: view/capture/edit.php:65 view/capture/edit.php:97 view/capture/edit.php:111
+#: view/detection/edit.php:69 view/detection/edit.php:101
+#: view/detection/edit.php:115 view/home/home.php:155 view/stack/edit.php:65
+#: view/stack/edit.php:97 view/stack/edit.php:111
+msgid "Data"
+msgstr ""
+
+#: view/capture/edit.php:66 view/detection/edit.php:70
+#: view/permission/edit.php:39 view/person/edit.php:38 view/stack/edit.php:66
+msgid "Filtra per ID"
+msgstr ""
+
+#: view/capture/edit.php:75 view/detection/edit.php:79 view/docker/edit.php:26
+#: view/home/home.php:154 view/stack/edit.php:75 view/user/edit.php:29
+#: view/user/list.php:24
+msgid "Nome"
+msgstr ""
+
+#: view/capture/edit.php:76 view/permission/edit.php:132
+#: view/person/edit.php:48 view/stack/edit.php:76
+msgid "Filtra per nome utente"
+msgstr ""
+
+#: view/capture/edit.php:85 view/detection/edit.php:89
+#: view/permission/edit.php:149 view/person/edit.php:75 view/stack/edit.php:85
+msgid "Applica filtri"
+msgstr ""
+
+#: view/capture/edit.php:86 view/detection/edit.php:90
+#: view/permission/edit.php:150 view/person/edit.php:76 view/stack/edit.php:86
+msgid "Pulisci filtri"
+msgstr ""
+
+#: view/capture/edit.php:98 view/detection/edit.php:102 view/stack/edit.php:98
+msgid "#"
+msgstr ""
+
+#: view/capture/edit.php:99 view/detection/edit.php:103 view/stack/edit.php:99
+msgid "Cartella"
+msgstr ""
+
+#: view/capture/edit.php:110
+msgid "Nome Calibrazione"
+msgstr ""
+
+#: view/capture/edit.php:112 view/detection/edit.php:116 view/home/home.php:156
+#: view/stack/edit.php:112
+msgid "Ora"
+msgstr ""
+
+#: view/capture/edit.php:113 view/detection/edit.php:117 view/home/home.php:157
+#: view/stack/edit.php:113
+msgid "Anteprima"
+msgstr ""
+
+#: view/capture/edit.php:114 view/stack/edit.php:114 view/station/edit.php:13
+msgid "Scarica"
+msgstr ""
+
+#: view/capture/edit.php:129
+msgid "Ultima Calibrazione"
+msgstr ""
+
+#: view/detection/edit.php:25
+msgid "Detections"
+msgstr ""
+
+#: view/detection/edit.php:80
+msgid "Filtra per Username"
+msgstr ""
+
+#: view/detection/edit.php:114
+msgid "Nome Detection"
+msgstr ""
+
+#: view/detection/edit.php:118 view/home/home.php:158
+msgid "DirMap"
+msgstr ""
+
+#: view/detection/edit.php:119 view/home/home.php:159
+msgid "GeMap"
+msgstr ""
+
+#: view/detection/edit.php:120 view/home/home.php:160
+msgid "Video"
+msgstr ""
+
+#: view/detection/edit.php:121 view/home/home.php:161
+msgid "Zip"
+msgstr ""
+
+#: view/detection/edit.php:136
+msgid "Ultima Detection"
+msgstr ""
+
+#: view/docker/edit.php:6
+msgid "Stato Containers"
+msgstr ""
+
+#: view/docker/edit.php:27
+msgid "Immagine"
+msgstr ""
+
+#: view/docker/edit.php:28
+msgid "Comando"
+msgstr ""
+
+#: view/docker/edit.php:29
+msgid "Stato"
+msgstr ""
+
+#: view/docker/edit.php:30
+msgid "Creato"
+msgstr ""
+
+#: view/docker/edit.php:31
+msgid "Avvia"
+msgstr ""
+
+#: view/docker/edit.php:32
+msgid "Ferma"
+msgstr ""
+
+#: view/docker/edit.php:33
+msgid "Riavvia"
+msgstr ""
+
+#: view/docker/edit.php:47
+msgid "Freeture logs"
+msgstr ""
+
+#: view/home/home.php:88
+msgid "Geolocalizzazione stazione"
+msgstr ""
+
+#: view/home/home.php:104
+msgid "Dati stazione"
+msgstr ""
+
+#: view/home/home.php:107 view/station/edit.php:9 view/station/edit.php:194
+msgid "Maschera"
+msgstr ""
+
+#: view/home/home.php:116 view/station/edit.php:202 view/station/edit.php:243
+msgid "Parametro"
+msgstr ""
+
+#: view/home/home.php:117 view/station/edit.php:203 view/station/edit.php:251
+#: view/station/edit.php:252
+msgid "Valore"
+msgstr ""
+
+#: view/home/home.php:132
+msgid "Detection rilevate oggi"
+msgstr ""
+
+#: view/home/home.php:178
+msgid "Ultima immagine rilevata"
+msgstr ""
+
+#: view/home/home.php:198
+msgid "Utilizzo Dati"
+msgstr ""
+
+#: view/ovpn/edit.php:6
+msgid "Configurazione OpenVPN"
+msgstr ""
+
+#: view/ovpn/edit.php:16 view/station/edit.php:43
+msgid "Carica File"
+msgstr ""
+
+#: view/ovpn/edit.php:24
+msgid "Carica nuovo file di configurazione OpenVPN (esempio: client.ovpn)"
+msgstr ""
+
+#: view/ovpn/edit.php:47
+msgid "Stato OpenVPN"
+msgstr ""
+
+#: view/permission/edit.php:6 view/user/edit.php:53
+msgid "Permessi"
+msgstr ""
+
+#: view/permission/edit.php:19 view/permission/edit.php:187
+msgid "Aggiungi nuovo"
+msgstr ""
+
+#: view/permission/edit.php:38 view/permission/edit.php:207
+#: view/permission/edit.php:208 view/person/edit.php:37 view/person/edit.php:91
+#: view/person/edit.php:126 view/person/edit.php:127 view/station/edit.php:207
+#: view/station/edit.php:235 view/station/edit.php:236
+msgid "ID"
+msgstr ""
+
+#: view/permission/edit.php:47 view/permission/edit.php:160
+#: view/permission/edit.php:215 view/permission/edit.php:216
+msgid "OID"
+msgstr ""
+
+#: view/permission/edit.php:48
+msgid "Filtra per OID"
+msgstr ""
+
+#: view/permission/edit.php:56 view/permission/edit.php:161
+#: view/permission/edit.php:223 view/permission/edit.php:224
+msgid "OID Esterno"
+msgstr ""
+
+#: view/permission/edit.php:57
+msgid "Filtra per OID Esterno"
+msgstr ""
+
+#: view/permission/edit.php:65 view/permission/edit.php:162
+#: view/permission/edit.php:231 view/permission/edit.php:232
+msgid "ID Persona"
+msgstr ""
+
+#: view/permission/edit.php:66
+msgid "Filtra per ID Persona"
+msgstr ""
+
+#: view/permission/edit.php:74 view/permission/edit.php:163
+#: view/permission/edit.php:240 view/permission/edit.php:241
+msgid "ID Gruppo"
+msgstr ""
+
+#: view/permission/edit.php:75
+msgid "Filtra per ID Gruppo"
+msgstr ""
+
+#: view/permission/edit.php:83 view/permission/edit.php:164
+#: view/permission/edit.php:249 view/permission/edit.php:250
+msgid "Esecuzione"
+msgstr ""
+
+#: view/permission/edit.php:84
+msgid "Filtra per esecuzione"
+msgstr ""
+
+#: view/permission/edit.php:86 view/permission/edit.php:98
+#: view/permission/edit.php:110 view/permission/edit.php:122
+msgid "Sì"
+msgstr ""
+
+#: view/permission/edit.php:87 view/permission/edit.php:99
+#: view/permission/edit.php:111 view/permission/edit.php:123
+msgid "No"
+msgstr ""
+
+#: view/permission/edit.php:95 view/permission/edit.php:165
+#: view/permission/edit.php:257 view/permission/edit.php:258
+msgid "Lettura"
+msgstr ""
+
+#: view/permission/edit.php:96
+msgid "Filtra per lettura"
+msgstr ""
+
+#: view/permission/edit.php:107 view/permission/edit.php:166
+#: view/permission/edit.php:265 view/permission/edit.php:266
+msgid "Scrittura"
+msgstr ""
+
+#: view/permission/edit.php:108
+msgid "Filtra per scrittura"
+msgstr ""
+
+#: view/permission/edit.php:119 view/permission/edit.php:273
+#: view/permission/edit.php:274
+msgid "Utente attivo"
+msgstr ""
+
+#: view/permission/edit.php:120
+msgid "Filtra per utente attivo"
+msgstr ""
+
+#: view/permission/edit.php:131 view/permission/edit.php:168
+#: view/permission/edit.php:281 view/permission/edit.php:282
+#: view/person/edit.php:47 view/person/edit.php:86 view/user/edit.php:41
+#: view/user/list.php:26
+msgid "Nome utente"
+msgstr ""
+
+#: view/permission/edit.php:140 view/permission/edit.php:169
+#: view/permission/edit.php:289 view/permission/edit.php:290
+msgid "Token segreto"
+msgstr ""
+
+#: view/permission/edit.php:141
+msgid "Filtra per token segreto"
+msgstr ""
+
+#: view/permission/edit.php:167
+msgid "Attivo"
+msgstr ""
+
+#: view/permission/edit.php:190 view/person/edit.php:110
+#: view/station/edit.php:96 view/station/edit.php:225
+msgid "SALVA"
+msgstr ""
+
+#: view/permission/edit.php:191 view/person/edit.php:111
+msgid "PULISCI CAMPI"
+msgstr ""
+
+#: view/permission/edit.php:192 view/person/edit.php:112
+#: view/station/edit.php:97 view/station/edit.php:226
+msgid "MODIFICA"
+msgstr ""
+
+#: view/permission/edit.php:193 view/person/edit.php:113
+#: view/station/edit.php:98 view/station/edit.php:227
+msgid "ANNULLA"
+msgstr ""
+
+#: view/permission/edit.php:194
+msgid "TUTTI"
+msgstr ""
+
+#: view/permission/edit.php:201 view/person/edit.php:120
+#: view/station/edit.php:107 view/user/edit.php:25
+msgid "I campi contrassegnati con * sono obbligatori"
+msgstr ""
+
+#: view/person/edit.php:7 view/user/list.php:15
+msgid "Utenti"
+msgstr ""
+
+#: view/person/edit.php:56 view/person/edit.php:87 view/user/edit.php:47
+#: view/user/list.php:27
+msgid "Password"
+msgstr ""
+
+#: view/person/edit.php:57
+msgid "Filtra per password"
+msgstr ""
+
+#: view/person/edit.php:66 view/person/edit.php:88
+msgid "Timezone"
+msgstr ""
+
+#: view/person/edit.php:67
+msgid "Filtra per timezone"
+msgstr ""
+
+#: view/person/edit.php:89 view/station/edit.php:206
+msgid "Rimosso"
+msgstr ""
+
+#: view/person/edit.php:90 view/user/list.php:28
+msgid "Livello"
+msgstr ""
+
+#: view/person/edit.php:106
+msgid "Modifica Password"
+msgstr ""
+
+#: view/person/edit.php:109
+msgid "ELIMINA"
+msgstr ""
+
+#: view/person/edit.php:135 view/person/edit.php:136
+msgid "Nuova Password"
+msgstr ""
+
+#: view/person/edit.php:145 view/person/edit.php:146
+msgid "Conferma Password"
+msgstr ""
+
+#: view/prometheus/edit.php:6
+msgid "Stato node_exporter"
+msgstr ""
+
+#: view/prometheus/edit.php:17
+msgid "Metriche"
+msgstr ""
+
+#: view/settings/edit.php:5 view/template/menu.php:82
+msgid "Impostazioni"
+msgstr ""
+
+#: view/settings/edit.php:17
+msgid "Visualizzazione Media"
+msgstr ""
+
+#: view/settings/edit.php:53
+msgid "Archiviazione Media"
+msgstr ""
+
+#: view/settings/edit.php:62
+msgid "Pulisci media"
+msgstr ""
+
+#: view/stack/edit.php:22
+msgid "Stack"
+msgstr ""
+
+#: view/stack/edit.php:110
+msgid "Nome Stack"
+msgstr ""
+
+#: view/stack/edit.php:129
+msgid "Ultimo Stack"
+msgstr ""
+
+#: view/station/edit.php:33
+msgid "Configurazione Freeture"
+msgstr ""
+
+#: view/station/edit.php:51
+msgid "Carica nuovo file di configurazione Freeture (esempio: configuration.cfg)"
+msgstr ""
+
+#: view/station/edit.php:68
+msgid "Carica nuova maschera (esempio: default.bmp)"
+msgstr ""
+
+#: view/station/edit.php:93
+msgid "Configurazione automatica"
+msgstr ""
+
+#: view/station/edit.php:116 view/station/edit.php:117
+msgid "Nome stazione"
+msgstr ""
+
+#: view/station/edit.php:124 view/station/edit.php:125
+msgid "Codice stazione"
+msgstr ""
+
+#: view/station/edit.php:132 view/station/edit.php:133
+#: view/station/edit.php:175 view/station/edit.php:176
+msgid "Osservatore"
+msgstr ""
+
+#: view/station/edit.php:140 view/station/edit.php:141
+msgid "Altitudine"
+msgstr ""
+
+#: view/station/edit.php:148 view/station/edit.php:149
+msgid "Longitudine"
+msgstr ""
+
+#: view/station/edit.php:156 view/station/edit.php:157
+msgid "Latitudine"
+msgstr ""
+
+#: view/station/edit.php:165
+msgid "Indica le coordinate"
+msgstr ""
+
+#: view/station/edit.php:191
+msgid "Configurazione manuale"
+msgstr ""
+
+#: view/station/edit.php:204 view/station/edit.php:259
+#: view/station/edit.php:260
+msgid "Descrizione"
+msgstr ""
+
+#: view/station/edit.php:205
+msgid "Mostra"
+msgstr ""
+
+#: view/station/edit.php:222 view/user/list.php:29
+msgid "Modifica"
+msgstr ""
+
+#: view/station/edit.php:244
+msgid "Chiave"
+msgstr ""
+
+#: view/template/menu.php:14
+msgid "Benvenuto"
+msgstr ""
+
+#: view/template/menu.php:80
+msgid "Log Out"
+msgstr ""
+
+#: view/user/edit.php:6
+msgid "Gruppo Menu"
+msgstr ""
+
+#: view/user/edit.php:15
+msgid "Utente"
+msgstr ""
+
+#: view/user/edit.php:35 view/user/list.php:25
+msgid "Cognome"
+msgstr ""
+
+#: view/user/edit.php:60
+msgid "Invia"
+msgstr ""
+
+#: view/user/edit.php:76 view/user/edit.php:77
+msgid "Campo obbligatorio"
+msgstr ""
+
+#: view/user/edit.php:78
+msgid "Troppo basso"
+msgstr ""
+
+#: view/user/edit.php:79
+msgid "Troppo alto"
+msgstr ""
+
+#: view/user/list.php:6
+msgid "Anagrafica"
+msgstr ""
+
+#: view/user/list.php:15
+msgid "Nuovo Utente"
+msgstr ""
+
+#: view/user/list.php:30
+msgid "Elimina"
+msgstr ""
+
+#: view/user/list.php:53 view/user/list.php:62
+msgid "Nessun risultato"
+msgstr ""
+
+#: view/user/list.php:54
+msgid "Cerca"
+msgstr ""
+
+#: view/user/list.php:56
+msgid "Indietro"
+msgstr ""
+
+#: view/user/list.php:57
+msgid "Avanti"
+msgstr ""
+
+#: view/user/list.php:59
+msgid "Mostra pagina _PAGE_ di _PAGES_"
+msgstr ""
+
+#: view/user/list.php:61
+msgid "Mostra pagina 0 di 0 elementi"
+msgstr ""
+
+#: view/user/list.php:63
+msgid "Mostra _MENU_ elementi"
+msgstr ""
+
+#: view/user/selectLevel.php:2
+msgid "Amministratore"
+msgstr ""
+
+#: view/user/selectLevel.php:3
+msgid "Agente"
+msgstr ""

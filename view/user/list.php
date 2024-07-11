@@ -12,7 +12,7 @@
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <div class='x_panel'>
                     <div class='x_title'>                     
-                        <h2><?= _('Utenti') ?></h2><button type='button' onclick="window.location.href = '/user/edit'" class='btn btn-success btn-sm' style='margin-left: 20px'><?= _("Nuovo User") ?></button>                    
+                        <h2><?= _('Utenti') ?></h2><button type='button' onclick="window.location.href = '/user/edit'" class='btn btn-success btn-sm' style='margin-left: 20px'><?= _("Nuovo Utente") ?></button>                    
 
                         <div class='clearfix'></div>
                     </div>
@@ -23,7 +23,7 @@
                                     <tr>
                                         <th><?php echo (_('Nome')) ?></th>
                                         <th><?php echo (_('Cognome')) ?></th>
-                                        <th><?php echo (_('Username')) ?></th>
+                                        <th><?php echo (_('Nome utente')) ?></th>
                                         <th><?php echo (_('Password')) ?></th>
                                         <th><?php echo (_('Livello')) ?></th>
                                         <th><?php echo (_('Modifica')) ?></th>
@@ -51,7 +51,7 @@ include './view/template/foot.php';
         $('#UserList').dataTable({
             "oLanguage": {
                 "sZeroRecords": "<?= _("Nessun risultato") ?>",
-                "sSearch": "<?= _("Cerca:") ?>",
+                "sSearch": "<?= _("Cerca") ?>:",
                 "oPaginate": {
                     "sPrevious": "<?= _("Indietro") ?>",
                     "sNext": "<?= _("Avanti") ?>"

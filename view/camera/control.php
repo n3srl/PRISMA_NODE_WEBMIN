@@ -19,7 +19,7 @@
     <div class=''>
         <div class='page-title'>
             <div class='title_left'>
-                <h2><?= _('Camera control') ?></h2>
+                <h2><?= _('Controllo camera') ?></h2>
             </div>
         </div>
         <div class='clearfix'></div>
@@ -121,7 +121,7 @@
                     <div class='x_title no-padding-lr'>
                         <div class='clearfix'>
                             <div class='col-md-8 no-padding-l'>
-                                <h4><?= _('Esegui calibrazione con tutti i possibili valori di Gain [') ?><span style = 'color: black' id = 'minGain'></span>,<span style = 'color: black' id = 'maxGain'></span>]</h4>
+                                <h4><?= _('Esegui calibrazione con tutti i possibili valori di Guadagno') ?>[<span style = 'color: black' id = 'minGain'></span>,<span style = 'color: black' id = 'maxGain'></span>]</h4>
                                 
                             </div>
                         </div>

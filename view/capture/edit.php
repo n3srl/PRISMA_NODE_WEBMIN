@@ -63,7 +63,7 @@
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
                                         <small class='text-muted'><?php echo (_('Data')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per id')) ?>'>
+                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per ID')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -73,7 +73,7 @@
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
                                         <small class='text-muted'><?php echo (_('Nome')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per Username')) ?>'>
+                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per nome utente')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -96,7 +96,7 @@
                                     <tr>
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('#')) ?></th>
-                                        <th><?php echo (_('Folder')) ?></th>
+                                        <th><?php echo (_('Cartella')) ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -111,7 +111,7 @@
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('Ora')) ?></th>
                                         <th><?php echo (_('Anteprima')) ?></th>
-                                        <th><?php echo (_('Download')) ?></th>
+                                        <th><?php echo (_('Scarica')) ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>

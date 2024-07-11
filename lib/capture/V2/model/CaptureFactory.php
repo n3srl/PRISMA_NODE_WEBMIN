@@ -11,7 +11,7 @@ class CaptureFactory extends CaptureFactoryBase
 		$parse_error = false;
 		if (($object->erased === true && $object->erased!=null) || $object->erased =='true' || $object->erased =='1' ) {$object->erased = 1;}else{ $object->erased = 0;}
 		if (!is_numeric($object->erased) && $object->erased!= null && $object->erased!='' && $object->erased!= 'null') {
-			$errors[] = _('erased non numerico');
+			$errors[] = _('Rimosso non numerico');
 			$parse_error = true;
 		}
 		if ($parse_error){

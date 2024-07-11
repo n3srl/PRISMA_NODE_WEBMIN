@@ -15,15 +15,15 @@ class PersonFactory extends PersonFactoryBase {
             $parse_error = true;
         }
         if (!is_numeric($object->modified_by) && $object->modified_by != null && $object->modified_by != '' && $object->modified_by != 'null') {
-            $errors[] = _('modified_by non numerico');
+            $errors[] = _('Modificato da non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->created_by) && $object->created_by != null && $object->created_by != '' && $object->created_by != 'null') {
-            $errors[] = _('created_by non numerico');
+            $errors[] = _('Creato da non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->assigned) && $object->assigned != null && $object->assigned != '' && $object->assigned != 'null') {
-            $errors[] = _('assigned non numerico');
+            $errors[] = _('Assegnato non numerico');
             $parse_error = true;
         }
         if (($object->erased === true && $object->erased != null) || $object->erased == 'true' || $object->erased == '1') {
@@ -32,7 +32,7 @@ class PersonFactory extends PersonFactoryBase {
             $object->erased = 0;
         }
         if (!is_numeric($object->erased) && $object->erased != null && $object->erased != '' && $object->erased != 'null') {
-            $errors[] = _('erased non numerico');
+            $errors[] = _('Rimosso non numerico');
             $parse_error = true;
         }
         if ($parse_error) {

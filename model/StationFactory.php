@@ -10,35 +10,35 @@ class StationFactory extends StationFactoryBase
 		$errors = array();
 		$parse_error = false;
 		if (!is_numeric($object->camera_id) && $object->camera_id!= null && $object->camera_id!='' && $object->camera_id!= 'null') {
-			$errors[] = _('camera_id non numerico');
+			$errors[] = _('ID Camera non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->focal) && $object->focal!= null && $object->focal!='' && $object->focal!= 'null') {
-			$errors[] = _('focal non numerico');
+			$errors[] = _('Focale non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->aperture) && $object->aperture!= null && $object->aperture!='' && $object->aperture!= 'null') {
-			$errors[] = _('aperture non numerico');
+			$errors[] = _('Apertura non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->logitude) && $object->logitude!= null && $object->logitude!='' && $object->logitude!= 'null') {
-			$errors[] = _('logitude non numerico');
+			$errors[] = _('Longitudine non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->latitude) && $object->latitude!= null && $object->latitude!='' && $object->latitude!= 'null') {
-			$errors[] = _('latitude non numerico');
+			$errors[] = _('Latitudine non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->elevation) && $object->elevation!= null && $object->elevation!='' && $object->elevation!= 'null') {
-			$errors[] = _('elevation non numerico');
+			$errors[] = _('Altitudine non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->acq_day_gain) && $object->acq_day_gain!= null && $object->acq_day_gain!='' && $object->acq_day_gain!= 'null') {
-			$errors[] = _('acq_day_gain non numerico');
+			$errors[] = _('ACQ_DAY_GAIN non numerico');
 			$parse_error = true;
 		}
 		if (!is_numeric($object->acq_night_gain) && $object->acq_night_gain!= null && $object->acq_night_gain!='' && $object->acq_night_gain!= 'null') {
-			$errors[] = _('acq_night_gain non numerico');
+			$errors[] = _('ACQ_NIGHT_GAIN non numerico');
 			$parse_error = true;
 		}
 		if ($parse_error){

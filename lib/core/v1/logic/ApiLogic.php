@@ -19,15 +19,15 @@ class ApiLogic {
     }
 
     public static function getErrorMessage() {
-        return _("Si è verificato un errore<br />Contattare l'amministratore di sistema");
+        return _("Si è verificato un errore")."<br/>". _("Contattare l'amministratore di sistema");
     }
 
     public static function getCrudErrorCode() {
-        return ApiLogic::getErrorMessage() . "<br />Code:" . ApiLogic::$ERROR . ApiLogic::$CRUD_CODE;
+        return ApiLogic::getErrorMessage() . "<br/>Code:" . ApiLogic::$ERROR . ApiLogic::$CRUD_CODE;
     }
 
     public static function getDcmtNumberErrorMessage() {
-        return _("Il numero documento è già in utilizzo<br />Ricarica il numero per procedere");
+        return _("Il numero documento è già in uso")."<br/>". _("Ricarica il numero per procedere");
     }
 
     public static function getDcmtValidNumberErrorMessage() {

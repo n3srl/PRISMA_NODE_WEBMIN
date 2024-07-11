@@ -11,11 +11,11 @@ class PermissionFactory extends PermissionFactoryBase {
         $errors = array();
         $parse_error = false;
         if (!is_numeric($object->person_id) && $object->person_id != null && $object->person_id != '' && $object->person_id != 'null') {
-            $errors[] = _('person_id non numerico');
+            $errors[] = _('ID Persona non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->group_id) && $object->group_id != null && $object->group_id != '' && $object->group_id != 'null') {
-            $errors[] = _('group_id non numerico');
+            $errors[] = _('ID Gruppo non numerico');
             $parse_error = true;
         }
         if (($object->execute === true && $object->execute != null) || $object->execute == 'true' || $object->execute == '1') {
@@ -24,7 +24,7 @@ class PermissionFactory extends PermissionFactoryBase {
             $object->execute = 0;
         }
         if (!is_numeric($object->execute) && $object->execute != null && $object->execute != '' && $object->execute != 'null') {
-            $errors[] = _('execute non numerico');
+            $errors[] = _('Esecuzione non numerico');
             $parse_error = true;
         }
         if (($object->read === true && $object->read != null) || $object->read == 'true' || $object->read == '1') {
@@ -33,7 +33,7 @@ class PermissionFactory extends PermissionFactoryBase {
             $object->read = 0;
         }
         if (!is_numeric($object->read) && $object->read != null && $object->read != '' && $object->read != 'null') {
-            $errors[] = _('read non numerico');
+            $errors[] = _('Lettura non numerico');
             $parse_error = true;
         }
         if (($object->write === true && $object->write != null) || $object->write == 'true' || $object->write == '1') {
@@ -42,7 +42,7 @@ class PermissionFactory extends PermissionFactoryBase {
             $object->write = 0;
         }
         if (!is_numeric($object->write) && $object->write != null && $object->write != '' && $object->write != 'null') {
-            $errors[] = _('write non numerico');
+            $errors[] = _('Scrittura non numerico');
             $parse_error = true;
         }
         if (($object->active === true && $object->active != null) || $object->active == 'true' || $object->active == '1') {
@@ -51,19 +51,19 @@ class PermissionFactory extends PermissionFactoryBase {
             $object->active = 0;
         }
         if (!is_numeric($object->active) && $object->active != null && $object->active != '' && $object->active != 'null') {
-            $errors[] = _('active non numerico');
+            $errors[] = _('Utente attivo non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->modified_by) && $object->modified_by != null && $object->modified_by != '' && $object->modified_by != 'null') {
-            $errors[] = _('modified_by non numerico');
+            $errors[] = _('Modificato da non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->created_by) && $object->created_by != null && $object->created_by != '' && $object->created_by != 'null') {
-            $errors[] = _('created_by non numerico');
+            $errors[] = _('Creato da non numerico');
             $parse_error = true;
         }
         if (!is_numeric($object->assigned) && $object->assigned != null && $object->assigned != '' && $object->assigned != 'null') {
-            $errors[] = _('assigned non numerico');
+            $errors[] = _('Assegnato non numerico');
             $parse_error = true;
         }
         if (($object->erased === true && $object->erased != null) || $object->erased == 'true' || $object->erased == '1') {
@@ -72,7 +72,7 @@ class PermissionFactory extends PermissionFactoryBase {
             $object->erased = 0;
         }
         if (!is_numeric($object->erased) && $object->erased != null && $object->erased != '' && $object->erased != 'null') {
-            $errors[] = _('erased non numerico');
+            $errors[] = _('Rimosso non numerico');
             $parse_error = true;
         }
         if ($parse_error) {

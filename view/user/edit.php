@@ -12,7 +12,7 @@
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <div class='x_panel'>
                     <div class='x_title'>
-                        <h2><?= _('User') ?></h2>                   
+                        <h2><?= _('Utente') ?></h2>                   
                         <div class='clearfix'></div>
                     </div>
                     <div class='x_content'>
@@ -26,31 +26,31 @@
                                     </label>
                                 </div>						
                                 <div class='form-group'>
-                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('name')) ?>: </label>
+                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('Nome')) ?>: </label>
                                     <div class='col-md-6 col-sm-6 col-xs-12'>
                                         <input type='text' name='name'class='form-control col-md-7 col-xs-12' value="<?php echo parseText($User->name) ?>" maxlength = "250"/>
                                     </div>
                                 </div>
                                 <div class='form-group'>
-                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('surname')) ?>: </label>
+                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('Cognome')) ?>: </label>
                                     <div class='col-md-6 col-sm-6 col-xs-12'>
                                         <input type='text' name='surname'class='form-control col-md-7 col-xs-12' value="<?php echo parseText($User->surname) ?>" maxlength = "250"/>
                                     </div>
                                 </div>
                                 <div class='form-group'>
-                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('username')) ?>: </label>
+                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('Nome utente')) ?>: </label>
                                     <div class='col-md-6 col-sm-6 col-xs-12'>
                                         <input type='text' name='username'class='form-control col-md-7 col-xs-12' value="<?php echo parseText($User->username) ?>" maxlength = "250"/>
                                     </div>
                                 </div>
                                 <div class='form-group'>
-                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('password')) ?>: </label>
+                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('Password')) ?>: </label>
                                     <div class='col-md-6 col-sm-6 col-xs-12'>
                                         <input type='text' name='password'class='form-control col-md-7 col-xs-12' value="<?php echo parseText($User->password) ?>" maxlength = "45"/>
                                     </div>
                                 </div>
                                 <div class='form-group'>
-                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('level')) ?>: </label>
+                                    <label class='control-label col-md-3 col-sm-3 col-xs-12' ><?php echo ( _('Permessi')) ?>: </label>
                                     <div class='col-md-6 col-sm-6 col-xs-12'>
                                         <?php include "selectLevel.php" ?>
                                     </div>

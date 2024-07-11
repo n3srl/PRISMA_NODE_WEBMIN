@@ -3,7 +3,7 @@
     <div class=''>
         <div class='page-title'>
             <div class='title_left'>
-                <h2><?= _('Permission') ?></h2>
+                <h2><?= _('Permessi') ?></h2>
             </div>
         </div>
         <div class='clearfix'></div>
@@ -16,7 +16,7 @@
                                 <h2><?= _('Elenco') ?></h2>
                             </div>
                             <div class='col-md-6 no-padding'>
-                                <a href = '#edit' ><button type='button' onclick='newObj()' style='margin-right: 10px' class='btn btn-success pull-right' ><?= _('AGGIUNGI NUOVOpermission') ?></button></a>
+                                <a href = '#edit' ><button type='button' onclick='newObj()' style='margin-right: 10px' class='btn btn-success pull-right' ><?= _('Aggiungi nuovo') ?></button></a>
                             </div>
                         </div>
                     </div>
@@ -35,8 +35,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 b80bb7740288fda1f201890375a60c8f'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('id')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per id')) ?>'>
+                                        <small class='text-muted'><?php echo (_('ID')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per ID')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -44,8 +44,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 130f43112bb8a7a7790ebfc08ee9d6af'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('oid')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_oid' multiple='multiple' title='<?php echo (_('Filtra per oid')) ?>'>
+                                        <small class='text-muted'><?php echo (_('OID')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_oid' multiple='multiple' title='<?php echo (_('Filtra per OID')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -53,8 +53,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 81d0631cb71109c8c44506ddfec990f6'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('ext_oid')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_ext_oid' multiple='multiple' title='<?php echo (_('Filtra per ext_oid')) ?>'>
+                                        <small class='text-muted'><?php echo (_('OID Esterno')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_ext_oid' multiple='multiple' title='<?php echo (_('Filtra per OID Esterno')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -62,8 +62,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 a8452ca7c1312f959e1307fe2d017eb0'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('person_id')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_person_id' multiple='multiple' title='<?php echo (_('Filtra per person_id')) ?>'>
+                                        <small class='text-muted'><?php echo (_('ID Persona')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_person_id' multiple='multiple' title='<?php echo (_('Filtra per ID Persona')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -71,8 +71,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 0e939a4ffd3aacd724dd3b50147b4353'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('group_id')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_group_id' multiple='multiple' title='<?php echo (_('Filtra per group_id')) ?>'>
+                                        <small class='text-muted'><?php echo (_('ID Gruppo')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_group_id' multiple='multiple' title='<?php echo (_('Filtra per ID Gruppo')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -80,8 +80,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 ec0cd3cb91fe82b9501f62a528eb07a9'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('execute')) ?></small>
-                                        <select class='form-control filter filter-checkbox' id='F_execute' title='<?php echo (_('Filtra per execute')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Esecuzione')) ?></small>
+                                        <select class='form-control filter filter-checkbox' id='F_execute' title='<?php echo (_('Filtra per esecuzione')) ?>'>
                                             <option value=''></option>
                                             <option value='1'> <?php echo (_('Sì')) ?></option>
                                             <option value='0'> <?php echo (_('No')) ?></option>
@@ -92,8 +92,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 ecae13117d6f0584c25a9da6c8f8415e'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('read')) ?></small>
-                                        <select class='form-control filter filter-checkbox' id='F_read' title='<?php echo (_('Filtra per read')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Lettura')) ?></small>
+                                        <select class='form-control filter filter-checkbox' id='F_read' title='<?php echo (_('Filtra per lettura')) ?>'>
                                             <option value=''></option>
                                             <option value='1'> <?php echo (_('Sì')) ?></option>
                                             <option value='0'> <?php echo (_('No')) ?></option>
@@ -104,8 +104,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 efb2a684e4afb7d55e6147fbe5a332ee'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('write')) ?></small>
-                                        <select class='form-control filter filter-checkbox' id='F_write' title='<?php echo (_('Filtra per write')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Scrittura')) ?></small>
+                                        <select class='form-control filter filter-checkbox' id='F_write' title='<?php echo (_('Filtra per scrittura')) ?>'>
                                             <option value=''></option>
                                             <option value='1'> <?php echo (_('Sì')) ?></option>
                                             <option value='0'> <?php echo (_('No')) ?></option>
@@ -116,8 +116,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 c76a5e84e4bdee527e274ea30c680d79'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('active')) ?></small>
-                                        <select class='form-control filter filter-checkbox' id='F_active' title='<?php echo (_('Filtra per active')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Utente attivo')) ?></small>
+                                        <select class='form-control filter filter-checkbox' id='F_active' title='<?php echo (_('Filtra per utente attivo')) ?>'>
                                             <option value=''></option>
                                             <option value='1'> <?php echo (_('Sì')) ?></option>
                                             <option value='0'> <?php echo (_('No')) ?></option>
@@ -128,8 +128,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 14c4b06b824ec593239362517f538b29'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('username')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per username')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Nome utente')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per nome utente')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -137,8 +137,8 @@
                             <div class='form-group col-md-3 col-sm-6 col-xs-12 cffce994824327219b2404cef953e5eb'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('secret_token')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_secret_token' multiple='multiple' title='<?php echo (_('Filtra per secret_token')) ?>'>
+                                        <small class='text-muted'><?php echo (_('Token segreto')) ?></small>
+                                        <select class='form-control filter filter-text' id='F_secret_token' multiple='multiple' title='<?php echo (_('Filtra per token segreto')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -157,16 +157,16 @@
                         <table id='PermissionList' class='table table-striped table-bordered' style='width: 100%; '>
                             <thead>
                                 <tr>
-                                    <th><?php echo (_('oid')) ?></th>
-                                    <th><?php echo (_('ext_oid')) ?></th>
-                                    <th><?php echo (_('person_id')) ?></th>
-                                    <th><?php echo (_('group_id')) ?></th>
-                                    <th><?php echo (_('execute')) ?></th>
-                                    <th><?php echo (_('read')) ?></th>
-                                    <th><?php echo (_('write')) ?></th>
-                                    <th><?php echo (_('active')) ?></th>
-                                    <th><?php echo (_('username')) ?></th>
-                                    <th><?php echo (_('secret_token')) ?></th>
+                                    <th><?php echo (_('OID')) ?></th>
+                                    <th><?php echo (_('OID Esterno')) ?></th>
+                                    <th><?php echo (_('ID Persona')) ?></th>
+                                    <th><?php echo (_('ID Gruppo')) ?></th>
+                                    <th><?php echo (_('Esecuzione')) ?></th>
+                                    <th><?php echo (_('Lettura')) ?></th>
+                                    <th><?php echo (_('Scrittura')) ?></th>
+                                    <th><?php echo (_('Attivo')) ?></th>
+                                    <th><?php echo (_('Nome utente')) ?></th>
+                                    <th><?php echo (_('Token segreto')) ?></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -204,32 +204,32 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 b80bb7740288fda1f201890375a60c8f'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('id')) ?> </small>
-                                        <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('id')) ?> '  title=' <?php echo ( _('id')) ?> '/>
+                                        <small class='text-muted'><?php echo ( _('ID')) ?> </small>
+                                        <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('ID')) ?> '  title=' <?php echo ( _('ID')) ?> '/>
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 130f43112bb8a7a7790ebfc08ee9d6af'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('oid')) ?> </small>
-                                        <input type = 'text' name='oid' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('oid')) ?> '  title=' <?php echo ( _('oid')) ?>' maxlength = '32' />
+                                        <small class='text-muted'><?php echo ( _('OID')) ?> </small>
+                                        <input type = 'text' name='oid' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('OID')) ?> '  title=' <?php echo ( _('OID')) ?>' maxlength = '32' />
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 81d0631cb71109c8c44506ddfec990f6'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('ext_oid')) ?> </small>
-                                        <input type = 'text' name='ext_oid' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('ext_oid')) ?> '  title=' <?php echo ( _('ext_oid')) ?>' maxlength = '32' />
+                                        <small class='text-muted'><?php echo ( _('OID Esterno')) ?> </small>
+                                        <input type = 'text' name='ext_oid' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('OID Esterno')) ?> '  title=' <?php echo ( _('OID Esterno')) ?>' maxlength = '32' />
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 a8452ca7c1312f959e1307fe2d017eb0'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('person_id')) ?></small>
-                                        <select class='form-control foreign_key' id='person_id' name='person_id' title='<?php echo(_('person_id')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('ID Persona')) ?></small>
+                                        <select class='form-control foreign_key' id='person_id' name='person_id' title='<?php echo(_('ID Persona')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -237,8 +237,8 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 0e939a4ffd3aacd724dd3b50147b4353'>
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('group_id')) ?></small>
-                                        <select class='form-control foreign_key' id='group_id' name='group_id' title='<?php echo(_('group_id')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('ID Gruppo')) ?></small>
+                                        <select class='form-control foreign_key' id='group_id' name='group_id' title='<?php echo(_('ID Gruppo')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -246,48 +246,48 @@
                             <div class='col-md-3 col-sm-6 col-xs-12 ec0cd3cb91fe82b9501f62a528eb07a9'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='execute' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('execute')) ?>' title='<?php echo ( _('execute')) ?>'>
-                                        <small class='text-muted'><?php echo ( _('execute')) ?> <span class='required'>*</span></small>
+                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='execute' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('Esecuzione')) ?>' title='<?php echo ( _('Esecuzione')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('Esecuzione')) ?> <span class='required'>*</span></small>
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 ecae13117d6f0584c25a9da6c8f8415e'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='read' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('read')) ?>' title='<?php echo ( _('read')) ?>'>
-                                        <small class='text-muted'><?php echo ( _('read')) ?> <span class='required'>*</span></small>
+                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='read' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('Lettura')) ?>' title='<?php echo ( _('Lettura')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('Lettura')) ?> <span class='required'>*</span></small>
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 efb2a684e4afb7d55e6147fbe5a332ee'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='write' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('write')) ?>' title='<?php echo ( _('write')) ?>'>
-                                        <small class='text-muted'><?php echo ( _('write')) ?> <span class='required'>*</span></small>
+                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='write' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('Scrittura')) ?>' title='<?php echo ( _('Scrittura')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('Scrittura')) ?> <span class='required'>*</span></small>
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 c76a5e84e4bdee527e274ea30c680d79'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='active' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('active')) ?>' title='<?php echo ( _('active')) ?>'>
-                                        <small class='text-muted'><?php echo ( _('active')) ?> <span class='required'>*</span></small>
+                                        <input type = 'checkbox' onclick="$(this).val(this.checked ? 1 : 0)"  name='active' required='required' class='col-md-1 col-xs-1 input-disabled' placeholder='<?php echo ( _('Utente attivo')) ?>' title='<?php echo ( _('Utente attivo')) ?>'>
+                                        <small class='text-muted'><?php echo ( _('Utente attivo')) ?> <span class='required'>*</span></small>
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 14c4b06b824ec593239362517f538b29'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('username')) ?> </small>
-                                        <input type = 'text' name='username' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('username')) ?> '  title=' <?php echo ( _('username')) ?>' maxlength = '100' />
+                                        <small class='text-muted'><?php echo ( _('Nome utente')) ?> </small>
+                                        <input type = 'text' name='username' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('Nome utente')) ?> '  title=' <?php echo ( _('Nome utente')) ?>' maxlength = '100' />
                                     </div>
                                 </div>
                             </div>
                             <div class='col-md-3 col-sm-6 col-xs-12 cffce994824327219b2404cef953e5eb'>
                                 <div class='item form-group'>
                                     <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo ( _('secret_token')) ?> </small>
-                                        <input type = 'text' name='secret_token' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('secret_token')) ?> '  title=' <?php echo ( _('secret_token')) ?>' maxlength = '45' />
+                                        <small class='text-muted'><?php echo ( _('Token segreto')) ?> </small>
+                                        <input type = 'text' name='secret_token' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('Token segreto')) ?> '  title=' <?php echo ( _('Token segreto')) ?>' maxlength = '45' />
                                     </div>
                                 </div>
                             </div>

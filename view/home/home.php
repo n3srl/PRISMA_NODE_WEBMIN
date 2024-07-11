@@ -104,7 +104,7 @@
                                     <h2><?= _('Dati stazione') ?></h2>
                                 </div>
                                 <div class='col-md-4 no-padding'>
-                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Maschera') ?></button>
                                 </div>
                             </div>
                         </div>

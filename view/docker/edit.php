@@ -28,9 +28,9 @@
                                                                         <th><?php echo (_('Comando')) ?></th>
                                                                         <th><?php echo (_('Stato')) ?></th>
                                                                         <th><?php echo (_('Creato')) ?></th>
-                                                                        <th><?php echo (_('Start')) ?></th>
-                                                                        <th><?php echo (_('Stop')) ?></th>
-                                                                        <th><?php echo (_('Restart')) ?></th>
+                                                                        <th><?php echo (_('Avvia')) ?></th>
+                                                                        <th><?php echo (_('Ferma')) ?></th>
+                                                                        <th><?php echo (_('Riavvia')) ?></th>
                                                                 </tr>
                                                         </thead>
                                                         <tbody>

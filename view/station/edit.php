@@ -6,11 +6,11 @@
             <div class="modal-header">
                 <div class="col-md-12 col-sm-12 col-xs-12 no-padding-lr">
                     <div class="col-md-8 col-sm-8 col-xs-8">
-                        <h5 class="modal-title" id="mask-preview-modal-label">Mask</h5>
+                        <h5 class="modal-title" id="mask-preview-modal-label"><?= _('Maschera') ?></h5>
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
                         <a download="default.bmp" id="download-mask">
-                            <button type="button" class="btn btn-success pull-right">Download</button>
+                            <button type="button" class="btn btn-success pull-right"><?= _('Scarica') ?></button>
                         </a>
                     </div>
                     <div class="col-md-1 col-sm-1 col-xs-1 no-padding-r">
@@ -90,7 +90,7 @@
                         <div class='x_title no-padding-lr'>
                             <div class='clearfix'>
                                 <div class='col-md-8 col-sm-8 no-padding'>
-                                    <h2><?= _('Configurazione Automatica') ?></h2>
+                                    <h2><?= _('Configurazione automatica') ?></h2>
                                 </div>
                                 <div class='col-md-4 col-sm-4 no-padding'>
                                     <button type = 'submit' id = 'ftsavebtn' style= 'display: none; margin-right: 10px;' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
@@ -113,48 +113,48 @@
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('station-name') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('station name*')) ?> </small>
-                                                    <input type = 'text' id='station-name' name='station-name' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('station name')) ?> '  title=' <?php echo ( _('station name')) ?> '/>
+                                                    <small class='text-muted'><?php echo ( _('Nome stazione')) ?>* </small>
+                                                    <input type = 'text' id='station-name' name='station-name' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Nome stazione')) ?> '  title=' <?php echo ( _('Nome stazione')) ?> '/>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('station-code') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('station code*')) ?> </small>
-                                                    <input type = 'text' id='station-code' name='station-code' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('station code')) ?> '  title=' <?php echo ( _('station code')) ?>' maxlength = '128' />
+                                                    <small class='text-muted'><?php echo ( _('Codice stazione')) ?>* </small>
+                                                    <input type = 'text' id='station-code' name='station-code' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Codice stazione')) ?> '  title=' <?php echo ( _('Codice stazione')) ?>' maxlength = '128' />
                                                 </div>
                                             </div>
                                         </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('observer') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('observer*')) ?> </small>
-                                                    <input type = 'text' id='observer' name='observer' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('observer')) ?> '  title=' <?php echo ( _('observer')) ?>' maxlength = '128' />
+                                                    <small class='text-muted'><?php echo ( _('Osservatore')) ?>* </small>
+                                                    <input type = 'text' id='observer' name='observer' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Osservatore')) ?> '  title=' <?php echo ( _('Osservatore')) ?>' maxlength = '128' />
                                                 </div>
                                             </div>
                                         </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('elevation-observatory') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('elevation observatory*')) ?> </small>
-                                                    <input type = 'number' id='elevation-observatory' name='elevation-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('elevation observatory')) ?> '  title=' <?php echo ( _('elevation observatory')) ?>' maxlength = '128' />
+                                                    <small class='text-muted'><?php echo ( _('Altitudine')) ?>* </small>
+                                                    <input type = 'number' id='elevation-observatory' name='elevation-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Altitudine')) ?> '  title=' <?php echo ( _('Altitudine')) ?>' maxlength = '128' />
                                                 </div>
                                             </div>
                                         </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('longitude-observatory') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('longitude observatory*')) ?> </small>
-                                                    <input type = 'number' id='longitude-observatory' name='longitude-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('longitude observatory')) ?> '  title=' <?php echo ( _('longitude observatory')) ?>' maxlength = '128' />
+                                                    <small class='text-muted'><?php echo ( _('Longitudine')) ?>* </small>
+                                                    <input type = 'number' id='longitude-observatory' name='longitude-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Longitudine')) ?> '  title=' <?php echo ( _('Longitudine')) ?>' maxlength = '128' />
                                                 </div>
                                             </div>
                                         </div>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('latitude-observatory') ?>'>
                                             <div class='item form-group'>
                                                 <div class='col-xs-12'>
-                                                    <small class='text-muted'><?php echo ( _('latitude observatory*')) ?> </small>
-                                                    <input type = 'number' id='latitude-observatory'  name='latitude-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('latitude observatory')) ?> '  title=' <?php echo ( _('latitude observatory')) ?>' maxlength = '128' />
+                                                    <small class='text-muted'><?php echo ( _('Latitudine')) ?>* </small>
+                                                    <input type = 'number' id='latitude-observatory'  name='latitude-observatory' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Latitudine')) ?> '  title=' <?php echo ( _('Latitudine')) ?>' maxlength = '128' />
                                                 </div>
                                             </div>
                                         </div>
@@ -172,8 +172,8 @@
                                 <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('observer') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('observer*')) ?> </small>
-                                            <input type = 'text' id='observer' name='observer' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('observer')) ?> '  title=' <?php echo ( _('observer')) ?>' maxlength = '128' />
+                                            <small class='text-muted'><?php echo ( _('Osservatore')) ?>* </small>
+                                            <input type = 'text' id='observer' name='observer' class='form-control col-md-7 col-xs-12 input-disabled required' placeholder=' <?php echo ( _('Osservatore')) ?> '  title=' <?php echo ( _('Osservatore')) ?>' maxlength = '128' />
                                         </div>
                                     </div>
                                 </div>
@@ -188,10 +188,10 @@
                         <div class='x_title no-padding-lr'>
                             <div class='clearfix'>
                                 <div class='col-md-8 no-padding-l'>
-                                    <h2><?= _('Configurazione Manuale') ?></h2>
+                                    <h2><?= _('Configurazione manuale') ?></h2>
                                 </div>
                                 <div class='col-md-4 no-padding'>
-                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Mask') ?></button>
+                                    <button type = 'button' style= 'margin-left: 10px;' id ="btn-show-mask" class='btn btn-success pull-right' ><?= _('Maschera') ?></button>
                                 </div>
                             </div>
                         </div>
@@ -202,8 +202,8 @@
                                         <th><?php echo (_('Parametro')) ?></th>
                                         <th><?php echo (_('Valore')) ?></th>
                                         <th><?php echo (_('Descrizione')) ?></th>
-                                        <th><?php echo (_('Show')) ?></th>
-                                        <th><?php echo (_('Erased')) ?></th>
+                                        <th><?php echo (_('Mostra')) ?></th>
+                                        <th><?php echo (_('Rimosso')) ?></th>
                                         <th><?php echo (_('ID')) ?></th>
                                     </tr>
                                 </thead>
@@ -232,32 +232,32 @@
                                 <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('id') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('id')) ?> </small>
-                                            <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('id')) ?> '  title=' <?php echo ( _('id')) ?> '/>
+                                            <small class='text-muted'><?php echo ( _('ID')) ?> </small>
+                                            <input type = 'text' name='id' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('ID')) ?> '  title=' <?php echo ( _('ID')) ?> '/>
                                         </div>
                                     </div>
                                 </div>
                                 <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('key') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('parametro')) ?> </small>
-                                            <input type = 'text' name='key' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _(' ')) ?> '  title=' <?php echo ( _('key')) ?>' maxlength = '128' />
+                                            <small class='text-muted'><?php echo ( _('Parametro')) ?> </small>
+                                            <input type = 'text' name='key' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('Chiave')) ?> '  title=' <?php echo ( _('Chiave')) ?>' maxlength = '128' />
                                         </div>
                                     </div>
                                 </div>
                                 <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('value') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('valore')) ?> </small>
-                                            <input type = 'text' name='value' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _(' ')) ?> '  title=' <?php echo ( _('value')) ?>' maxlength = '128' />
+                                            <small class='text-muted'><?php echo ( _('Valore')) ?> </small>
+                                            <input type = 'text' name='value' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('Valore')) ?> '  title=' <?php echo ( _('Valore')) ?>' maxlength = '128' />
                                         </div>
                                     </div>
                                 </div>
                                 <div class='col-md-3 col-sm-6 col-xs-12 <?= md5('description') ?>'>
                                     <div class='item form-group'>
                                         <div class='col-xs-12'>
-                                            <small class='text-muted'><?php echo ( _('descrizione')) ?> </small>
-                                            <input type = 'text' name='description' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _(' ')) ?> '  title=' <?php echo ( _('description')) ?>' maxlength = '512' />
+                                            <small class='text-muted'><?php echo ( _('Descrizione')) ?> </small>
+                                            <input type = 'text' name='description' class='form-control col-md-7 col-xs-12 input-disabled' placeholder=' <?php echo ( _('Descrizione')) ?> '  title=' <?php echo ( _('Descrizione')) ?>' maxlength = '512' />
                                         </div>
                                     </div>
                                 </div>

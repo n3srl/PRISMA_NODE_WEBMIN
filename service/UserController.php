@@ -80,7 +80,7 @@ class UserController extends Controller {
             if($Us){
                 $response = $this->generateResponse(TRUE);
                 $response->success = FALSE;
-                $response->content = _("L'username inserito esiste già\nE' necessario modificarlo per poter continuare");
+                $response->content = _("Il nome utente inserito esiste già")."\n"._("E' necessario modificarlo per poter continuare");
                 return $response;
             }
             

@@ -67,7 +67,7 @@
                                 <div class='form-group'>
                                     <div class='col-xs-12'>
                                         <small class='text-muted'><?php echo (_('Data')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per id')) ?>'>
+                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per ID')) ?>'>
                                         </select>
                                     </div>
                                 </div>
@@ -100,7 +100,7 @@
                                     <tr>
                                         <th><?php echo (_('Data')) ?></th>
                                         <th><?php echo (_('#')) ?></th>
-                                        <th><?php echo (_('Folder')) ?></th>
+                                        <th><?php echo (_('Cartella')) ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
