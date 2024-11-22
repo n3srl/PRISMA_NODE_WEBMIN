@@ -173,7 +173,6 @@ class DetectionApiLogic {
             $directory = _FREETURE_DATA_ . self::getStationCode() . "/" . $day_dir . "/events/*";
             $iTotal = self::getDirectoryFilesCount($directory);
             $reply = self::getDetectionsFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
-
 			if (!empty($reply)){
 				$test = $reply[0];
 				if (empty($test)) {
@@ -628,7 +627,10 @@ class DetectionApiLogic {
                     $dirmap_base64,
                     $gemap_base64,
                     $date_dir . "_" . $detection,
-                    $date_dir . "_" . $detection); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
+                    $date_dir . "_" . $detection,
+                    self::GetDetectionDuration($date_dir . "_" . $detection)
+                ); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
+
                 $i++;
             }
         }
@@ -743,4 +745,14 @@ class DetectionApiLogic {
         return $n_files;
     }
 
+
+    public static function GetDetectionDuration($detection) {
+        $detection_folder = self::getDetectionBasePath($detection);
+        $n_files = self::getDirectoryFilesCount($detection_folder);
+        $d = round(($n_files/30)*1000);
+        $duration="$d [ms]";
+        $data = ['duration' => $duration];
+        return $duration;
+    } 
+    
 }

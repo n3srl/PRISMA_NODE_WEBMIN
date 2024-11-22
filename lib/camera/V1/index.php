@@ -163,5 +163,20 @@ $app->POST('/camera/cmd/{command}', function (Application $app, Request $request
     return $resp;
 });
 
+$app->POST('/camera/rebootServer', function(Application $app, Request $request) {
+
+    $result = ManutenzioneLogic::rebootServer();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
+
 $app->run();
+
 

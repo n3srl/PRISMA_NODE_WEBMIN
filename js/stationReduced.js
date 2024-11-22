@@ -49,7 +49,7 @@ function undoStation() {
         editStation();
         loadValues();
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 // Enable form fields

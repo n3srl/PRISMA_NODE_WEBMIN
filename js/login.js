@@ -18,9 +18,9 @@ $('#LoginForm').submit(function (event) {
         },
         error: function (jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 401) {
-                alert("Autenticazione fallita");
+                alert(_("Autenticazione fallita"));
             } else {
-                alert("Attenzione! Si è verificato un errore");
+                alert(_("Attenzione! Si è verificato un errore"));
             }
         }
     });

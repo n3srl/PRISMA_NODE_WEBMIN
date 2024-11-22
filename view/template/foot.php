@@ -2,8 +2,8 @@
     <footer style="bottom: 0px; display: block; clear: both; position: fixed;width:100%;margin-right: 0px; padding: 8px 15px; font-size: 11px; float: right; left:0 !important">
 
         <div class="pull-right">
-            Copyright &copy; <?php echo date("Y") ?> &ndash; <?php echo (date("Y") + 1) ?>
-            <a href="https://n-3.it/" style="color:black">N3 S.r.l.</a> All rights reserved 
+        <?= _('Copyright') ?>  &copy; <?php echo date("Y") ?> &ndash; <?php echo (date("Y") + 1) ?>
+            <a href="https://n-3.it/" style="color:black">N3 S.r.l.</a><?= _('All rights reserved ') ?> 
         </div>
         <div class="clearfix"></div>
     </footer>

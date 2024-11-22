@@ -37,7 +37,7 @@
                             <div class='col-md-8 col-sm-8 col-xs-12 no-padding' id='enable-detection-preview-box'>
                                 <div class='pull-right'>
                                     <div class='col-md-8'>
-                                        <label class='pull-right text-nowrap' style='vertical-align: middle;'>Abilita anteprima</label>
+                                        <label class='pull-right text-nowrap' style='vertical-align: middle;'><?= _('Abilita anteprima') ?></label>
                                     </div>
                                     <div class='col-md-4'>
                                         <label class='switch pull-right'>
@@ -119,6 +119,7 @@
                                 <th><center><?php echo (_('GeMap')) ?></center></th>
                                 <th><center><?php echo (_('Video')) ?></center></th>
                                 <th><center><?php echo (_('Zip')) ?></center></th>
+                                <th><?php echo (_('Durata')) ?></th>
                                 </tr>
                                 </thead>
                                 <tbody>

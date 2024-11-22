@@ -36,7 +36,7 @@ $(document).ready(function () {
     send.click(function() {
         var cmd = $("#camera-control-in").val();
         if(cmd == "") {
-            alert("Devi inviare un comando");
+            alert(_("Devi inviare un comando"));
         }
         executeCustomCommand(cmd);
     });
@@ -151,7 +151,7 @@ function getAllCameras()
                 {
                     var cameras = data.data.split('\n');
                     if(cameras.length == 0) {
-                        $("#camera-name").html("Nessuna camera disponibile");
+                        $("#camera-name").html(_("Nessuna camera disponibile"));
                         return;
                     }
                     if(cameras.length > 2)
@@ -244,13 +244,13 @@ function run_camera_calibration()
 
     if(minGain == "" || maxGain == "" || exposure == "")
     {
-        alert("Gain o exposure non sono validi");
+        alert(_("Gain o exposure non sono validi"));
         return;
     }
 
     if(maxGain < minGain)
     {
-        alert("MaxGain deve essere > di MinGain");
+        alert(_("MaxGain deve essere > di MinGain"));
         return;
     }
 

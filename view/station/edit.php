@@ -26,7 +26,7 @@
     </div>
 </div>
 
-<div class='right_col' role='main' >
+<div class='right_col' role='main'>
     <div class=''>
         <div class='page-title'>
             <div class='title_left'>
@@ -45,44 +45,96 @@
                             </div>
                         </div>
                         <div class="x_content">
-                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                <div class="mb-3">
+                            
+                            <!-- inizio flex -->
+                            <div class="flex-container" style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                                
+                                <!-- blocco1-->
+                                <div class="form-container" style="flex: 1; padding-right: 20px;">
+                                    <!-- caricamento config -->
                                     <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                        <h5><?= _('Carica nuovo file di configurazione Freeture (esempio: configuration.cfg)') ?></h5>
+                                        <div class="mb-3">
+                                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                                <h5><?= _('Carica nuovo file di configurazione Freeture (esempio: configuration.cfg)') ?></h5>
+                                            </div>
+                                            <div class='clearfix'>
+                                                <form id="ftCfgFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
+                                                    <div class='col-md-10 no-padding'>
+                                                        <input class="form-control" name="configuration" type="file" accept=".cfg" id="form-ftcfg">
+                                                    </div>
+                                                    <div class='col-md-2 no-padding'>
+                                                        <input type='submit' style='margin-right: 10px;' id='uploadftbtn' value=<?= _('CARICA') ?> disabled="true" class='btn btn-success pull-right'>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class='clearfix'>
-                                        <form id="ftCfgFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
-                                            <div class='col-md-10 no-padding'>
-                                                <input class="form-control" name="configuration" type="file" accept=".cfg" id="form-ftcfg">
+                                    
+                                    <!-- caricamento maschera -->
+                                    <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                        <div class="mb-3">
+                                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                                <h5><?= _('Carica nuova maschera (esempio: default.bmp)') ?></h5>
                                             </div>
-                                            <div class='col-md-2 no-padding'>
-                                                <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadftbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
+                                            <div class='clearfix'>
+                                                <form id="maskFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
+                                                    <div class='col-md-10 no-padding'>
+                                                        <input class="form-control" name="mask" type="file" accept=".bmp" id="form-mask">
+                                                    </div>
+                                                    <div class='col-md-2 no-padding'>
+                                                        <input type='submit' style='margin-right: 10px;' id='uploadmaskbtn' value=<?= _('CARICA') ?> disabled="true" class='btn btn-success pull-right'>
+                                                    </div>
+                                                </form>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                <div class="mb-3">
+                                
+                                <!-- blocco2 -->
+                                <div style="flex: 1; padding-left: 20px;">
                                     <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                                        <h5><?= _('Carica nuova maschera (esempio: default.bmp)') ?></h5>
-                                    </div>
-                                    <div class='clearfix'>
-                                        <form id="maskFileForm" method='post' class='file-upload' enctype='multipart/form-data'>
-                                            <div class='col-md-10 no-padding'>
-                                                <input class="form-control" name="mask" type="file" accept=".bmp" id="form-mask">
+                                        <div class="mb-3">
+                                            <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
+                                                <h5><?= _('Anteprima della maschera attuale') ?></h5>
                                             </div>
-                                            <div class='col-md-2 no-padding'>
-                                                <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadmaskbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
+                                            <div class='clearfix'>
+                                                <?php 
+                                                $maskPath = '/freeture/default.bmp';
+                                                $configPath = '/usr/local/share/freeture/configuration.cfg';
+                                                if (file_exists($maskPath)) { 
+                                                    $imageData = file_get_contents($maskPath);
+                                                    $base64Image = base64_encode($imageData);
+                                                    $dataUri = 'data:image/bmp;base64,' . $base64Image;
+                                                    list($w,$h) = getimagesize($maskPath);
+                                                ?>
+                                                    <!--anteprima-->
+                                                    <div class='col-md-10 no-padding'>
+                                                        <img src="<?= $dataUri ?>" alt="Anteprima Maschera" style="max-width:400px;">
+                                                        <p><?= sprintf(_('Risoluzione: %d x %d px'), $w, $h) ?></p>
+                                                    </div>
+                                                    <div class='col-md-2 no-padding'>
+                                                        <a href="<?= $maskPath ?>" download="default.bmp" class="btn btn-success btn-blue-success"><?= _('Scarica Maschera') ?></a>
+                                                    </div>
+                                                    <div class='col-md-2 no-padding'>
+                                                        <a href="<?= $configPath ?>" download="configuration.cfg" class="btn btn-success btn-blue-success"><?= _('Scarica File <br> di configurazione ') ?></a>
+                                                    </div>
+                                                <?php } else { ?>
+                                                    <div class='col-md-12 no-padding'>
+                                                        <p><?= _('Maschera non disponibile') ?></p>
+                                                    </div>
+                                                <?php } ?>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> <!--fine flex -->
                         </div>
                     </div>
                 </div>
             <?php } ?>
+        </div>
+    </div>
+
 
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <form id='StationForm' method='POST' action='' class='form-horizontal form-label-left file-upload' novalidate>
@@ -278,4 +330,6 @@
 <?php } ?>
 
 <script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyA7Wg-9vZ4pc0KTymAAh4L2x93HLRtWMZ4'></script>
+
+
 

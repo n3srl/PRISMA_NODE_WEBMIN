@@ -1,0 +1,1190 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2024-11-08 11:51+0100\n"
+"PO-Revision-Date: 2024-11-08 16:20+0100\n"
+"Last-Translator: Alessia Mazzeo <alessia.mazzeo@n-3.it>\n"
+"Language-Team: \n"
+"Language: pt_PT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: ../../..\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "I risultati non possono essere caricati."
+msgstr "Os resultados não podem ser carregados."
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Per favore cancella "
+msgstr "Por favor, apague "
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Per favore inserisci "
+msgstr "Por favor, insira "
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid " o più caratteri"
+msgstr " ou mais caracteres"
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Caricando più risultati…"
+msgstr "Carregando mais resultados…"
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Puoi selezionare solo "
+msgstr "Você pode selecionar apenas "
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Nessun risultato trovato"
+msgstr "Nenhum resultado encontrado"
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Sto cercando…"
+msgstr "Procurando…"
+
+#: ext_lib_fe/select2/dist/js/i18n/it.js:3
+msgid "Rimuovi tutti gli oggetti"
+msgstr "Remover todos os itens"
+
+#: index.php:40
+msgid "Autorizzazione negata"
+msgstr "Autorização negada"
+
+#: js/actions.js:2
+msgid "Sei sicuro di voler eliminare?"
+msgstr "Tem certeza de que deseja excluir?"
+
+#: js/actions.js:14
+msgid "Vuoi procedere con l'eliminazione?"
+msgstr "Você quer continuar com a exclusão?"
+
+#: js/actions.js:20
+msgid "Eliminazione annullata."
+msgstr "Exclusão cancelada."
+
+#: js/camera.js:39
+msgid "Devi inviare un comando"
+msgstr "Você precisa enviar um comando"
+
+#: js/camera.js:154
+msgid "Nessuna camera disponibile"
+msgstr "Nenhuma câmera disponível"
+
+#: js/camera.js:247
+msgid "Gain o exposure non sono validi"
+msgstr "Gain ou exposição não são válidos"
+
+#: js/camera.js:253
+msgid "MaxGain deve essere > di MinGain"
+msgstr "MaxGain deve ser > de MinGain"
+
+#: js/capture.js:60 js/detection.js:69 js/docker.js:55 js/form.js:562 js/freetureFinal.js:65
+#: js/permission.js:46 js/person.js:72 js/stack.js:60 js/station.js:127 js/stationReduced.js:52
+msgid "Conferma"
+msgstr "Confirmar"
+
+#: js/capture.js:60 js/detection.js:69 js/docker.js:55 js/freetureFinal.js:65 js/permission.js:46
+#: js/person.js:72 js/stack.js:60 js/station.js:127 js/stationReduced.js:52
+msgid "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"
+msgstr "Tem certeza de que deseja cancelar as alterações? As alterações não salvas serão perdidas"
+
+#: js/capture.js:72 js/capture.js:162
+msgid "Calibrazione del "
+msgstr "Calibração de "
+
+#: js/capture.js:88 js/capture.js:97 js/capture.js:178 js/capture.js:187 js/detection.js:228
+#: js/detection.js:237 js/detection.js:311 js/detection.js:320 js/docker.js:183 js/docker.js:192
+#: js/freetureFinal.js:75 js/freetureFinal.js:84 js/home.js:274 js/home.js:283 js/permission.js:56
+#: js/permission.js:65 js/person.js:82 js/person.js:91 js/stack.js:88 js/stack.js:97 js/stack.js:177
+#: js/stack.js:186 view/user/list.php:53 view/user/list.php:62
+msgid "Nessun risultato"
+msgstr "Nenhum resultado"
+
+#: js/capture.js:89 js/capture.js:179 js/detection.js:229 js/detection.js:312 js/docker.js:184
+#: js/freetureFinal.js:76 js/home.js:275 js/permission.js:57 js/person.js:83 js/stack.js:89 js/stack.js:178
+msgid "Cerca:"
+msgstr "Procurar:"
+
+#: js/capture.js:91 js/capture.js:181 js/detection.js:231 js/detection.js:314 js/docker.js:186
+#: js/freetureFinal.js:78 js/home.js:277 js/permission.js:59 js/person.js:85 js/stack.js:91 js/stack.js:180
+#: view/user/list.php:56
+msgid "Indietro"
+msgstr "Voltar"
+
+#: js/capture.js:92 js/capture.js:182 js/detection.js:232 js/detection.js:315 js/docker.js:187
+#: js/freetureFinal.js:79 js/home.js:278 js/permission.js:60 js/person.js:86 js/stack.js:92 js/stack.js:181
+#: view/user/list.php:57
+msgid "Avanti"
+msgstr "Avançar"
+
+#: js/capture.js:94 js/capture.js:184 js/detection.js:234 js/detection.js:317 js/docker.js:189
+#: js/freetureFinal.js:81 js/home.js:280 js/permission.js:62 js/person.js:88 js/stack.js:94 js/stack.js:183
+#: view/user/list.php:59
+msgid "Mostra pagina _PAGE_ di _PAGES_"
+msgstr "Mostrar página _PAGE_ de _PAGES_"
+
+#: js/capture.js:96 js/capture.js:186 js/detection.js:236 js/detection.js:319 js/docker.js:191
+#: js/freetureFinal.js:83 js/home.js:282 js/permission.js:64 js/person.js:90 js/stack.js:96 js/stack.js:185
+#: view/user/list.php:61
+msgid "Mostra pagina 0 di 0 elementi"
+msgstr "Mostrar página 0 de 0 itens"
+
+#: js/capture.js:98 js/capture.js:188 js/detection.js:238 js/detection.js:321 js/docker.js:193
+#: js/freetureFinal.js:85 js/home.js:284 js/permission.js:66 js/person.js:92 js/stack.js:98 js/stack.js:187
+#: view/user/list.php:63
+msgid "Mostra _MENU_ elementi"
+msgstr "Mostrar _MENU_ itens"
+
+#: js/detection.js:87
+msgid "Detection del "
+msgstr "Detecção de "
+
+#: js/detection.js:97
+msgid "DirMap del "
+msgstr "MapaDir de "
+
+#: js/detection.js:115 js/home.js:69
+msgid "Il tuo download inizierà tra qualche minuto"
+msgstr "Seu download começará em alguns minutos"
+
+#: js/detection.js:134 js/home.js:88
+msgid "Il download del video inizierà tra qualche minuto"
+msgstr "O download do vídeo começará em alguns minutos"
+
+#: js/detection.js:179
+msgid "Zip annullato"
+msgstr "Zip cancelado"
+
+#: js/detection.js:196 js/home.js:150
+msgid "Video annullato"
+msgstr "Vídeo cancelado"
+
+#: js/detection.js:204
+msgid "Se lasci o ricarichi la pagina i download correnti verranno interrotti. Vuoi continuare lo stesso?"
+msgstr ""
+"Se você sair ou recarregar a página, os downloads em andamento serão interrompidos. Você deseja continuar?"
+
+#: js/detection.js:337 js/home.js:300
+msgid ""
+"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso..."
+"</div>"
+msgstr ""
+"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparando zip...</div>"
+
+#: js/detection.js:340 js/home.js:303
+msgid ""
+"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in "
+"corso...</div>"
+msgstr ""
+"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparando vídeo...</div>"
+
+#: js/docker.js:69
+msgid "Container riavviato correttamente"
+msgstr "Container reiniciado com sucesso"
+
+#: js/docker.js:89
+msgid "Container avviato correttamente"
+msgstr "Container iniciado com sucesso"
+
+#: js/docker.js:109
+msgid "Container fermato correttamente"
+msgstr "Container parado com sucesso"
+
+#: js/form.js:2 js/form.js:3 view/user/edit.php:76 view/user/edit.php:77
+msgid "Campo obbligatorio"
+msgstr "Campo obrigatório"
+
+#: js/form.js:4 view/user/edit.php:78
+msgid "Troppo basso"
+msgstr "Muito baixo"
+
+#: js/form.js:5 view/user/edit.php:79
+msgid "Troppo alto"
+msgstr "Muito alto"
+
+#: js/form.js:6
+msgid "Le password non corrispondono"
+msgstr "As senhas não coincidem"
+
+#: js/form.js:266
+msgid "Operazione avvenuta correttamente"
+msgstr "Operação realizada com sucesso"
+
+#: js/form.js:269
+msgid "Si è verificato un errore imprevisto"
+msgstr "Ocorreu um erro inesperado"
+
+#: js/form.js:270
+msgid "Attenzione"
+msgstr "Atenção"
+
+#: js/form.js:562
+msgid "Sei sicuro di voler cancellare l'elemento?"
+msgstr "Você tem certeza de que deseja excluir o item?"
+
+#: js/freetureFinal.js:186 js/ovpn.js:28
+msgid "Configurazione caricata correttamente"
+msgstr "Configuração carregada com sucesso"
+
+#: js/freetureFinal.js:210
+msgid "Maschera caricata correttamente"
+msgstr "Máscara carregada com sucesso"
+
+#: js/home.js:538 js/ovpn.js:50
+msgid "VPN non attiva"
+msgstr "VPN não ativa"
+
+#: js/home.js:546
+msgid "Accesso VPN come PRISMA"
+msgstr "Acesso VPN como PRISMA"
+
+#: js/home.js:548
+msgid "Accesso VPN come GUEST"
+msgstr "Acesso VPN como GUEST"
+
+#: js/home.js:553 js/ovpn.js:53
+msgid "VPN Attiva"
+msgstr "VPN Ativa"
+
+#: js/login.js:21
+msgid "Autenticazione fallita"
+msgstr "Autenticação falhou"
+
+#: js/login.js:23
+msgid "Attenzione! Si è verificato un errore"
+msgstr "Atenção! Ocorreu um erro"
+
+#: js/prometheus.js:16 js/prometheus.js:26
+msgid "Servizio non attivo"
+msgstr "Serviço inativo"
+
+#: js/prometheus.js:19
+msgid "Servizio attivo"
+msgstr "Serviço ativo"
+
+#: js/settings.js:21
+msgid "Spazio liberato con successo"
+msgstr "Espaço liberado com sucesso"
+
+#: js/settings.js:31
+msgid "Spazio occupato dai media: "
+msgstr "Espaço ocupado pelos mídias: "
+
+#: js/stack.js:72
+msgid "Stack del "
+msgstr "Stack de "
+
+#: js/standard.js:54 js/standard.js:134 lib/core/v1/logic/ApiLogic.php:22
+msgid "Si è verificato un errore"
+msgstr "Ocorreu um erro"
+
+#: js/standard.js:119 js/standard.js:125
+msgid "Vuoi proseguire?"
+msgstr "Você quer continuar?"
+
+#: lib/camera/V1/logic/CameraLogic.php:141 view/camera/control.php:182
+msgid "Una calibrazione è già in corso"
+msgstr "Uma calibração já está em andamento"
+
+#: lib/camera/V1/logic/CameraLogic.php:283
+msgid "Calibrazione iniziata, presto disponibile"
+msgstr "Calibração iniciada, em breve disponível"
+
+#: lib/camera/V1/logic/CameraLogic.php:297
+msgid "<tr><td>Nessuna calibrazione recente</td></tr>"
+msgstr "<tr><td>Sem calibração recente</td></tr>"
+
+#: lib/capture/V2/model/CaptureFactory.php:14 lib/core/v1/model/PermissionFactory.php:75
+#: lib/core/v1/model/PersonFactory.php:35 lib/detection/V2/model/DetectionFactory.php:14
+#: lib/docker/V2/model/DockerFactory.php:14 lib/ft/V2/model/FreetureFinalFactory.php:19
+msgid "Rimosso non numerico"
+msgstr "Removido não numérico"
+
+#: lib/core/v1/logic/ApiLogic.php:22
+msgid "Contattare l'amministratore di sistema"
+msgstr "Contate o administrador do sistema"
+
+#: lib/core/v1/logic/ApiLogic.php:30
+msgid "Il numero documento è già in uso"
+msgstr "O número do documento já está em uso"
+
+#: lib/core/v1/logic/ApiLogic.php:30
+msgid "Ricarica il numero per procedere"
+msgstr "Recarregue o número para continuar"
+
+#: lib/core/v1/logic/ApiLogic.php:34
+msgid "Il numero documento non è nel formato corretto"
+msgstr "O número do documento não está no formato correto"
+
+#: lib/core/v1/logic/ManutenzioneLogic.php:25
+msgid "Autenticazione SSH fallita"
+msgstr "Autenticação SSH falhou"
+
+#: lib/core/v1/logic/ManutenzioneLogic.php:31
+msgid "Connessione SSH fallita"
+msgstr "Conexão SSH falhou"
+
+#: lib/core/v1/logic/ManutenzioneLogic.php:40
+msgid "Reboot in corso..."
+msgstr "Reiniciando..."
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:472
+msgid "Inglese"
+msgstr "Inglês"
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:473
+msgid "Italiano"
+msgstr "Italiano"
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:474
+msgid "Tedesco"
+msgstr "Alemão"
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:475
+msgid "Portoghese"
+msgstr "Português"
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:476
+msgid "Greco"
+msgstr "Grego"
+
+#: lib/core/v1/logic/PrismaMultilanguageLogic.php:477
+msgid "Francese"
+msgstr "Francês"
+
+#: lib/core/v1/model/PermissionFactory.php:14
+msgid "ID Persona non numerico"
+msgstr "ID de Pessoa não numérico"
+
+#: lib/core/v1/model/PermissionFactory.php:18
+msgid "ID Gruppo non numerico"
+msgstr "ID de Grupo não numérico"
+
+#: lib/core/v1/model/PermissionFactory.php:27
+msgid "Esecuzione non numerico"
+msgstr "Execução não numérica"
+
+#: lib/core/v1/model/PermissionFactory.php:36
+msgid "Lettura non numerico"
+msgstr "Leitura não numérica"
+
+#: lib/core/v1/model/PermissionFactory.php:45
+msgid "Scrittura non numerico"
+msgstr "Escrita não numérica"
+
+#: lib/core/v1/model/PermissionFactory.php:54
+msgid "Utente attivo non numerico"
+msgstr "Usuário ativo não numérico"
+
+#: lib/core/v1/model/PermissionFactory.php:58 lib/core/v1/model/PersonFactory.php:18
+msgid "Modificato da non numerico"
+msgstr "Modificado por não numérico"
+
+#: lib/core/v1/model/PermissionFactory.php:62 lib/core/v1/model/PersonFactory.php:22
+msgid "Creato da non numerico"
+msgstr "Criado por não numérico"
+
+#: lib/core/v1/model/PermissionFactory.php:66 lib/core/v1/model/PersonFactory.php:26
+msgid "Assegnato non numerico"
+msgstr "Atribuído não numérico"
+
+#: lib/core/v1/model/PersonFactory.php:14
+msgid "timezone non numerico"
+msgstr "fuso horário não numérico"
+
+#: lib/ft/V2/model/FreetureFinalFactory.php:14
+msgid "Mostra non numerico"
+msgstr "Mostrar não numérico"
+
+#: lib/stack/V2/model/StackFactory.php:14
+msgid "erased non numerico"
+msgstr "apagado não numérico"
+
+#: model/StationFactory.php:13
+msgid "ID Camera non numerico"
+msgstr "ID de Câmera não numérico"
+
+#: model/StationFactory.php:17
+msgid "Focale non numerico"
+msgstr "Distância focal não numérica"
+
+#: model/StationFactory.php:21
+msgid "Apertura non numerico"
+msgstr "Abertura não numérica"
+
+#: model/StationFactory.php:25
+msgid "Longitudine non numerico"
+msgstr "Longitude não numérica"
+
+#: model/StationFactory.php:29
+msgid "Latitudine non numerico"
+msgstr "Latitude não numérica"
+
+#: model/StationFactory.php:33
+msgid "Altitudine non numerico"
+msgstr "Altitude não numérica"
+
+#: model/StationFactory.php:37
+msgid "ACQ_DAY_GAIN non numerico"
+msgstr "ACQ_DAY_GAIN não numérico"
+
+#: model/StationFactory.php:41
+msgid "ACQ_NIGHT_GAIN non numerico"
+msgstr "ACQ_NIGHT_GAIN não numérico"
+
+#: service/HomeController.php:38
+msgid "Maschera non presente"
+msgstr "Máscara não presente"
+
+#: service/HomeController.php:40
+msgid "Maschera presente"
+msgstr "Máscara presente"
+
+#: service/HomeController.php:44
+msgid "Mancata connessione a Internet."
+msgstr "Conexão com a Internet falhou."
+
+#: service/HomeController.php:46
+msgid "Connessione ad internet stabilita"
+msgstr "Conexão com a internet estabelecida"
+
+#: service/HomeController.php:50
+msgid "File di configurazione non presente"
+msgstr "Arquivo de configuração não presente"
+
+#: service/HomeController.php:52
+msgid "File di configurazione presente"
+msgstr "Arquivo de configuração presente"
+
+#: service/UserController.php:83
+msgid "Il nome utente inserito esiste già"
+msgstr "O nome de usuário inserido já existe"
+
+#: service/UserController.php:83
+msgid "E' necessario modificarlo per poter continuare"
+msgstr "É necessário alterá-lo para continuar"
+
+#: view/camera/control.php:22
+msgid "Controllo camera"
+msgstr "Controle da câmera"
+
+#: view/camera/control.php:32
+msgid "Funzioni"
+msgstr "Funções"
+
+#: view/camera/control.php:62
+msgid "List"
+msgstr "Lista"
+
+#: view/camera/control.php:67
+msgid "List Reset"
+msgstr "Reiniciar lista"
+
+#: view/camera/control.php:72
+msgid "FactoryReset"
+msgstr "Restaurar configurações de fábrica"
+
+#: view/camera/control.php:77
+msgid "Features"
+msgstr "Características"
+
+#: view/camera/control.php:82
+msgid "Values"
+msgstr "Valores"
+
+#: view/camera/control.php:90
+msgid "Comando custom"
+msgstr "Comando personalizado"
+
+#: view/camera/control.php:90
+msgid "[inserisci il comando senza scrivere arv-tool-0.8]"
+msgstr "[insira o comando sem escrever arv-tool-0.8]"
+
+#: view/camera/control.php:93
+msgid "Invia comando"
+msgstr "Enviar comando"
+
+#: view/camera/control.php:104
+msgid "Output"
+msgstr "Saída"
+
+#: view/camera/control.php:124
+msgid "Esegui calibrazione con tutti i possibili valori di Guadagno"
+msgstr "Executar calibração com todos os possíveis valores de Ganho"
+
+#: view/camera/control.php:134
+msgid "Esposizione per la calibrazione"
+msgstr "Exposição para calibração"
+
+#: view/camera/control.php:138
+msgid "MinGain"
+msgstr "MinGain"
+
+#: view/camera/control.php:142
+msgid "MaxGain"
+msgstr "MaxGain"
+
+#: view/camera/control.php:146
+msgid "GainStep"
+msgstr "Passo de Ganho"
+
+#: view/camera/control.php:150 view/camera/control.php:153
+msgid "Freeture"
+msgstr "Freeture"
+
+#: view/camera/control.php:152
+msgid "Freeture13"
+msgstr "Freeture13"
+
+#: view/camera/control.php:166 view/camera/control.php:199
+msgid "Calibrazione"
+msgstr "Calibração"
+
+#: view/camera/control.php:200
+msgid "Data calibrazione"
+msgstr "Data de calibração"
+
+#: view/capture/edit.php:22 view/template/menu.php:37
+msgid "Calibrazioni"
+msgstr "Calibrações"
+
+#: view/capture/edit.php:32 view/detection/edit.php:35 view/docker/edit.php:16 view/permission/edit.php:16
+#: view/person/edit.php:17 view/stack/edit.php:32
+msgid "Elenco"
+msgstr "Lista"
+
+#: view/capture/edit.php:37 view/detection/edit.php:40 view/home/home.php:137 view/stack/edit.php:37
+msgid "Abilita anteprima"
+msgstr "Habilitar pré-visualização"
+
+#: view/capture/edit.php:65 view/capture/edit.php:97 view/capture/edit.php:111 view/detection/edit.php:69
+#: view/detection/edit.php:101 view/detection/edit.php:115 view/home/home.php:155 view/stack/edit.php:65
+#: view/stack/edit.php:97 view/stack/edit.php:111
+msgid "Data"
+msgstr "Data"
+
+#: view/capture/edit.php:66 view/detection/edit.php:70 view/permission/edit.php:39 view/person/edit.php:38
+#: view/stack/edit.php:66
+msgid "Filtra per ID"
+msgstr "Filtrar por ID"
+
+#: view/capture/edit.php:75 view/detection/edit.php:79 view/docker/edit.php:26 view/home/home.php:154
+#: view/stack/edit.php:75 view/user/edit.php:29 view/user/list.php:24
+msgid "Nome"
+msgstr "Nome"
+
+#: view/capture/edit.php:76 view/permission/edit.php:132 view/person/edit.php:48 view/stack/edit.php:76
+msgid "Filtra per nome utente"
+msgstr "Filtrar por nome de usuário"
+
+#: view/capture/edit.php:85 view/detection/edit.php:89 view/permission/edit.php:149 view/person/edit.php:75
+#: view/stack/edit.php:85
+msgid "Applica filtri"
+msgstr "Aplicar filtros"
+
+#: view/capture/edit.php:86 view/detection/edit.php:90 view/permission/edit.php:150 view/person/edit.php:76
+#: view/stack/edit.php:86
+msgid "Pulisci filtri"
+msgstr "Limpar filtros"
+
+#: view/capture/edit.php:98 view/detection/edit.php:102 view/stack/edit.php:98
+msgid "#"
+msgstr "#"
+
+#: view/capture/edit.php:99 view/detection/edit.php:103 view/stack/edit.php:99
+msgid "Cartella"
+msgstr "Pasta"
+
+#: view/capture/edit.php:110
+msgid "Nome Calibrazione"
+msgstr "Nome da Calibração"
+
+#: view/capture/edit.php:112 view/detection/edit.php:116 view/home/home.php:156 view/stack/edit.php:112
+msgid "Ora"
+msgstr "Hora"
+
+#: view/capture/edit.php:113 view/detection/edit.php:117 view/home/home.php:157 view/stack/edit.php:113
+msgid "Anteprima"
+msgstr "Pré-visualização"
+
+#: view/capture/edit.php:114 view/stack/edit.php:114 view/station/edit.php:13 view/station/edit.php:113
+msgid "Scarica"
+msgstr "Baixar"
+
+#: view/capture/edit.php:129
+msgid "Ultima Calibrazione"
+msgstr "Última Calibração"
+
+#: view/detection/edit.php:25 view/template/menu.php:39
+msgid "Detections"
+msgstr "Detecções"
+
+#: view/detection/edit.php:80
+msgid "Filtra per Username"
+msgstr "Filtrar por nome de usuário"
+
+#: view/detection/edit.php:114
+msgid "Nome Detection"
+msgstr "Nome da Detecção"
+
+#: view/detection/edit.php:118 view/home/home.php:158
+msgid "DirMap"
+msgstr "DirMap"
+
+#: view/detection/edit.php:119 view/home/home.php:159
+msgid "GeMap"
+msgstr "GeMap"
+
+#: view/detection/edit.php:120 view/home/home.php:160
+msgid "Video"
+msgstr "Vídeo"
+
+#: view/detection/edit.php:121 view/home/home.php:161
+msgid "Zip"
+msgstr "Zip"
+
+#: view/detection/edit.php:136
+msgid "Ultima Detection"
+msgstr "Última Detecção"
+
+#: view/docker/edit.php:6 view/template/menu.php:32
+msgid "Stato Containers"
+msgstr "Estado dos Containers"
+
+#: view/docker/edit.php:27
+msgid "Immagine"
+msgstr "Imagem"
+
+#: view/docker/edit.php:28
+msgid "Comando"
+msgstr "Comando"
+
+#: view/docker/edit.php:29
+msgid "Stato"
+msgstr "Estado"
+
+#: view/docker/edit.php:30
+msgid "Creato"
+msgstr "Criado"
+
+#: view/docker/edit.php:31
+msgid "Avvia"
+msgstr "Iniciar"
+
+#: view/docker/edit.php:32
+msgid "Ferma"
+msgstr "Parar"
+
+#: view/docker/edit.php:33
+msgid "Riavvia"
+msgstr "Reiniciar"
+
+#: view/docker/edit.php:47
+msgid "Freeture logs"
+msgstr "Logs do Freeture"
+
+#: view/docker/edit.php:50 view/home/home.php:27
+msgid "Download"
+msgstr "Baixar"
+
+#: view/home/home.php:23
+msgid "Mask"
+msgstr "Máscara"
+
+#: view/home/home.php:57
+msgid "Detection rilevate dalla stazione"
+msgstr "Detecções detectadas pela estação"
+
+#: view/home/home.php:66
+msgid "Detection rilevate nel mese corrente"
+msgstr "Detecções detectadas no mês corrente"
+
+#: view/home/home.php:75 view/home/home.php:132
+msgid "Detection rilevate oggi"
+msgstr "Detecções detectadas hoje"
+
+#: view/home/home.php:88
+msgid "Geolocalizzazione stazione"
+msgstr "Geolocalização da estação"
+
+#: view/home/home.php:104
+msgid "Dati stazione"
+msgstr "Dados da estação"
+
+#: view/home/home.php:107 view/station/edit.php:9 view/station/edit.php:240
+msgid "Maschera"
+msgstr "Máscara"
+
+#: view/home/home.php:116 view/station/edit.php:248 view/station/edit.php:289
+msgid "Parametro"
+msgstr "Parâmetro"
+
+#: view/home/home.php:117 view/station/edit.php:249 view/station/edit.php:297 view/station/edit.php:298
+msgid "Valore"
+msgstr "Valor"
+
+#: view/home/home.php:178
+msgid "Ultima immagine rilevata"
+msgstr "Última imagem detectada"
+
+#: view/home/home.php:198
+msgid "Utilizzo Dati"
+msgstr "Uso de Dados"
+
+#: view/home/home.php:206
+msgid "RAM"
+msgstr "RAM"
+
+#: view/home/home.php:216
+msgid "Disco"
+msgstr "Disco"
+
+#: view/home/home.php:235
+msgid "Stato del nodo"
+msgstr "Estado do nó"
+
+#: view/home/home.php:241
+msgid "Errori rilevati:"
+msgstr "Erros detectados:"
+
+#: view/home/home.php:251
+msgid "Nessun errore rilevato"
+msgstr "Nenhum erro detectado"
+
+#: view/home/home.php:258
+msgid "Messaggi di stato:"
+msgstr "Mensagens de estado:"
+
+#: view/home/home.php:268
+msgid "Nessun messaggio di stato"
+msgstr "Nenhuma mensagem de estado"
+
+#: view/home/home.php:276
+msgid "Stato della VPN:"
+msgstr "Estado da VPN:"
+
+#: view/manutenzione/edit.php:12
+msgid "Reboot"
+msgstr "Reiniciar"
+
+#: view/manutenzione/edit.php:17
+msgid "Avvia il reboot"
+msgstr "Iniciar o reboot"
+
+#: view/ovpn/edit.php:6 view/template/menu.php:30
+msgid "Configurazione OpenVPN"
+msgstr "Configuração OpenVPN"
+
+#: view/ovpn/edit.php:16 view/station/edit.php:43
+msgid "Carica File"
+msgstr "Carregar Arquivo"
+
+#: view/ovpn/edit.php:24
+msgid "Carica nuovo file di configurazione OpenVPN (esempio: client.ovpn)"
+msgstr "Carregar novo arquivo de configuração OpenVPN (exemplo: client.ovpn)"
+
+#: view/ovpn/edit.php:32 view/station/edit.php:66 view/station/edit.php:85
+msgid "CARICA"
+msgstr "CARREGAR"
+
+#: view/ovpn/edit.php:47
+msgid "Stato OpenVPN"
+msgstr "Estado do OpenVPN"
+
+#: view/permission/edit.php:6 view/user/edit.php:53
+msgid "Permessi"
+msgstr "Permissões"
+
+#: view/permission/edit.php:19 view/permission/edit.php:187
+msgid "Aggiungi nuovo"
+msgstr "Adicionar novo"
+
+#: view/permission/edit.php:26
+msgid "Filtra per..."
+msgstr "Filtrar por..."
+
+#: view/permission/edit.php:38 view/permission/edit.php:207 view/permission/edit.php:208
+#: view/person/edit.php:37 view/person/edit.php:91 view/person/edit.php:126 view/person/edit.php:127
+#: view/station/edit.php:253 view/station/edit.php:281 view/station/edit.php:282
+msgid "ID"
+msgstr "ID"
+
+#: view/permission/edit.php:47 view/permission/edit.php:160 view/permission/edit.php:215
+#: view/permission/edit.php:216
+msgid "OID"
+msgstr "OID"
+
+#: view/permission/edit.php:48
+msgid "Filtra per OID"
+msgstr "Filtrar por OID"
+
+#: view/permission/edit.php:56 view/permission/edit.php:161 view/permission/edit.php:223
+#: view/permission/edit.php:224
+msgid "OID Esterno"
+msgstr "OID Externo"
+
+#: view/permission/edit.php:57
+msgid "Filtra per OID Esterno"
+msgstr "Filtrar por OID Externo"
+
+#: view/permission/edit.php:65 view/permission/edit.php:162 view/permission/edit.php:231
+#: view/permission/edit.php:232
+msgid "ID Persona"
+msgstr "ID da Pessoa"
+
+#: view/permission/edit.php:66
+msgid "Filtra per ID Persona"
+msgstr "Filtrar por ID da Pessoa"
+
+#: view/permission/edit.php:74 view/permission/edit.php:163 view/permission/edit.php:240
+#: view/permission/edit.php:241
+msgid "ID Gruppo"
+msgstr "ID do Grupo"
+
+#: view/permission/edit.php:75
+msgid "Filtra per ID Gruppo"
+msgstr "Filtrar por ID do Grupo"
+
+#: view/permission/edit.php:83 view/permission/edit.php:164 view/permission/edit.php:249
+#: view/permission/edit.php:250
+msgid "Esecuzione"
+msgstr "Execução"
+
+#: view/permission/edit.php:84
+msgid "Filtra per esecuzione"
+msgstr "Filtrar por execução"
+
+#: view/permission/edit.php:86 view/permission/edit.php:98 view/permission/edit.php:110
+#: view/permission/edit.php:122
+msgid "Sì"
+msgstr "Sim"
+
+#: view/permission/edit.php:87 view/permission/edit.php:99 view/permission/edit.php:111
+#: view/permission/edit.php:123
+msgid "No"
+msgstr "Não"
+
+#: view/permission/edit.php:95 view/permission/edit.php:165 view/permission/edit.php:257
+#: view/permission/edit.php:258
+msgid "Lettura"
+msgstr "Leitura"
+
+#: view/permission/edit.php:96
+msgid "Filtra per lettura"
+msgstr "Filtrar por leitura"
+
+#: view/permission/edit.php:107 view/permission/edit.php:166 view/permission/edit.php:265
+#: view/permission/edit.php:266
+msgid "Scrittura"
+msgstr "Escrita"
+
+#: view/permission/edit.php:108
+msgid "Filtra per scrittura"
+msgstr "Filtrar por escrita"
+
+#: view/permission/edit.php:119 view/permission/edit.php:273 view/permission/edit.php:274
+msgid "Utente attivo"
+msgstr "Usuário ativo"
+
+#: view/permission/edit.php:120
+msgid "Filtra per utente attivo"
+msgstr "Filtrar por usuário ativo"
+
+#: view/permission/edit.php:131 view/permission/edit.php:168 view/permission/edit.php:281
+#: view/permission/edit.php:282 view/person/edit.php:47 view/person/edit.php:86 view/user/edit.php:41
+#: view/user/list.php:26
+msgid "Nome utente"
+msgstr "Nome de usuário"
+
+#: view/permission/edit.php:140 view/permission/edit.php:169 view/permission/edit.php:289
+#: view/permission/edit.php:290
+msgid "Token segreto"
+msgstr "Token secreto"
+
+#: view/permission/edit.php:141
+msgid "Filtra per token segreto"
+msgstr "Filtrar por token secreto"
+
+#: view/permission/edit.php:167
+msgid "Attivo"
+msgstr "Ativo"
+
+#: view/permission/edit.php:190 view/person/edit.php:110 view/station/edit.php:142 view/station/edit.php:271
+msgid "SALVA"
+msgstr "SALVAR"
+
+#: view/permission/edit.php:191 view/person/edit.php:111
+msgid "PULISCI CAMPI"
+msgstr "LIMPAR CAMPOS"
+
+#: view/permission/edit.php:192 view/person/edit.php:112 view/station/edit.php:143 view/station/edit.php:272
+msgid "MODIFICA"
+msgstr "EDITAR"
+
+#: view/permission/edit.php:193 view/person/edit.php:113 view/station/edit.php:144 view/station/edit.php:273
+msgid "ANNULLA"
+msgstr "CANCELAR"
+
+#: view/permission/edit.php:194
+msgid "TUTTI"
+msgstr "TODOS"
+
+#: view/permission/edit.php:201 view/person/edit.php:120 view/station/edit.php:153 view/user/edit.php:25
+msgid "I campi contrassegnati con * sono obbligatori"
+msgstr "Os campos marcados com * são obrigatórios"
+
+#: view/person/edit.php:7 view/template/menu.php:29 view/user/list.php:15
+msgid "Utenti"
+msgstr "Usuários"
+
+#: view/person/edit.php:56 view/person/edit.php:87 view/user/edit.php:47 view/user/list.php:27
+#: view/user/register.php:6
+msgid "Password"
+msgstr "Senha"
+
+#: view/person/edit.php:57
+msgid "Filtra per password"
+msgstr "Filtrar por senha"
+
+#: view/person/edit.php:66 view/person/edit.php:88
+msgid "Timezone"
+msgstr "Fuso horário"
+
+#: view/person/edit.php:67
+msgid "Filtra per timezone"
+msgstr "Filtrar por fuso horário"
+
+#: view/person/edit.php:89 view/station/edit.php:252
+msgid "Rimosso"
+msgstr "Removido"
+
+#: view/person/edit.php:90 view/user/list.php:28
+msgid "Livello"
+msgstr "Nível"
+
+#: view/person/edit.php:106
+msgid "Modifica Password"
+msgstr "Alterar senha"
+
+#: view/person/edit.php:109
+msgid "ELIMINA"
+msgstr "EXCLUIR"
+
+#: view/person/edit.php:135 view/person/edit.php:136
+msgid "Nuova Password"
+msgstr "Nova senha"
+
+#: view/person/edit.php:145 view/person/edit.php:146
+msgid "Conferma Password"
+msgstr "Confirmar senha"
+
+#: view/prometheus/edit.php:6 view/template/menu.php:31
+msgid "Stato node_exporter"
+msgstr "Estado do node_exporter"
+
+#: view/prometheus/edit.php:17
+msgid "Metriche"
+msgstr "Métricas"
+
+#: view/settings/edit.php:8 view/template/menu.php:83
+msgid "Impostazioni"
+msgstr "Configurações"
+
+#: view/settings/edit.php:20
+msgid "Visualizzazione Media"
+msgstr "Visualização de Mídia"
+
+#: view/settings/edit.php:27
+msgid "Abilita possibilità di visualizzare le anteprime"
+msgstr "Habilitar a visualização de miniaturas"
+
+#: view/settings/edit.php:38
+msgid "Abilita possibilità di scaricare video e zip"
+msgstr "Habilitar a possibilidade de baixar vídeos e arquivos zip"
+
+#: view/settings/edit.php:56
+msgid "Archiviazione Media"
+msgstr "Armazenamento de Mídia"
+
+#: view/settings/edit.php:65
+msgid "Pulisci media"
+msgstr "Limpar mídia"
+
+#: view/settings/edit.php:80
+msgid "Lingua"
+msgstr "Idioma"
+
+#: view/settings/edit.php:88
+msgid "Seleziona Lingua"
+msgstr "Selecione o Idioma"
+
+#: view/stack/edit.php:22 view/template/menu.php:38
+msgid "Stack"
+msgstr "Pilha"
+
+#: view/stack/edit.php:110
+msgid "Nome Stack"
+msgstr "Nome da Pilha"
+
+#: view/stack/edit.php:129
+msgid "Ultimo Stack"
+msgstr "Última Pilha"
+
+#: view/station/edit.php:33 view/template/menu.php:36
+msgid "Configurazione Freeture"
+msgstr "Configuração do Freeture"
+
+#: view/station/edit.php:58
+msgid "Carica nuovo file di configurazione Freeture (esempio: configuration.cfg)"
+msgstr "Carregar novo arquivo de configuração Freeture (exemplo: configuration.cfg)"
+
+#: view/station/edit.php:77
+msgid "Carica nuova maschera (esempio: default.bmp)"
+msgstr "Carregar nova máscara (exemplo: default.bmp)"
+
+#: view/station/edit.php:98
+msgid "Anteprima della maschera attuale"
+msgstr "Pré-visualização da máscara atual"
+
+#: view/station/edit.php:117
+msgid "Maschera non disponibile"
+msgstr "Máscara não disponível"
+
+#: view/station/edit.php:139
+msgid "Configurazione automatica"
+msgstr "Configuração automática"
+
+#: view/station/edit.php:162 view/station/edit.php:163
+msgid "Nome stazione"
+msgstr "Nome da estação"
+
+#: view/station/edit.php:170 view/station/edit.php:171
+msgid "Codice stazione"
+msgstr "Código da estação"
+
+#: view/station/edit.php:178 view/station/edit.php:179 view/station/edit.php:221 view/station/edit.php:222
+msgid "Osservatore"
+msgstr "Observador"
+
+#: view/station/edit.php:186 view/station/edit.php:187
+msgid "Altitudine"
+msgstr "Altitude"
+
+#: view/station/edit.php:194 view/station/edit.php:195
+msgid "Longitudine"
+msgstr "Longitude"
+
+#: view/station/edit.php:202 view/station/edit.php:203
+msgid "Latitudine"
+msgstr "Latitude"
+
+#: view/station/edit.php:211
+msgid "Indica le coordinate"
+msgstr "Informe as coordenadas"
+
+#: view/station/edit.php:237
+msgid "Configurazione manuale"
+msgstr "Configuração manual"
+
+#: view/station/edit.php:250 view/station/edit.php:305 view/station/edit.php:306
+msgid "Descrizione"
+msgstr "Descrição"
+
+#: view/station/edit.php:251
+msgid "Mostra"
+msgstr "Mostrar"
+
+#: view/station/edit.php:268 view/user/list.php:29
+msgid "Modifica"
+msgstr "Editar"
+
+#: view/station/edit.php:290
+msgid "Chiave"
+msgstr "Chave"
+
+#: view/template/foot.php:5
+msgid "Copyright"
+msgstr "Copyright"
+
+#: view/template/foot.php:6
+msgid "All rights reserved "
+msgstr "Todos os direitos reservados "
+
+#: view/template/index.php:90
+msgid "Stai lavorando come Cliente 1"
+msgstr "Você está trabalhando como Cliente 1"
+
+#: view/template/menu.php:14
+msgid "Benvenuto"
+msgstr "Bem-vindo"
+
+#: view/template/menu.php:33
+msgid "Camera Control"
+msgstr "Controle da Câmera"
+
+#: view/template/menu.php:34
+msgid "Manutenzione"
+msgstr "Manutenção"
+
+#: view/template/menu.php:81
+msgid "Log Out"
+msgstr "Sair"
+
+#: view/user/edit.php:6
+msgid "Gruppo Menu"
+msgstr "Menu de Grupo"
+
+#: view/user/edit.php:15
+msgid "Utente"
+msgstr "Usuário"
+
+#: view/user/edit.php:35 view/user/list.php:25
+msgid "Cognome"
+msgstr "Sobrenome"
+
+#: view/user/edit.php:60
+msgid "Invia"
+msgstr "Enviar"
+
+#: view/user/list.php:6
+msgid "Anagrafica"
+msgstr "Cadastro"
+
+#: view/user/list.php:15
+msgid "Nuovo Utente"
+msgstr "Novo Usuário"
+
+#: view/user/list.php:30
+msgid "Elimina"
+msgstr "Excluir"
+
+#: view/user/list.php:54
+msgid "Cerca"
+msgstr "Pesquisar"
+
+#: view/user/register.php:2
+msgid "Nuovo utente"
+msgstr "Novo usuário"
+
+#: view/user/register.php:4
+msgid "Username"
+msgstr "Nome de usuário"
+
+#: view/user/register.php:7
+msgid "Conferma password"
+msgstr "Confirmar senha"
+
+#: view/user/register.php:11
+msgid "Salva"
+msgstr "Salvar"
+
+#: view/user/selectLevel.php:2
+msgid "Amministratore"
+msgstr "Administrador"
+
+#: view/user/selectLevel.php:3
+msgid "Agente"
+msgstr "Agente"

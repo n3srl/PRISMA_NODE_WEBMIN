@@ -179,7 +179,7 @@ class CaptureApiLogic {
                 $iDisplayStart = 0;
             }
             if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
+                $pageNumber = 0; 
             } else {
                 $pageNumber = ($iDisplayStart / $iDisplayLength);
             }

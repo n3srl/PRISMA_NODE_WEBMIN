@@ -52,7 +52,7 @@ function undoObj() {
     var f = function () {
         editObj(inafdocker.id);
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 function setIndexToShow() {
@@ -66,7 +66,7 @@ function restart(value) {
         type: "POST",
         success: function (res) {
             if (JSON.parse(res).result) {
-                defaultSuccess("Container riavviato correttamente");
+                defaultSuccess(_("Container riavviato correttamente"));
                 reloadAllDatatable();
             } else {
                 defaultError();
@@ -86,7 +86,7 @@ function start(value) {
         type: "POST",
         success: function (res) {
             if (JSON.parse(res).result) {
-                defaultSuccess("Container avviato correttamente");
+                defaultSuccess(_("Container avviato correttamente"));
                 reloadAllDatatable();
             } else {
                 defaultError();
@@ -106,7 +106,7 @@ function stop(value) {
         type: "POST",
         success: function (res) {
             if (JSON.parse(res).result) {
-                defaultSuccess("Container fermato correttamente");
+                defaultSuccess(_("Container fermato correttamente"));
                 reloadAllDatatable();
             } else {
                 defaultError();
@@ -180,17 +180,17 @@ $(document).ready(function () {
     //
     table = $('#DockerList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
 
         columnDefs: [{

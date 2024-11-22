@@ -20,11 +20,11 @@
             <div class="modal-header">
                 <div class="col-md-12 col-sm-12 col-xs-12 no-padding-lr">
                     <div class="col-md-8 col-sm-8 col-xs-8">
-                        <h5 class="modal-title" id="mask-preview-modal-label">Mask</h5>
+                        <h5 class="modal-title" id="mask-preview-modal-label"><?= _('Mask') ?></h5>
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-3 no-padding-r">
                         <a download="default.bmp" id="download-mask">
-                            <button type="button" class="btn btn-success pull-right">Download</button>
+                            <button type="button" class="btn btn-success pull-right"><?= _('Download') ?></button>
                         </a>
                     </div>
                     <div class="col-md-1 col-sm-1 col-xs-1 no-padding-r">
@@ -54,7 +54,7 @@
                     <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
                     <div class="count" id="all-detections-number">0</div>
-                    <h3>Detection rilevate dalla stazione</h3>
+                    <h3><?= _('Detection rilevate dalla stazione') ?></h3>
 
                 </div>
             </div>
@@ -63,7 +63,7 @@
                     <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
                     <div class="count" id="month-detections-number">0</div>
-                    <h3>Detection rilevate nel mese corrente</h3>
+                    <h3><?= _('Detection rilevate nel mese corrente') ?></h3>
 
                 </div>
             </div>
@@ -72,7 +72,7 @@
                     <div class="icon"><i class="fa fa-calendar-check-o"></i>
                     </div>
                     <div class="count" id="day-detections-number">0</div>
-                    <h3>Detection rilevate oggi</h3>
+                    <h3><?= _('Detection rilevate oggi') ?></h3>
 
                 </div>
             </div>
@@ -134,7 +134,7 @@
                                 <div class='col-md-8 col-sm-8 col-xs-12 no-padding'>
                                     <div class='pull-right'>
                                         <div class='col-md-8'>
-                                            <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                            <label class='pull-right text-nowrap'><?= _('Abilita anteprima') ?></label>
                                         </div>
                                         <div class='col-md-4'>
                                             <label class='switch pull-left'>
@@ -203,7 +203,7 @@
                             <div id="cores">
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <label>RAM</label>
+                                <label><?= _('RAM') ?></label>
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
                                 <div class="progress">
@@ -213,7 +213,7 @@
                                 </div>
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
-                                <label>Disco</label>
+                                <label><?= _('Disco') ?></label>
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
                                 <div class="progress">
@@ -225,11 +225,83 @@
                         </div>
                     </div>
                 </div>
+
+ <!-- Dashboard di errore -->
+<div class="col-md-12 col-sm-12 col-xs-12">
+    <div class='x_panel'>
+        <div class='x_title no-padding-lr'>
+            <div class='clearfix'>
+                <div class='col-md-6 no-padding-l'>
+                    <h2><?= _('Stato del nodo') ?></h2>
+                </div>
+            </div>
+        </div>
+        <div class='x_content'>
+            <div class="error-container">
+                <h5><?= _('Errori rilevati:') ?></h5>
+                <?php 
+                if (!empty($verrors)): ?>
+                    <div id="error-message"> 
+                        <?php foreach ($verrors as $e): ?>
+                            <p><?= htmlspecialchars($e) ?></p> 
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div id="error-message">
+                        <?= _('Nessun errore rilevato') ?>
+                    </div>
+                <?php endif; ?>
+            
+            </div>
+
+            <div class="status-container">
+                <h5><?= _('Messaggi di stato:') ?></h5>
+                <?php 
+                if (!empty($vstatus)): ?>
+                    <div id="status-message"> 
+                        <?php foreach ($vstatus as $s): ?>
+                            <p><?= htmlspecialchars($s) ?></p> 
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div id="status-message">
+                        <?= _('Nessun messaggio di stato') ?>
+                    </div>
+                <?php endif; ?>
+            
+            </div> 
+
+            <!-- Stato della VPN -->
+            <div class="vpn-status-container">
+                <h5><?= _('Stato della VPN:') ?></h5>
+                <div id="home-ovpn" style="font-weight: bold;"></div>
+                <div id="home-ovpn-description"></div> 
+                <div id="ip-status"></div> 
+                 
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
             </div>
         </div>
     </div>
     <div class="row" style="height: 20px;"></div>
 </div>
+
+
+
+
+
+
+
+
+
+
 <?php
 include "./view/template/foot.php";
 ?>

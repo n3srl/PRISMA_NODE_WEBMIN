@@ -2,9 +2,13 @@
 //include $_SERVER['DOCUMENT_ROOT'].'/config/config.php';
 include $_SERVER['DOCUMENT_ROOT'].'/lib/core/v1/autoloadBase.php';
 //session_start();
+//require_once __DIR__ . '/lib/core/v1/logic/PrismaMultilanguage.php'; 
 
+$language = $_SESSION["lang"] ?? "it_IT";
+
+$multilanguageInstance = PrismaMultilanguage::getInstance($language);
 define('_VERSION_', '?ver=5.3.4');
-
+session_start();
 
 if ($db_rdbms == 'PostgreSQL'){
     $connect_string = "host=$db_host port=$db_port dbname=$db_name user=$db_user password=$db_pass";
@@ -14,12 +18,6 @@ if ($db_rdbms == 'PostgreSQL'){
     }
 } else {
 	
-//    $db_conn = mysqli_connect($db_host . ":" . $db_port, $db_user, $db_pass,$db_name) or die;
-    
-//$db_conn = mysqli_connect($db_host ,$db_user, $db_pass,$db_name,$db_port);
-//mysqli_select_db($db_conn,$db_name) or die;
-//mysqli_set_charset($db_conn, "utf8");
-  // mysqli_select_db($db_conn,$db_name) or die;
 }
 
 function __autoload_libraries($name) {

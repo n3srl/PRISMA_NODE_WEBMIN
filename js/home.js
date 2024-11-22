@@ -3,6 +3,8 @@
  * @author: N3 S.r.l.
  */
 
+
+
 $(setDetectionVisibility());
 var inafdetection = new DetectionModel('V2');
 var lastEditId = '';
@@ -64,7 +66,7 @@ function geMap(row) {
 // Create detection zip
 function getZip(row) {
     var data = table.rows(row).data()[0];
-    defaultSuccess("Il tuo download inizierà tra qualche minuto");
+    defaultSuccess(_("Il tuo download inizierà tra qualche minuto"));
     isProcessingZip = true;
     zipRow = row;
     $('#DetectionList').dataTable().fnDraw();
@@ -83,7 +85,7 @@ function getZip(row) {
 // Create detection video
 function getVideo(row) {
     var data = table.rows(row).data()[0];
-    defaultSuccess("Il download del video inizierà tra qualche minuto");
+    defaultSuccess(_("Il download del video inizierà tra qualche minuto"));
     isProcessingVideo = true;
     videoRow = row;
     $('#DetectionList').dataTable().fnDraw();
@@ -145,7 +147,7 @@ function cancelVideo() {
         global: false,
         url: "/lib/detection/V2/detection/video/cancel",
         success: function (json) {
-            defaultError("Video annullato");
+            defaultError(_("Video annullato"));
         }
     });
     $('#DetectionList').dataTable().fnDraw();
@@ -269,17 +271,17 @@ function initDetectionsDatatable(folder) {
     var groupColumn = 1;
     table = $('#DetectionList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
         columnDefs: [
             {
@@ -295,10 +297,10 @@ function initDetectionsDatatable(folder) {
                 "targets": [-8],
                 render: function (data, type, row, meta) {
                     if (isProcessingZip && meta.row === zipRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + _("<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>");
                     }
                     if (isProcessingVideo && meta.row === videoRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + _("<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>");
                     }
                     return data;
                 }
@@ -436,6 +438,7 @@ function initDetectionsDatatable(folder) {
 
 $(document).ready(function () {
 
+    StatusVPN();
     // Get last day folder name to get last day detections
     $.get("/lib/ft/V2/freeturefinal/id/STATION_CODE", function (json1) {
         var id = JSON.parse(json1).data;
@@ -517,6 +520,43 @@ $(document).ready(function () {
 
     storageInfo();
 });
+
+
+
+// Show ovpn status
+function StatusVPN() {
+    $.ajax({
+        url: "/lib/ovpn/V2/ovpn/status",
+        type: "GET",
+        success: function (res) {
+            var vpnStatus = JSON.parse(res).data;
+            var vpnIP = '';
+
+            if (vpnStatus === '') {
+                //NON ATTIVA
+                $('#home-ovpn').css({'color': '#b52c1d', 'font-weight': 'bold'});
+                $('#home-ovpn').text(_("VPN non attiva"));
+                $('#home-ovpn-description').html(''); //se non attiva non ho ip
+            } else {
+                var ipMatch = vpnStatus.match(/inet\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
+                if (ipMatch) {
+                    vpnIP = ipMatch[1]; //trovato ip
+                }
+                if(vpnIP.startsWith("11")){
+                    $('#ip-status').text(_("Accesso VPN come PRISMA"));
+                }else if(vpnIP.startsWith("10")){
+                    $('#ip-status').text(_("Accesso VPN come GUEST"));
+                }
+
+                //ATTIVA
+                $('#home-ovpn').css({'color': '#35b85a', 'font-weight': 'bold'});
+                $('#home-ovpn').text(_("VPN Attiva"));
+                $('#home-ovpn-description').html(vpnIP ? 'IP: ' + vpnIP : '');
+            }
+        }
+    });
+}
+
 
 
 

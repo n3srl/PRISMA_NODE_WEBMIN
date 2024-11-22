@@ -37,7 +37,7 @@ try {
 } catch (SecurityException $ex) {
     $class = "home";
     $operazione = "error";
-    $error = "Autorizzazione negata";
+    $error = _("Autorizzazione negata");
 }
 
 

@@ -387,5 +387,21 @@ $app->GET('/detection/counter/all', function (Application $app, Request $request
     return $resp;
 });
 
+
+
+/**
+ *
+ * GET DETECTION DURATION
+ *
+ * */
+$app->POST('/detection/duration', function (Application $app, Request $request, $detection) {
+    $duration = DetectionApiLogic::getDetectionDuration($detection);
+    return new Response(json_encode(['duration' => $duration]), 200);
+});
+
+
+
+
+
 $app->run();
 

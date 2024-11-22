@@ -66,7 +66,7 @@ function undoObj() {
     var f = function () {
         editObj(inafdetection.id);
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 function setIndexToShow() {
@@ -75,8 +75,10 @@ function setIndexToShow() {
 
 // Enable detections previews
 $("#enable-detection-preview").on('change', function (event) {
+    var currentPage = table2.page();
     isPreviewEnabled = $("#enable-detection-preview").is(":checked");
     $('#DetectionList').dataTable().fnDraw();
+    table2.page(currentPage).draw(false);
 });
 
 // Show modal with detection preview and timestamp
@@ -84,7 +86,7 @@ function preview(row) {
     var data = table2.rows(row).data()[0];
     var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("Detection del " + info[0] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html(_("Detection del ") + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -94,7 +96,7 @@ function dirMap(row) {
     var data = table2.rows(row).data()[0];
     var info = data[1].split(":");
     $('#detection-preview-modal').modal('show');
-    $('#detection-preview-modal-label').html("DirMap del " + info[0] + " (" + data[2] + ")");
+    $('#detection-preview-modal-label').html(_("DirMap del ") + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[4] + '"/>';
     $('#detection-preview-modal-body').html(body);
 }
@@ -112,7 +114,7 @@ function geMap(row) {
 // Create detection zip
 function getZip(row) {
     var data = table2.rows(row).data()[0];
-    defaultSuccess("Il tuo download inizierà tra qualche minuto");
+    defaultSuccess(_("Il tuo download inizierà tra qualche minuto"));
     isProcessingZip = true;
     zipRow = row;
     $('#DetectionList').dataTable().fnDraw();
@@ -131,7 +133,7 @@ function getZip(row) {
 // Create detection video
 function getVideo(row) {
     var data = table2.rows(row).data()[0];
-    defaultSuccess("Il download del video inizierà tra qualche minuto");
+    defaultSuccess(_("Il download del video inizierà tra qualche minuto"));
     isProcessingVideo = true;
     videoRow = row;
     $('#DetectionList').dataTable().fnDraw();
@@ -176,7 +178,7 @@ function cancelZip() {
         global: false,
         url: "/lib/detection/V2/detection/zip/cancel",
         success: function (json) {
-            defaultError("Zip annullato");
+            defaultError(_("Zip annullato"));
         }
     });
     $('#DetectionList').dataTable().fnDraw();
@@ -193,7 +195,7 @@ function cancelVideo() {
         global: false,
         url: "/lib/detection/V2/detection/video/cancel",
         success: function (json) {
-            defaultError("Video annullato");
+            defaultError(_("Video annullato"));
         }
     });
     $('#DetectionList').dataTable().fnDraw();
@@ -201,7 +203,7 @@ function cancelVideo() {
 
 $(window).bind('beforeunload', function () {
     if (isProcessingZip || isProcessingVideo) {
-        return 'Se lasci o ricarichi la pagina i download correnti verranno interrotti. Vuoi continuare lo stesso?';
+        return _('Se lasci o ricarichi la pagina i download correnti verranno interrotti. Vuoi continuare lo stesso?');
     }
 });
 
@@ -221,21 +223,23 @@ $(window).unload(function () {
 });
 
 $(document).ready(function () {
-
+    $.getJSON('/lib/detection/V2/detection/datatable/filelist', function(data) {
+        console.log(data);  // Mostra i dati restituiti dal server
+    });
     // Create days datatable
     table1 = $('#DetectionDayList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
         columnDefs: [
             {
@@ -307,18 +311,19 @@ $(document).ready(function () {
 function initDetectionsDatatable() {
     var groupColumn = 1;
     table2 = $('#DetectionList').DataTable({
+        stateSave: true,
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
         columnDefs: [
             {
@@ -331,19 +336,19 @@ function initDetectionsDatatable() {
                 "targets": [-1, -2, -3, -4, -5]
             },
             {
-                "targets": [-8],
+                "targets": [-7],
                 render: function (data, type, row, meta) {
                     if (isProcessingZip && meta.row === zipRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + _("<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione zip in corso...</div>");
                     }
                     if (isProcessingVideo && meta.row === videoRow) {
-                        return "<div class='col-md-12'>" + data + "</div>" + "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>";
+                        return "<div class='col-md-12'>" + data + "</div>" + _("<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>");
                     }
                     return data;
                 }
             },
             {
-                "targets": [-5],
+                "targets": [-6],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -355,7 +360,7 @@ function initDetectionsDatatable() {
                 }
             },
             {
-                "targets": [-4],
+                "targets": [-5],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -367,7 +372,7 @@ function initDetectionsDatatable() {
                 }
             },
             {
-                "targets": [-3],
+                "targets": [-4],
                 render: function (data, type, row, meta) {
                     var disabled = "";
                     if (!isPreviewEnabled) {
@@ -379,7 +384,7 @@ function initDetectionsDatatable() {
                 }
             },
             {
-                "targets": [-2],
+                "targets": [-3],
                 render: function (data, type, row, meta) {
                     if (isProcessingVideo && meta.row === videoRow) {
                         return "<center>" +
@@ -396,7 +401,7 @@ function initDetectionsDatatable() {
                 }
             },
             {
-                "targets": [-1],
+                "targets": [-2],
                 render: function (data, type, row, meta) {
                     if (isProcessingZip && meta.row === zipRow) {
                         return "<center>" +
@@ -411,6 +416,15 @@ function initDetectionsDatatable() {
                             "<button class='btn btn-success' " + disabled + " onclick= 'getZip(" + meta.row + ")'><i class='fa fa-download'></i></button>" +
                             "</center>";
                 }
+            },     
+            {
+                    "targets": [-1],
+                    "data": null, 
+                    "render": function (data, type, row, meta) {
+                 
+                       console.log(data);
+                        return data[8]; 
+                    }
             },
             {
                 "visible": false,
@@ -432,6 +446,7 @@ function initDetectionsDatatable() {
                 aoData.push({"name": "date", "value": $('#F_date').val()});
             if ($("." + $.md5('hour')).is(":visible"))
                 aoData.push({"name": "hour", "value": $('#F_hour').val()});
+            console.log(aoData);
         },
         rowGroup: {
             startRender: function (rows, group) {

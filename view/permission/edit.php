@@ -23,7 +23,7 @@
                     <div class='x_panel filter-container'>
                         <div class='x_title filter-title-container collapse-link'>
                             <div class='filter-title'>
-                                <h2 class='font-15'>Filtra per...</h2>
+                                <h2 class='font-15'><?= _('Filtra per...') ?></h2>
                                 <ul class='nav navbar-right panel_toolbox'>
                                     <li><a class='black'><i class='fa fa-chevron-down'></i></a>
                                     </li>

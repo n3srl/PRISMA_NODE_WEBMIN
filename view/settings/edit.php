@@ -1,3 +1,6 @@
+
+
+
 <div class="right_col" role="main">
     <div class="">
         <div class="page-title">
@@ -21,7 +24,7 @@
                         <div class='x_content'>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
                                 <div class='col-md-8'>
-                                    <label style="font-size:14px;">Abilita possibilità di visualizzare le anteprime</label>
+                                    <label style="font-size:14px;"><?= _('Abilita possibilità di visualizzare le anteprime') ?></label>
                                 </div>
                                 <div class='col-md-4'>
                                     <label class='switch pull-right' style='vertical-align: middle;'>
@@ -32,7 +35,7 @@
                             </div>
                             <div class='col-md-12 col-sm-12 col-xs-12'>
                                 <div class='col-md-8'>
-                                    <label style="font-size:14px;">Abilita possibilità di scaricare video e zip</label>
+                                    <label style="font-size:14px;"><?= _('Abilita possibilità di scaricare video e zip') ?></label>
                                 </div>
                                 <div class='col-md-4'>
                                     <label class='switch pull-right' style='vertical-align: middle;'>
@@ -68,6 +71,33 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-12 col-sm-12 col-xs-12"> 
+    <div class="x_panel">
+        <div class="x_title no-padding-lr">
+            <div class="clearfix">
+                <div class="col-md-6 no-padding-l">
+                    <h2><?= _('Lingua') ?></h2> 
+                </div>
+            </div>
+        </div>
+        <div class="x_content">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <label id="mediausagelbl"></label>
+                <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES) ?>">
+                   <h5> <label for="language"><?= _('Seleziona Lingua') ?>:</label> </h5>
+                    <?php PrismaMultilanguage::getViewOptions(); ?>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+   
+
+
+
+
 </div>
 <?php
 include "./view/template/foot.php";

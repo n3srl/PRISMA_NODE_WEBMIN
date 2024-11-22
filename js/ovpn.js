@@ -25,7 +25,7 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (res) {
-                defaultSuccess("Configurazione caricata correttamente");
+                defaultSuccess(_("Configurazione caricata correttamente"));
                 $("#uploadovpnbtn").attr('disabled', true);
                 $('#form-ovpncfg').val('');
                 showStatus();
@@ -47,10 +47,10 @@ function showStatus() {
             var vpnStatus = JSON.parse(res).data;
             if (vpnStatus === '') {
                 $('#status-ovpn').css({'color': '#b52c1d', 'font-weight': 'bold'}); // Stato NON ATTIVA, rosso
-                $('#status-ovpn').text("VPN non attiva");
+                $('#status-ovpn').text(_("VPN non attiva"));
             } else {
                 $('#status-ovpn').css({'color': '#35b85a', 'font-weight': 'bold'}); // Stato ATTIVA, verde
-                $('#status-ovpn').text("VPN Attiva");
+                $('#status-ovpn').text(_("VPN Attiva"));
             }
             $('#status-ovpn-description').html(vpnStatus);
         }

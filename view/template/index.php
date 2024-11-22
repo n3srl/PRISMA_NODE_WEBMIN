@@ -1,4 +1,9 @@
-<?php ?>
+<?php 
+$locale = PrismaMultilanguage::getLocale();
+$loc_path = $_SERVER['DOCUMENT_ROOT']."/locale/$locale/LC_MESSAGES/messages.po";
+$poContent = po_read($loc_path); 
+?>
+
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -58,7 +63,13 @@
 
         <link rel="preload" href="/img/loading.gif" as="image">
 
-    </head>
+ <script type="text/javascript" src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/translations.js<?= _VERSION_ ?>"></script>
+
+<script>
+    let prismatranslation = parsePo(`<?php echo $poContent ?>`);
+</script>
+
+</head>
 
 
     <?php
@@ -76,7 +87,7 @@
             <div class="main_container">
                 <div id="stailavorandocome" class="row" style="height: 40px;background-color: orange; display: none">
                     <div class="col-md-11" style="margin-left: 10px;color: black">
-                        <h4>Stai lavorando come Cliente 1</h4>
+                        <h4><?= _('Stai lavorando come Cliente 1') ?></h4>
                     </div>
                 </div>
                 <?php

@@ -59,27 +59,27 @@
                     <div class='x_content'>
                         <div class='col-md-2 col-sm-2 col-xs-12'>
                             <div class = 'btn btn-success camera-control-function' id = "camera-control-list">
-                                List
+                            <?= _('List') ?>
                             </div>
                         </div>
                         <div class='col-md-2 col-sm-2 col-xs-12'>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-reset">
-                                Reset
+                            <?= _('List Reset') ?>
                             </div>
                         </div>
                         <div class='col-md-2 col-sm-2 col-xs-12'>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-freset">
-                                FactoryReset
+                            <?= _('FactoryReset') ?> 
                             </div>
                         </div>
                         <div class='col-md-2 col-sm-2 col-xs-12'>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-features">
-                                Features
+                            <?= _('Features') ?> 
                             </div>
                         </div>
                         <div class='col-md-2 col-sm-2 col-xs-12'>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-values">
-                                Values
+                            <?= _('Values') ?> 
                             </div>
                         </div>
                         
@@ -87,10 +87,10 @@
                     <br>
                     <div class='x_content'>
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <h3>Comando custom</h3><small>[inserisci il comando senza scrivere arv-tool-0.8]</small>
+                            <h3><?= _('Comando custom') ?></h3><small><?= _('[inserisci il comando senza scrivere arv-tool-0.8]') ?></small>
                             <textarea rows="5" style="min-width:500px; width:100%;" id="camera-control-in"></textarea>
                             <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera-control-send">
-                                Invia comando
+                            <?= _('Invia comando') ?>
                             </div>
                         </div>
                     </div>
@@ -131,26 +131,26 @@
                             
                             <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">Esposizione per la calibrazione</small>
+                                    <small class = "text-muted"><?= _('Esposizione per la calibrazione') ?></small>
                                     <input type = 'number' id = "calibration_exp" class = "form-control col-md-7 col-xs-12" value = "1000">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">MinGain</small>
+                                    <small class = "text-muted"><?= _('MinGain') ?></small>
                                     <input type = 'number' id = "calibration_minGain" class = "form-control col-md-7 col-xs-12" value = "">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">MaxGain</small>
+                                    <small class = "text-muted"><?= _('MaxGain') ?></small>
                                     <input type = 'number' id = "calibration_maxGain" class = "form-control col-md-7 col-xs-12" value = "">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">GainStep</small>
+                                    <small class = "text-muted"><?= _('GainStep') ?></small>
                                     <input type = 'number' id = "calibration_step" class = "form-control col-md-7 col-xs-12" value = "1">
                                 </div>
                                 <div class='col-md-2 no-padding-l'>
-                                    <small class = "text-muted">Freeture</small>
+                                    <small class = "text-muted"><?= _('Freeture') ?></small>
                                     <select id = "calibration_freeture" class = "form-control col-md-7 col-xs-12">
-                                        <option selected value = 'n3srl/freeture13'>Freeture13</option>
-                                        <option value = 'n3srl/freeture'>Freeture</option>
+                                        <option selected value = 'n3srl/freeture13'><?= _('Freeture13') ?></option>
+                                        <option value = 'n3srl/freeture'><?= _('Freeture') ?></option>
                                     </select>
                                 </div>
                                 
@@ -163,7 +163,7 @@
                                     
                                     <div class='col-md-2 no-padding-l'>
                                         <div class = 'btn btn-success btn-blue-success camera-control-function' id = "camera_calibration">
-                                            Calibrazione
+                                        <?= _('Calibrazione') ?>
                                         </div>
                                     </div>
                                     
@@ -179,7 +179,7 @@
                             
                             <div class='col-md-12 col-sm-12 col-xs-12 no-padding'>
                                 <div class='col-md-4 alert alert-success'>
-                                    Una calibrazione e gia in corso
+                                <?= _('Una calibrazione e gia in corso') ?>
                                 </div>
                                 
                             </div>
@@ -196,8 +196,8 @@
                                 <table class = "table table-striped table-bordered dataTable no-footer dtr-inline">
                                     <thead>
                                         <tr>
-                                            <th>Calibrazione</th>
-                                            <th>Data calibrazione</th>
+                                            <th><?= _('Calibrazione') ?></th>
+                                            <th><?= _('Data calibrazione') ?></th>
                                             <th></th>
                                             <th></th>
                                         </tr>

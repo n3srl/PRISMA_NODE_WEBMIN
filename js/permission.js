@@ -43,7 +43,7 @@ function undoObj() {
     var f = function () {
         editObj(core_permission.id);
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 function setIndexToShow() {
@@ -53,17 +53,17 @@ function setIndexToShow() {
 $(document).ready(function () {
     $('#PermissionList').dataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
         "columnDefs": [{
                 "targets": [-2, -3],

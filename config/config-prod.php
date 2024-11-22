@@ -12,10 +12,10 @@ $db_port = '8889';
 date_default_timezone_set('UTC');
 
 define('_DB_NAME_', $db_name);
-define('_EXTLIB_', '/var/www/html/ext_lib/');
-define('_WEBROOTDIR_', '/var/www/html/');
+define('_EXTLIB_', BASE_PATH.'ext_lib/');
+define('_WEBROOTDIR_', BASE_PATH);
 define('_IMGFILEURL_', 'http://34.78.124.10/img/');
-define('_FILEUPLADPATH_', '/var/www/html/export');
+define('_FILEUPLADPATH_', BASE_PATH.'export');
 
 define('_ENABLEWAREHOUSE_', false);
 
@@ -38,7 +38,7 @@ define('_DOCKER_SSH_PRI_', '/keys/chiave');
 define('_DOCKER_SSH_PUB_', '/keys/chiave.pub');
 
 // Utils
-define('_CALIBRATION_PATH_','/var/www/html/calibration/');
+define('_CALIBRATION_PATH_', BASE_PATH.'calibration/');
 
 define('_DEFAULT_STATION_CODE_','DEFAULT');
 define('_DEFAULT_STATION_NAME_','DEFAULT');

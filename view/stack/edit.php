@@ -34,7 +34,7 @@
                             <div class='col-md-8 col-sm-8 col-xs-12 no-padding' id='enable-stack-preview-box'>
                                 <div class='pull-right'>
                                     <div class='col-md-8'>
-                                        <label class='pull-right text-nowrap'>Abilita anteprima</label>
+                                        <label class='pull-right text-nowrap'><?= _('Abilita anteprima') ?></label>
                                     </div>
                                     <div class='col-md-4'>
                                         <label class='switch pull-left'>

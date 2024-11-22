@@ -47,7 +47,7 @@
                                 <h2><?= _('Freeture logs') ?></h2>
                             </div>
                             <div class='col-md-6 no-padding-l'>
-                                <div id = "freeture-log-download" class = "btn btn-success btn-blue-success pull-right">Download</div>
+                                <div id = "freeture-log-download" class = "btn btn-success btn-blue-success pull-right"><?= _('Download') ?></div>
                             </div>
                         </div>
                     </div>

@@ -51,7 +51,7 @@ function defaultSubmitAjaxWithReload(e) {
             location.reload();
         },
         error: function () {
-            alert("Si è verificato un errore");
+            alert(_("Si è verificato un errore"));
         }
     });
 }
@@ -116,13 +116,13 @@ function errorMessage() {
 }
 
 function defaultDelete(service) {
-    if (!confirm("Vuoi proseguire?")) {
+    if (!confirm(_("Vuoi proseguire?"))) {
         return;
     }
     $("#" + service).submit();
 }
 function schedeDelete(service) {
-    if (!confirm("Vuoi proseguire?")) {
+    if (!confirm(_("Vuoi proseguire?"))) {
         return;
     }
     $.ajax({
@@ -131,7 +131,7 @@ function schedeDelete(service) {
         success: function (data) {
             drawTables();
         }, error: function (jqXHR, textStatus, errorThrown) {
-            alert("Si è verificato un errore");
+            alert(_("Si è verificato un errore"));
         }
     });
 }

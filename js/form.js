@@ -1,9 +1,9 @@
 validator.defaults.alerts = true;
-validator.message.empty = "Campo obbligatorio";
-validator.message.select = "Campo obbligatorio";
-validator.message.number_min = "Troppo basso";
-validator.message.number_max = "Troppo alto";
-validator.message.password_repeat = "Le password non corrispondono";
+validator.message.empty = _("Campo obbligatorio");
+validator.message.select = _("Campo obbligatorio");
+validator.message.number_min = _("Troppo basso");
+validator.message.number_max = _("Troppo alto");
+validator.message.password_repeat = _("Le password non corrispondono");
 
 $('form')
         .on('blur', 'input[required], input.optional, select.required', validator.checkField)
@@ -263,11 +263,11 @@ function reloadAllDatatable() {
 
 
 }
-function defaultSuccess(message = "Operazione avvenuta correttamente") {
+function defaultSuccess(message = _("Operazione avvenuta correttamente")) {
     alertSuccess("Successo", message);
 }
-function defaultError(message = "Si è verificato un errore imprevisto") {
-    alertError("Attenzione", message);
+function defaultError(message = _("Si è verificato un errore imprevisto")) {
+    alertError(_("Attenzione"), message);
 }
 
 function goToPreviousPage() {
@@ -559,7 +559,7 @@ function removeClass(objClass, id, safe, ...callBack) {
             objClass.delete(id, clean, ...callBack);
         }
     };
-    alertConfirm("Conferma", "Sei sicuro di voler cancellare l'elemento?", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler cancellare l'elemento?"), f);
 }
 function alertSuccess(title = "", message = "") {
     PNotify.prototype.options.delay = 8000;

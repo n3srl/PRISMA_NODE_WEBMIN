@@ -49,19 +49,42 @@ class FreetureFinalApiLogic {
             //$tmp = $request->get("data");
 
             $res = self::updateMaskFile($request);
-            If ($res) {
+            if ($res) {
                 $ob = new FreetureFinal();
                 $ob->id = self::getId("ACQ_MASK_ENABLED");
                 $ob->key = "ACQ_MASK_ENABLED";
                 $ob->value = "true";
                 //self::updateValue($ob);
+                $warning = self::checkRes(); 
             }
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
             return CoreLogic::GenerateErrorResponse($a->message);
         }
-        return CoreLogic::GenerateResponse($res);
+        $res = CoreLogic::GenerateResponse($res);
+        if (isset($warning)) {
+            $res->warning = $warning;
+
+        }
+        return $res;
     }
+    
+    public function checkRes() {
+        $configPath = '/usr/local/share/freeture/configuration.cfg';
+        $maskPath = '/freeture/default.bmp';
+        list($mw, $mh) = getimagesize($maskPath);
+        $id= self::getId("ACQ_RES_SIZE");
+        $ob=self::getCfg("$id");
+        $expRes=$ob-> value;
+        list($expW, $expH) = explode('x', $expRes);
+        if ($mw != $expW || $mh != $expH) {
+            return "Warning: La risoluzione della maschera: $mw x $mh non coincide con quella attesa: $expW x $expH";
+        }else{
+            return null;
+        }
+           
+    }
+    
 
     public static function Update($request) {
 

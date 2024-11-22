@@ -29,7 +29,7 @@
                                             <input class="form-control" name="configuration" type="file" accept=".ovpn" id="form-ovpncfg">
                                         </div>
                                         <div class='col-md-2 no-padding'>
-                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadovpnbtn' value='CARICA' disabled="true" class='btn btn-success pull-right' >
+                                            <input type = 'submit' style= 'margin-right: 10px;' id= 'uploadovpnbtn' value=<?= _('CARICA') ?> disabled="true" class='btn btn-success pull-right' >
                                         </div>
                                     </form>
                                 </div>

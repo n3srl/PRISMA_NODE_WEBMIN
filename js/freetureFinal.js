@@ -62,7 +62,7 @@ function undoObj() {
     var f = function () {
         editObj(inaffreeturefinal.id);
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 function setIndexToShow() {
@@ -72,17 +72,17 @@ function setIndexToShow() {
 $(document).ready(function () {
     table = $('#FreetureFinalList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
         "columnDefs": [
             {
@@ -183,7 +183,7 @@ $("#ftCfgFileForm").on("submit", function (e) {
         contentType: false,
         success: function (res) {
             reloadAllDatatable();
-            defaultSuccess("Configurazione caricata correttamente");
+            defaultSuccess(_("Configurazione caricata correttamente"));
             $("#uploadftbtn").attr('disabled', true);
             $('#form-ftcfg').val('');
         }
@@ -207,9 +207,15 @@ $("#maskFileForm").on("submit", function (e) {
         contentType: false,
         success: function (res) {
             reloadAllDatatable();
-            defaultSuccess("Maschera caricata correttamente");
+            defaultSuccess(_("Maschera caricata correttamente"));
             $("#uploadmaskbtn").attr('disabled', true);
             $('#form-mask').val('');
+            if (typeof res === "string") {
+                res = JSON.parse(res);
+            }
+            if (res.warning) {
+                alert(res.warning); 
+            }
         }
     });
 

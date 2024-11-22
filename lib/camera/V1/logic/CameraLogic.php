@@ -138,7 +138,7 @@ class CameraLogic
         {
             return array(
                 "res" => true,
-                "data" => "Una calibrazione e gia in corso"
+                "data" => _("Una calibrazione e gia in corso")
             );
         }
 
@@ -280,7 +280,7 @@ class CameraLogic
 
         return array(
             "res" => true,
-            "data" => "Calibrazione iniziata, presto disponibile"
+            "data" => _("Calibrazione iniziata, presto disponibile")
         );
 
 	}
@@ -294,7 +294,7 @@ class CameraLogic
 
         if($count == 0)
         {
-            $data = "<tr><td>Nessuna calibrazione recente</td></tr>";
+            $data = _("<tr><td>Nessuna calibrazione recente</td></tr>");
         } else 
         {
             $data = "";

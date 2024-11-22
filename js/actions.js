@@ -1,5 +1,5 @@
 function verify() {
-    msg = "Sei sicuro di voler eliminare?";
+    msg = _("Sei sicuro di voler eliminare?");
     //all we have to do is return the return value of the confirm() method
     return confirm(msg);
 }
@@ -11,13 +11,13 @@ function submitForm(d) {
 function submitFormWithCheck(d) {
 
     //alert("Procedere con l'eliminazione?");
-    if (confirm("Vuoi perocedere con l'eliminazione?")) {
+    if (confirm(_("Vuoi procedere con l'eliminazione?"))) {
 
         document.getElementById(d).submit();
 
         return true;
     } else
-        alert("Eliminazione annullata.");
+        alert(_("Eliminazione annullata."));
     {
         return false;
     }

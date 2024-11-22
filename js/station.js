@@ -49,7 +49,7 @@ function saveStation() {
                 ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "ACQ_MASK_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/default.bmp";
+                ft.value = "/freeture/default.bmp";
                 break;
             case "DET_DEBUG_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/debug/";
@@ -67,14 +67,15 @@ function saveStation() {
 }
 
 async function updateValues() {
-    await Promise.all([
-        freetureObjects.forEach(ft => {
-            ft.insert();
+   
+    await Promise.all(
+        freetureObjects,forEach(ft => {
+            ft.insert(); 
         })
-    ]);
+    );
 
     reloadAllDatatable();
-    loadValues();
+    loadValues(); 
 }
 
 // For each field load the actual value and creates the objects
@@ -124,7 +125,7 @@ function undoStation() {
         editStation();
         loadValues();
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 // Enable form fields

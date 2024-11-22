@@ -57,7 +57,7 @@ function undoObj() {
     var f = function () {
         editObj(inafcapture.id);
     };
-    alertConfirm("Conferma", "Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse", f);
+    alertConfirm(_("Conferma"), _("Sei sicuro di voler annullare le modifiche? Le modifiche non salvate andranno perse"), f);
 }
 
 function setIndexToShow() {
@@ -69,15 +69,17 @@ function preview(row) {
     var data = table2.rows(row).data()[0];
     var info = data[1].split(":");
     $('#capture-preview-modal').modal('show');
-    $('#capture-preview-modal-label').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+    $('#capture-preview-modal-label').html(_("Calibrazione del ") + info[0] + " (" + data[2] + ")");
     var body = '<img class="img-responsive" src="' + data[3] + '"/>';
     $('#capture-preview-modal-body').html(body);
 }
 
 // Enable captures previews
 $("#enable-capture-preview").on('change', function (event) {
+    var currentPage = table2.page();
     isPreviewEnabled = $("#enable-capture-preview").is(":checked");
     $('#CaptureList').dataTable().fnDraw();
+    table2.page(currentPage).draw(false);
 });
 
 $(document).ready(function () {
@@ -85,17 +87,17 @@ $(document).ready(function () {
     // Create days datatable
     table1 = $('#CaptureDayList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
 
         columnDefs: [
@@ -159,7 +161,7 @@ $(document).ready(function () {
         var data = JSON.parse(json).data;
         if (data) {
             var info = data[1].split(":");
-            $('#last-capture-description').html("Calibrazione del " + info[0] + " (" + data[2] + ")");
+            $('#last-capture-description').html(_("Calibrazione del ") + info[0] + " (" + data[2] + ")");
             $('#last-capture-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
         }
     });
@@ -175,17 +177,17 @@ function initCapturesDatatable() {
     var collapsedGroups = {};
     table2 = $('#CaptureList').DataTable({
         "oLanguage": {
-            "sZeroRecords": "Nessun risultato",
-            "sSearch": "Cerca:",
+            "sZeroRecords": _("Nessun risultato"),
+            "sSearch": _("Cerca:"),
             "oPaginate": {
-                "sPrevious": "Indietro",
-                "sNext": "Avanti"
+                "sPrevious": _("Indietro"),
+                "sNext": _("Avanti")
             },
-            "sInfo": "Mostra pagina _PAGE_ di _PAGES_",
+            "sInfo": _("Mostra pagina _PAGE_ di _PAGES_"),
             "sInfoFiltered": "",
-            "sInfoEmpty": "Mostra pagina 0 di 0 elementi",
-            "sEmptyTable": "Nessun risultato",
-            "sLengthMenu": "Mostra _MENU_ elementi"
+            "sInfoEmpty": _("Mostra pagina 0 di 0 elementi"),
+            "sEmptyTable": _("Nessun risultato"),
+            "sLengthMenu": _("Mostra _MENU_ elementi")
         },
 
         columnDefs: [
