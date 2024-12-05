@@ -8,3 +8,8 @@ and open the template in the editor.
     Author     : Alessandro
 */
 
+.language_selector_home {
+    position: absolute;
+    top: 20;
+    right: 20;
+}

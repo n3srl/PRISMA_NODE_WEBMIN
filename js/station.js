@@ -23,8 +23,7 @@ function allowEditStation() {
 // For each element to change assign the new value and send a post request
 function saveStation() {
 
-    disableStationForm();
-
+   disableStationForm();
     freetureObjects.forEach(ft => {
         switch (ft.key) {
             case "OBSERVER":
@@ -49,7 +48,7 @@ function saveStation() {
                 ft.value = $('#station-code').val().toUpperCase();
                 break;
             case "ACQ_MASK_PATH":
-                ft.value = "/freeture/default.bmp";
+                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/default.bmp";
                 break;
             case "DET_DEBUG_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/debug/";
@@ -60,27 +59,46 @@ function saveStation() {
             case "LOG_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/log/";
                 break;
+            case "ACQ_REGULAR_PRFX":
+                ft.value = $('#station-code').val().toUpperCase();
+                break;   
         }
     });
-    
     updateValues();
 }
 
-async function updateValues() {
-   
-    await Promise.all(
-        freetureObjects,forEach(ft => {
-            ft.insert(); 
-        })
-    );
 
-    reloadAllDatatable();
-    loadValues(); 
+async function updateValues() {
+
+    const filtered = freetureObjects.filter(ft => keys.includes(ft.key));
+
+    let settings = {
+        type :"PUT",
+        url: "/lib/ft/V2/freeturefinal/auto",
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: JSON.stringify(filtered),
+       }
+
+    const cbk = function(s) {
+        $.ajax(s).success(function (response) {
+            defaultSuccess();
+            reloadAllDatatable();
+            callBack.forEach(s => s.apply());
+        }).fail(function (xhr, status, error) {
+            let json = JSON.parse(xhr.responseText);
+            defaultError(json.message);
+        });
+    }
+       
+    getCSFR(settings, cbk);
+
 }
+
 
 // For each field load the actual value and creates the objects
 function loadValues() {
-
     keys.forEach(key => {
         $.get("/lib/ft/V2/freeturefinal/id/" + key, function (json1) {
             var id = JSON.parse(json1).data;

@@ -7,7 +7,7 @@
 class PrometheusController extends Controller
 {
 	public function editOperation() {
-		$permission = parent::securityCheck();
+		$permission = parent::securityCheck(2);
 		global $FreetureFinal;
 		global $params;
 		$par = 0;

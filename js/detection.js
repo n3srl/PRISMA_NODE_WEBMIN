@@ -224,7 +224,7 @@ $(window).unload(function () {
 
 $(document).ready(function () {
     $.getJSON('/lib/detection/V2/detection/datatable/filelist', function(data) {
-        console.log(data);  // Mostra i dati restituiti dal server
+       // console.log(data);  // Mostra i dati restituiti dal server
     });
     // Create days datatable
     table1 = $('#DetectionDayList').DataTable({
@@ -422,7 +422,6 @@ function initDetectionsDatatable() {
                     "data": null, 
                     "render": function (data, type, row, meta) {
                  
-                       console.log(data);
                         return data[8]; 
                     }
             },
@@ -446,7 +445,6 @@ function initDetectionsDatatable() {
                 aoData.push({"name": "date", "value": $('#F_date').val()});
             if ($("." + $.md5('hour')).is(":visible"))
                 aoData.push({"name": "hour", "value": $('#F_hour').val()});
-            console.log(aoData);
         },
         rowGroup: {
             startRender: function (rows, group) {

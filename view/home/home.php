@@ -168,6 +168,62 @@
                         </div>
                     </div>
                 </div>
+                 <!-- Dashboard di errore -->
+                <div class="col-md-12 col-sm-12 col-xs-12 no-padding-r">
+                    <div class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Stato del nodo') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class="error-container">
+                                <h5><?= _('Errori rilevati:') ?></h5>
+                                <?php 
+                                if (!empty($verrors)): ?>
+                                    <div id="error-message"> 
+                                        <?php foreach ($verrors as $e): ?>
+                                            <p><?= htmlspecialchars($e) ?></p> 
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="error-message">
+                                        <?= _('Nessun errore rilevato') ?>
+                                    </div>
+                                <?php endif; ?>
+                            
+                            </div>
+
+                            <div class="status-container">
+                                <h5><?= _('Messaggi di stato:') ?></h5>
+                                <?php 
+                                if (!empty($vstatus)): ?>
+                                    <div id="status-message"> 
+                                        <?php foreach ($vstatus as $s): ?>
+                                            <p><?= htmlspecialchars($s) ?></p> 
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="status-message">
+                                        <?= _('Nessun messaggio di stato') ?>
+                                    </div>
+                                <?php endif; ?>
+                            
+                            </div> 
+
+                            <!-- Stato della VPN -->
+                            <div class="vpn-status-container">
+                                <h5><?= _('Stato della VPN:') ?></h5>
+                                <div id="home-ovpn" style="font-weight: bold;"></div>
+                                <div id="home-ovpn-description"></div> 
+                                <div id="ip-status"></div> 
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6 col-sm-12 col-xs-12 no-padding-lr">
                 <div class="col-md-12 col-sm-12 col-xs-12">
@@ -225,68 +281,6 @@
                         </div>
                     </div>
                 </div>
-
- <!-- Dashboard di errore -->
-<div class="col-md-12 col-sm-12 col-xs-12">
-    <div class='x_panel'>
-        <div class='x_title no-padding-lr'>
-            <div class='clearfix'>
-                <div class='col-md-6 no-padding-l'>
-                    <h2><?= _('Stato del nodo') ?></h2>
-                </div>
-            </div>
-        </div>
-        <div class='x_content'>
-            <div class="error-container">
-                <h5><?= _('Errori rilevati:') ?></h5>
-                <?php 
-                if (!empty($verrors)): ?>
-                    <div id="error-message"> 
-                        <?php foreach ($verrors as $e): ?>
-                            <p><?= htmlspecialchars($e) ?></p> 
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div id="error-message">
-                        <?= _('Nessun errore rilevato') ?>
-                    </div>
-                <?php endif; ?>
-            
-            </div>
-
-            <div class="status-container">
-                <h5><?= _('Messaggi di stato:') ?></h5>
-                <?php 
-                if (!empty($vstatus)): ?>
-                    <div id="status-message"> 
-                        <?php foreach ($vstatus as $s): ?>
-                            <p><?= htmlspecialchars($s) ?></p> 
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div id="status-message">
-                        <?= _('Nessun messaggio di stato') ?>
-                    </div>
-                <?php endif; ?>
-            
-            </div> 
-
-            <!-- Stato della VPN -->
-            <div class="vpn-status-container">
-                <h5><?= _('Stato della VPN:') ?></h5>
-                <div id="home-ovpn" style="font-weight: bold;"></div>
-                <div id="home-ovpn-description"></div> 
-                <div id="ip-status"></div> 
-                 
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-
-
             </div>
         </div>
     </div>

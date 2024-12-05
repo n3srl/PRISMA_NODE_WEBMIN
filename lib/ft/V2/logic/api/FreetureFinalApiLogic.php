@@ -47,8 +47,7 @@ class FreetureFinalApiLogic {
             $Person = CoreLogic::VerifyPerson();
             //CoreLogic::CheckCSRF($request->get("token"));
             //$tmp = $request->get("data");
-
-            $res = self::updateMaskFile($request);
+            $res = self::updateMaskFile($request->files->get('mask'));
             if ($res) {
                 $ob = new FreetureFinal();
                 $ob->id = self::getId("ACQ_MASK_ENABLED");
@@ -70,8 +69,7 @@ class FreetureFinalApiLogic {
     }
     
     public function checkRes() {
-        $configPath = '/usr/local/share/freeture/configuration.cfg';
-        $maskPath = '/freeture/default.bmp';
+        $maskPath = self::getMaskPath();
         list($mw, $mh) = getimagesize($maskPath);
         $id= self::getId("ACQ_RES_SIZE");
         $ob=self::getCfg("$id");
@@ -102,10 +100,25 @@ class FreetureFinalApiLogic {
             $res = self::updateValue($ob);
             self::restartFreeture();
         } catch (ApiException $a) {
-            CoreLogic::rollbackTransaction();
+            //CoreLogic::rollbackTransaction();
             return CoreLogic::GenerateErrorResponse($a->message);
         }
         return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    public static function UpdateAuto($tmp) {
+
+        try {
+            $ob = new FreetureFinal();
+            $ob->id = $tmp["id"];
+            $ob->key = $tmp["key"];
+            $ob->value = $tmp["value"];
+
+            $res = self::updateValue($ob);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public static function Erase($request) {
@@ -655,24 +668,7 @@ class FreetureFinalApiLogic {
 
     // Get path to mask file parsing freeture configuration
     public static function getMaskPath() {
-        $freetureConf = _FREETURE_;
-        $path = "";
-
-        if (file_exists($freetureConf) && is_file($freetureConf)) {
-            $contents = file($freetureConf);
-
-            //Parse config file line by line
-            foreach ($contents as $line) {
-
-                if (isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
-                        (strlen($line) - 1) !== substr_count($line, " ")) {
-                    if (self::getKey($line) === "ACQ_MASK_PATH") {
-                        $path = self::getValue($line);
-                    }
-                }
-            }
-        }
-        return $path;
+        return CoreLogic::GetMaskPath();
     }
 
     // Check if mask is enabled parsing freeture configuration

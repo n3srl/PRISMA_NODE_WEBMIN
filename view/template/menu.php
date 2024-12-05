@@ -25,15 +25,20 @@
             <div class="menu_section">
                 <ul class="nav side-menu">
 
-                    <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
-                        <li><a href="/person/edit"><i class="fa fa-user"></i><?= _('Utenti') ?></a></li>
+                    <?php  //SuperUser
+                    if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 2) {?>
                         <li><a href="/ovpn/edit"><i class="fa fa-wifi"></i><?= _('Configurazione OpenVPN') ?></a></li>
                         <li><a href="/prometheus/edit"><i class="fa fa-fire"></i><?= _('Stato node_exporter') ?></a></li>
-                        <li><a href="/docker/edit"><i class="fa fa-suitcase"></i><?= _('Stato Containers') ?></a></li>
                         <li><a href="/camera/control"><i class="fa fa-camera"></i><?= _('Camera Control') ?></a></li>
-                        <li><a href="/manutenzione/edit"><i class="fa fa-wrench"></i><?= _('Manutenzione') ?></a></li>
                     <?php } ?>
-                    <li><a href="/station/edit"><i class="fa fa-building"></i><?= _('Configurazione Freeture') ?></a></li>
+                    <?php  //Admin
+                    if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 1) {?>
+                        <li><a href="/person/edit"><i class="fa fa-user"></i><?= _('Utenti') ?></a></li>
+                        <li><a href="/docker/edit"><i class="fa fa-suitcase"></i><?= _('Stato Containers') ?></a></li>
+                        <li><a href="/station/edit"><i class="fa fa-building"></i><?= _('Configurazione Freeture')?></a></li>
+                        <li><a href="/manutenzione/edit"><i class="fa fa-wrench"></i><?= _('Manutenzione') ?></a></li>
+                    <?php } 
+                          //Guest?>
                     <li><a href="/capture/edit"><i class="fa fa-camera"></i><?= _('Calibrazioni') ?></a></li>
                     <li><a href="/stack/edit"><i class="fa fa-cubes"></i><?= _('Stack') ?></a></li>
                     <li><a href="/detection/edit"><i class="fa fa-star"></i><?= _('Detections') ?></a></li>
@@ -79,7 +84,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-usermenu pull-right">
                         <li><a href="#" id="logout" onclick="logout()"><i class="fa fa-sign-out pull-right"></i> <?= _("Log Out") ?></a>
-                            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+                            <?php if (CoreLogic::GetPersonLogged() != null) { ?>
                             <li><a href="/settings/edit" id="settings"><i class="fa fa-gear pull-right"></i> <?= _("Impostazioni") ?></a>
                             <?php } ?>
                     </ul>

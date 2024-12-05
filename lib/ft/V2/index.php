@@ -49,8 +49,8 @@ $app->POST('/freeturefinal/editconfiguration', function (Application $app, Reque
  *
  * */
 $app->POST('/freeturefinal/editmask', function (Application $app, Request $request) {
-
-    $result = FreetureFinalApiLogic::EditMask($request->files->get('mask'));
+    
+    $result = FreetureFinalApiLogic::EditMask($request);
     if ($result->result) {
         $resp = new Response(json_encode($result));
         $resp->setStatusCode(200);
@@ -78,6 +78,26 @@ $app->POST('/freeturefinal', function (Application $app, Request $request) {
     }
     return $resp;
 });
+
+
+$app->PUT('/freeturefinal/auto', function (Application $app, Request $request) {
+
+    $result = true;
+    
+    foreach($request->get("data") as $t) {
+        $result &= FreetureFinalApiLogic::UpdateAuto($t);
+    }
+
+    if ($result) {
+        $resp = new Response("OK");
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
 
 /**
  *

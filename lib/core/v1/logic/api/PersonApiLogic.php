@@ -37,7 +37,6 @@ class PersonApiLogic {
     }
 
     public static function Update($request) {
-
         try {
             $Person = CoreLogic::VerifyPerson();
             CoreLogic::CheckCSRF($request->get("token"));
@@ -366,14 +365,18 @@ class PersonApiLogic {
     // Parse users file to get users list
     public static function parseUsersFile() {
         $file = _PASSWD_;
-
+        $mylevel = CoreLogic::VerifyPermission();
         if (file_exists($file) && is_file($file)) {
             $contents = file($file);
 
             //Parse config file line by line
             foreach ($contents as $line) {
                 $array = explode(" ", $line);
-                $user[] = array($array[1], $array[2], $array[3], $array[4], str_replace("\n", "", $array[5]), $array[0]);
+                $level = str_replace("\n", "", $array[5]);
+
+                if(intval($mylevel) >= intval($level)) {
+                    $user[] = array($array[1], $array[2], $array[3], $array[4], $level, $array[0]);
+                }
             }
         }
         return $user;

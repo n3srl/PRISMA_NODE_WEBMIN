@@ -195,9 +195,17 @@ class DockerApiLogic {
             // Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
+                $sshCmd = "docker container ls -a --format \"{{.Names}} {{.Image}} {{.Status}}\"";
                 // Execute command to get containers
                 //https://www.baeldung.com/ops/docker-list-containers
-                $stream = ssh2_exec($session, "docker container ls -a --format \"{{.Names}} {{.Image}} {{.Status}}\"");
+                $mylevel = CoreLogic::VerifyPermission();
+                if(intval($mylevel) >= 2) {
+                    $sshCmd = $sshCmd . " | awk '$1 ~ /^(freeture|prisma-orma)$/'";
+                } else {
+                    $sshCmd = $sshCmd . " | awk '$1 ~ /^(freeture)$/'";
+                }
+                $stream = ssh2_exec($session, $sshCmd);
+
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $text = stream_get_contents($stream_out);
@@ -333,7 +341,7 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "docker logs freeture");
+                $stream = ssh2_exec($session, "docker logs --tail 100 freeture");
                 stream_set_blocking($stream, true);
                 $stream_out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
                 $cmd_out = stream_get_contents($stream_out);

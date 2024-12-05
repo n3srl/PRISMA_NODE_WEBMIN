@@ -543,9 +543,9 @@ function StatusVPN() {
                     vpnIP = ipMatch[1]; //trovato ip
                 }
                 if(vpnIP.startsWith("11")){
-                    $('#ip-status').text(_("Accesso VPN come PRISMA"));
-                }else if(vpnIP.startsWith("10")){
                     $('#ip-status').text(_("Accesso VPN come GUEST"));
+                }else if(vpnIP.startsWith("10")){
+                    $('#ip-status').text(_("Accesso VPN come PRISMA"));
                 }
 
                 //ATTIVA

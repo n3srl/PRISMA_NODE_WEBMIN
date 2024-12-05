@@ -745,7 +745,7 @@ class DetectionApiLogic {
         return $n_files;
     }
 
-
+//restituisce la durata in ms di ogni detection
     public static function GetDetectionDuration($detection) {
         $detection_folder = self::getDetectionBasePath($detection);
         $n_files = self::getDirectoryFilesCount($detection_folder);
@@ -755,4 +755,99 @@ class DetectionApiLogic {
         return $duration;
     } 
     
+
+function getStartAndEndDate($week, $year) {
+    $dto = new DateTime();
+    $dto->setISODate($year, $week);
+    $ret['week_start'] = $dto->format('Y-m-d');
+    $dto->modify('+6 days');
+    $ret['week_end'] = $dto->format('Y-m-d');
+    return $ret;
+  }
+  
+//restituisce le detection della settimana corrente e delle 4 precedenti, formato $date: "Y-m-d"
+  public static function getPrevWeeks($date) {
+    $detections = self::getWeeklyDetections(); 
+    $date_o = new DateTime($date); 
+    $Y = $date_o->format('o'); //ISO
+    $w = $date_o->format('W'); //ISO
+    $weekly_detections = [];
+
+    for ($i = 0; $i < 5; $i++) {
+        $w_offset = $w - $i;
+        $y_offset = $Y;
+
+        if ($w_offset < 1) { //settimana in anno precedente
+            $y_offset -= 1; 
+            $prev_w = (new DateTime())->setISODate($y_offset, 53)->format('W') === "53" ? 53 : 52; //setta all'ultima settimana 53 o 52 a seconda dell'anno
+            $w_offset += $prev_w;
+        }
+
+        $w_data = self::getStartAndEndDate($w_offset, $y_offset);
+        $w_key = "$y_offset-$w_offset"; //y-w iso
+
+        $weekly_detections[] = [
+            'week_start' => $w_data['week_start'],
+            'week_end' => $w_data['week_end'],
+            'detections' => $detections[$w_key] ?? 0
+        ];
+    }
+    return array_reverse($weekly_detections); 
+}
+
+
+public static function getWeeklyDetections() {
+    $path = _FREETURE_DATA_ . self::getStationCode() . "/";
+    $weekly_counts = [];
+    $w = null;
+    $n_det = 0;
+
+    try {
+
+        $dirs = array_filter(scandir($path), function($item) use ($path) { //filtra solo le directory
+            return is_dir($path . $item) && $item !== '.' && $item !== '..';
+        });
+
+        usort($dirs, function($a, $b) { //ordina in base alla data
+            $d1 = explode("_", $a)[1] ?? '';
+            $d2 = explode("_", $b)[1] ?? '';
+            return strcmp($d1, $d2); 
+        });
+
+        foreach ($dirs as $day) {
+
+            $dir_name = explode("_", $day); 
+            if (!isset($dir_name[1]) || !preg_match('/^\d{8}$/', $dir_name[1])) { //8 elem per data in formato YYYYMMDD
+                continue;
+            }
+
+            $datetime = DateTime::createFromFormat('Ymd', $dir_name[1]);
+            if (!$datetime) {
+                continue;
+            }
+            $w_y = $datetime->format('o-W');
+            if ($w !== $w_y) {
+                if ($w !== null) {
+                    $weekly_counts[$w] = $n_det;
+                }
+                $w = $w_y;
+                $n_det = 0; 
+            }
+
+            $e_path = $path . $day . "/events/*";
+            $c = self::getDirectoryFilesCount($e_path);
+
+            if ($c > 0) {
+                $n_det += $c;
+            } 
+        }
+        if ($w !== null) {
+            $weekly_counts[$w] = $n_det;
+        }
+    } catch (Exception $e) {
+        echo "Errore: " . $e->getMessage() . "\n";
+    }
+    return $weekly_counts;
+}
+
 }

@@ -7,7 +7,7 @@
 class OvpnController extends Controller
 {
 	public function editOperation() {
-		$permission = parent::securityCheck();
+		$permission = parent::securityCheck(2);
 		//global $Ovpn;
 		global $params;
 		$par = 0;

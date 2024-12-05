@@ -1,10 +1,12 @@
 <?php
 //include $_SERVER['DOCUMENT_ROOT'].'/config/config.php';
 include $_SERVER['DOCUMENT_ROOT'].'/lib/core/v1/autoloadBase.php';
-//session_start();
-//require_once __DIR__ . '/lib/core/v1/logic/PrismaMultilanguage.php'; 
+define("_DEFAULT_LANG_C", "en_US");
+define("_DEFAULT_LANG", "en");
+define("_DEFAULT_COUNTRY", "US");
 
-$language = $_SESSION["lang"] ?? "it_IT";
+PrismaMultilanguage::GetCurrentLocaleFromHeader();
+$language = $_SESSION["lang"] ?? PrismaMultilanguage::GetCurrentLocaleFromHeader();
 
 $multilanguageInstance = PrismaMultilanguage::getInstance($language);
 define('_VERSION_', '?ver=5.3.4');

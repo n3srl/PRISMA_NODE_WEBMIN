@@ -116,21 +116,27 @@ class OvpnApiLogic {
         $print = ssh2_fingerprint($session);
         $text2 = "";
 
+        $supported_interfaces = ["enp1s0", "eno2"];
+
         if ($session) {
 
-            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
 
-                    $stream2 = ssh2_exec($session, "ip address show eno2");
+                foreach($supported_interfaces as $interface) {
+                    $stream2 = ssh2_exec($session, "ip address show ".$interface);
                     stream_set_blocking($stream2, true);
                     $stream_out2 = ssh2_fetch_stream($stream2, SSH2_STREAM_STDIO);
-                    $text2 = stream_get_contents($stream_out2);
+                    $res = stream_get_contents($stream_out2);
+                    $text2 = $text2.str_replace("\n", "</br>",$res);
+                }
             }
+            
 
             unset($session);
         }
         
         $text2 = str_replace("\n", "</br>",$text2);
+        
         return $text2;
     }
 }

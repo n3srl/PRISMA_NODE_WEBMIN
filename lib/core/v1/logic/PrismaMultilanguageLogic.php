@@ -1,8 +1,7 @@
 <?php
-
 /*Lingue attualmente previste:
-    - italiano (default)
-    - inglese
+    - italiano 
+    - inglese (default)
     - portoghese
     - tedesco 
     - greco
@@ -67,7 +66,7 @@ define("UTF_16", "UTF-16");
  
 class PrismaMultilanguage {
 
-    private static $_locale = null;
+    private static $_locale = _DEFAULT_LANG_C;
     private static $_lang = '';
     private static $_charset = UTF_8;
     private static $_web_charset = UTF8;
@@ -78,8 +77,13 @@ class PrismaMultilanguage {
     private static $_time_zone;
     public static $_decimal_symbol;
     public static $_grouping_symbol='';
+    public static $AllowedLangs = ['en_US', 'it_IT', 'de_DE', 'pt_PT', 'el_GR', "fr_FR"];
     
-    
+    public function GetCurrentLocaleFromHeader() {
+        return substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+    }
+
+
     public static function getCurrentDateWithTimezone () {
        $datetime = new DateTime();
        $otherTZ  = new DateTimeZone(PrismaMultilanguage::$_time_zone);
@@ -104,59 +108,56 @@ class PrismaMultilanguage {
         }
         
         //check locale from browser
-        if ($loc === null) {
-            if (isset($_COOKIE['locale'])) {
-                $loc = $_COOKIE['locale'];
-            } else {
-                if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-                    if (strlen($_SERVER['HTTP_ACCEPT_LANGUAGE']) >= 5) {
-                        $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-                    } else {
-                        $lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-                    }
-
-                    switch($lang){
-                        case 'it': $country = "IT";
-                                    break;
-                        case 'en': $country = "US";
-                                    break;
-                        case 'de': $country = "DE";
-                                    break;
-                        case 'pt': $country = "PT";
-                                    break;
-                        case 'el': $country = "GR";
-                                    break;
-                        case 'fr': $country = "FR";
-                                    break;
-                        default:   $lang = "it";
-                                   $country = "IT";
-                                   break;
-                    }
-                    
-
-                    $loc = $lang . "_" . $country;
-                    
-                    setcookie("locale", $loc, strtotime('+1 hour'));
+        if (isset($_SESSION['lang'])) {
+            $loc = $_SESSION['lang'];
+        } else {
+            if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+                if (strlen($_SERVER['HTTP_ACCEPT_LANGUAGE']) >= 5) {
+                    $lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
                 } else {
-                    $loc = "it_IT";
+                    $lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
                 }
+
+                switch($lang){
+                    case 'it': $country = "IT";
+                                break;
+                    case 'en': $country = "US";
+                                break;
+                    case 'de': $country = "DE";
+                                break;
+                    case 'pt': $country = "PT";
+                                break;
+                    case 'el': $country = "GR";
+                                break;
+                    case 'fr': $country = "FR";
+                                break;
+                    default:   $lang = _DEFAULT_LANG;
+                               $country = _DEFAULT_COUNTRY;
+                               break;
+                }
+                
+
+                $loc = $lang . "_" . $country;
+                
+                setcookie("locale", $loc, strtotime('+1 hour'));
+            } else {
+                $loc = _DEFAULT_LANG_C;
             }
-        } 
-        $allowed_lang = ['en_US', 'it_IT', 'de_DE', 'pt_PT', 'el_GR', "fr_FR"];
+        }
+        $allowed_lang = PrismaMultilanguage::$AllowedLangs;
         //check allowed
         //if (!( $loc == es_ES || $loc == cs_CZ || $loc == de_DE || $loc == en_UK || $loc == fr_FR || $loc == hu_HU || $loc == it_IT || $loc == ja_JP || $loc == pl_PL || $loc == ru_RU ))
         if (!(in_array($loc, $allowed_lang))) {
             /*if ($_SERVER['PHP_SELF']!='/traduzione_non_disponibile.php')
                 header("location: traduzione_non_disponibile.php?LC_ALL=" . $loc);
             else return;*/
-            $loc = it_IT; //default
+            $loc = _DEFAULT_LANG_C; //default
         }
         if ($s_multilanguage == null) {
             $s_multilanguage = new PrismaMultilanguage();
         }
 
         PrismaMultilanguage::changeLocale($loc);
-
         return $s_multilanguage;
     }
 
@@ -339,16 +340,6 @@ class PrismaMultilanguage {
                        PrismaMultilanguage::$_w3c_lang = ISO693_3611_fr_FR;
                        PrismaMultilanguage::$_file_charset = ISO_8859_1;
                        break;
-                    
-            default:PrismaMultilanguage::$_locale = it_IT;
-                       PrismaMultilanguage::$_lang = "it";
-                       date_default_timezone_set('Europe/Rome');
-                       PrismaMultilanguage::$_time_zone = 'Europe/Rome';
-                       PrismaMultilanguage::$_charset = UTF_8;
-                       PrismaMultilanguage::$_web_charset = UTF8;
-                       PrismaMultilanguage::$_w3c_lang = ISO693_3611_it_IT;
-                       PrismaMultilanguage::$_file_charset = ISO_8859_1;
-                       break;
         }
        
         $locale = PrismaMultilanguage::$_locale;
@@ -470,8 +461,9 @@ class PrismaMultilanguage {
     public static function getViewOptions() {
         ?>
         <div id="N3LanguageSelector" >
-             <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES) ?>">
-                    <select name="language" id="language" onchange="this.form.submit()" style="width: 100px; height: 20px; font-size: 12px;">
+             <form method="POST" action="<?= htmlspecialchars("/settings/changeLanguage", ENT_QUOTES) ?>">
+             <input type='hidden' name='redir' value= "<?=$_SERVER['REQUEST_URI']?>">
+                    <select name="language" id="language_selector" onchange="this.form.submit()" style="width: 100px; height: 20px; font-size: 12px;">
                     <option id="en" value="<?= en_US ?>"<?php if (PrismaMultilanguage::$_locale == en_US) echo " selected" ?>><?= _('Inglese') ?></option>
                     <option id="it" value="<?= it_IT ?>"<?php if (PrismaMultilanguage::$_locale == it_IT) echo " selected" ?>><?= _('Italiano') ?></option>
                     <option id="de" value="<?= de_DE ?>"<?php if (PrismaMultilanguage::$_locale == de_DE) echo " selected" ?>><?= _('Tedesco') ?></option>
@@ -487,6 +479,10 @@ class PrismaMultilanguage {
             function languageChanged() {
                 $("#locale").submit();
             }
+            $(document).ready(()=>{
+                $("#language_selector").select2()
+            })
+
         </script>
         <?php
     }

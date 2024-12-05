@@ -5,17 +5,26 @@
 <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/css/custom.css" rel="stylesheet">    
 
+<title><?= CoreLogic::GetStationCode() ?></title>
+
 <body style="background:#F7F7F7;">
+    <!-- Selettore di Lingua -->
+    <div class="language_selector_home" style="
+        position: absolute;
+        top: 20;
+        right: 20;
+    ">
+        <?php PrismaMultilanguage::getViewOptions(); ?>
+    </div>
     <div class="">
         <a class="hiddenanchor" id="toregister"></a>
         <a class="hiddenanchor" id="tologin"></a>
 
         <div id="wrapper">
-            <div id="login" class=" form">
+            <div id="login" class="form">
                 <section class="login_content">
                     <img src="/img/logo.png" alt="..." width="140px">
                     <form id="LoginForm">
-                        
                         <h1>Login</h1>
                         <div>
                             <input type="text" class="form-control" name='username' id='username' placeholder="Username" required="" />
@@ -27,20 +36,14 @@
                             <button type="submit" class="btn btn-success">Log in</button>
                         </div>
                         <div class="clearfix"></div>
-<!--                        <div class="separator">
-                            <div class="clearfix"></div>
-                            <br />
-                            <div>
-
-                            </div>
-                        </div>-->
                     </form>
                 </section>
+
+                
             </div>
-
-
         </div>
     </div>
+    
     <!-- jQuery -->
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/jquery/dist/jquery.min.js"></script>
     <!-- Bootstrap -->
@@ -65,9 +68,5 @@
 
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/login.js<?= _VERSION_ ?>"></script>
 
-
-
-
 </body>
 </html>
-

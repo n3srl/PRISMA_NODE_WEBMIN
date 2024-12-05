@@ -29,6 +29,29 @@ $app->before(function (Request $request) {
 
 /**
  *
+ * DETECTION GRAPH
+ *
+ * */
+$app->GET('/detection/getPrevWeeks', function (Application $app, Request $request) {
+    try {
+        $date = $request->query->get('date', date('Y-m-d'));
+        $detections = DetectionApiLogic::getPrevWeeks($date);
+
+        return new Response(json_encode([
+            'success' => true,
+            'data' => $detections
+        ]), 200, ['Content-Type' => 'application/json']);
+        
+    }catch (Exception $e) {
+        return new Response(json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]), 500, ['Content-Type' => 'application/json']);
+    }
+});
+
+/**
+ *
  * INSERT
  *
  * */
@@ -388,16 +411,6 @@ $app->GET('/detection/counter/all', function (Application $app, Request $request
 });
 
 
-
-/**
- *
- * GET DETECTION DURATION
- *
- * */
-$app->POST('/detection/duration', function (Application $app, Request $request, $detection) {
-    $duration = DetectionApiLogic::getDetectionDuration($detection);
-    return new Response(json_encode(['duration' => $duration]), 200);
-});
 
 
 

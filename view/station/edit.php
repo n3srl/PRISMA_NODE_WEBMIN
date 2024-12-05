@@ -34,7 +34,7 @@
             </div>
         </div>
         <div class='row'>
-            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 1) { ?>
                 <div class='col-md-12 col-sm-12 col-xs-12'>
                     <div id='edit-buttons-ft' class='x_panel'>
                         <div class='x_title no-padding-lr'>
@@ -99,8 +99,8 @@
                                             </div>
                                             <div class='clearfix'>
                                                 <?php 
-                                                $maskPath = '/freeture/default.bmp';
-                                                $configPath = '/usr/local/share/freeture/configuration.cfg';
+                                                $maskPath = CoreLogic::GetMaskPath();//FreetureFinalApiLogic::getMaskPath();
+                                                $configPath = _FREETURE_;//'/usr/local/share/freeture/configuration.cfg';
                                                 if (file_exists($maskPath)) { 
                                                     $imageData = file_get_contents($maskPath);
                                                     $base64Image = base64_encode($imageData);
@@ -113,16 +113,28 @@
                                                         <p><?= sprintf(_('Risoluzione: %d x %d px'), $w, $h) ?></p>
                                                     </div>
                                                     <div class='col-md-2 no-padding'>
-                                                        <a href="<?= $maskPath ?>" download="default.bmp" class="btn btn-success btn-blue-success"><?= _('Scarica Maschera') ?></a>
+                                                        <a href="<?= $dataUri ?>" download="default.bmp" class="btn btn-success btn-blue-success"><?= _('Scarica Maschera') ?></a>
                                                     </div>
-                                                    <div class='col-md-2 no-padding'>
-                                                        <a href="<?= $configPath ?>" download="configuration.cfg" class="btn btn-success btn-blue-success"><?= _('Scarica File <br> di configurazione ') ?></a>
-                                                    </div>
+                                                    
                                                 <?php } else { ?>
                                                     <div class='col-md-12 no-padding'>
                                                         <p><?= _('Maschera non disponibile') ?></p>
                                                     </div>
                                                 <?php } ?>
+                                                <?php 
+
+                                                    if(file_exists($configPath)) {
+                                                        $data = file_get_contents($configPath);
+                                                        $b64 = base64_encode($data);
+                                                        $dataUri = 'data:text/plain;base64,' . $b64;
+                                                        ?>
+                                                        <div class='col-md-2 no-padding'>
+                                                            <a href="<?= $dataUri ?>" download="configuration.cfg" class="btn btn-success btn-blue-success"><?= _('Scarica File <br> di configurazione ') ?></a>
+                                                        </div>
+                                                        <?php
+                                                    }
+                                                
+                                                ?>
                                             </div>
                                         </div>
                                     </div>
@@ -145,7 +157,7 @@
                                     <h2><?= _('Configurazione automatica') ?></h2>
                                 </div>
                                 <div class='col-md-4 col-sm-4 no-padding'>
-                                    <button type = 'submit' id = 'ftsavebtn' style= 'display: none; margin-right: 10px;' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
+                                    <button type = 'submit' style= 'display: none; margin-right: 10px;' id= 'ftsavebtn' onclick= 'saveStation();' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
                                     <button type = 'button' id = 'ftmodifybtn' style= 'display: none; margin-left: 10px; margin-right: 10px;' id= 'modifybtn' onclick= 'allowEditStation();' class='btn btn-success btn-blue-success pull-right' ><?= _('MODIFICA') ?></button>
                                     <button type = 'button' id = 'ftundobtn' style= 'display: none; margin-left: 10px; margin-right: 10px;' id= 'undobtn' onclick= 'undoStation();' class='btn btn-warning btn-yellow-warning pull-right' ><?= _('ANNULLA') ?></button>
 
@@ -159,7 +171,7 @@
                                     <label class='col-md-6 col-sm-6 col-xs-12' ><?= _('I campi contrassegnati con * sono obbligatori') ?></label>
                                 </div>
                             </div>
-                            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+                            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 1) { ?>
                                 <div class='col-md-12 col-sm-12 col-xs-12'>
                                     <div class='col-md-6 col-sm-12 col-xs-12'>
                                         <div class='col-md-12 col-sm-12 col-xs-12 <?= md5('station-name') ?>'>
@@ -234,7 +246,7 @@
                     </div>
                 </form>
             </div>
-            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+            <?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 1) { ?>
                 <div class='col-md-12 col-sm-12 col-xs-12'>
                     <div class='x_panel'>
                         <div class='x_title no-padding-lr'>
@@ -274,7 +286,7 @@
                                         <h2><?= _('Modifica') ?></h2>
                                     </div>
                                     <div class='col-md-4 no-padding'>
-                                        <button type = 'submit' style= 'display: none; margin-right: 10px;' id= 'savebtn' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
+                                        <button type = 'submit' style= 'display: none; margin-right: 10px;' id= 'savebtn' onclick= 'saveObj();' class='btn btn-success pull-right' ><?= _('SALVA') ?></button>
                                         <button type = 'button' style= 'display: none; margin-right: 10px;' id= 'modifybtn' onclick= 'allowEditObj();' class='btn btn-success btn-blue-success pull-right' ><?= _('MODIFICA') ?></button>
                                         <button type = 'button' style= 'display: none; margin-right: 10px;' id= 'undobtn' onclick= 'undoObj();' class='btn btn-warning btn-yellow-warning pull-right' ><?= _('ANNULLA') ?></button>
                                     </div>
@@ -322,7 +334,7 @@
     </div>
 </div>
 <?php include './view/template/foot.php'; ?>
-<?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() == 1) { ?>
+<?php if (CoreLogic::GetPersonLogged() != null && CoreLogic::VerifyPermission() >= 1) { ?>
     <script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/station.js<?= _VERSION_ ?>'></script>
     <script src='<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/freetureFinal.js<?= _VERSION_ ?>'></script>
 <?php } else { ?>

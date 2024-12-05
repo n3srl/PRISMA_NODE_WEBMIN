@@ -27,6 +27,7 @@ class FreetureFinalModel extends FreetureFinal {
 		postAjax(this,endpoint,json,...callBack);
 	}
 	update(...callBack){
+		console.log('updatefactory');
 		let endpoint = this.endpointBase + '';
 		let obj = this.parseToObj;
 		let json = JSON.stringify(obj);

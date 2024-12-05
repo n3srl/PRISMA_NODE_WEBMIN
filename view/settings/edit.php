@@ -1,6 +1,3 @@
-
-
-
 <div class="right_col" role="main">
     <div class="">
         <div class="page-title">
@@ -9,7 +6,7 @@
             </div>
         </div>
         <div class="clearfix"></div>
-
+    <? if(CoreLogic::VerifyPermission()>=1){?>
         <div class="row">
             <div class="col-md-12 col-sm-12 col-xs-12">
                 <div class="col-md-12 col-sm-12 col-xs-12">
@@ -70,6 +67,7 @@
 
             </div>
         </div>
+        <?} ?>
     </div>
 
     <div class="col-md-12 col-sm-12 col-xs-12"> 
@@ -83,11 +81,8 @@
         </div>
         <div class="x_content">
             <div class="col-md-12 col-sm-12 col-xs-12">
-                <label id="mediausagelbl"></label>
-                <form method="POST" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES) ?>">
-                   <h5> <label for="language"><?= _('Seleziona Lingua') ?>:</label> </h5>
-                    <?php PrismaMultilanguage::getViewOptions(); ?>
-                </form>
+            <h5> <label for="language"><?= _('Seleziona Lingua') ?>:</label> </h5>
+            <?php PrismaMultilanguage::getViewOptions(); ?>
             </div>
         </div>
     </div>

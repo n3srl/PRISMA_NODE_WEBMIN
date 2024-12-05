@@ -8,14 +8,18 @@
 
 class SettingsController extends Controller
 {
-    public function editOperation() {
-     
+    public function changeLanguageOperation() {
+        $redir="/";
+        if (isset($_POST["redir"])) {
+            $redir = $_POST["redir"];
+        } 
+
         if (isset($_POST['language'])) {
             $lang = $_POST['language'];
             setcookie('lang', $lang, time() + strtotime('+30 days')); 
 
             $_SESSION['lang'] = $lang; 
-            header("Location: " . $_SERVER['REQUEST_URI']);  
+            header("Location: ".$redir);  
             exit();
         } else {
             if (isset($_COOKIE['lang'])) {
@@ -27,22 +31,15 @@ class SettingsController extends Controller
                 $lang=$_SESSION['lang'];
             }
         }
-       
-      
-        //Debug output:
-        /*
-        echo "Available locales:<br>";
-        setlocale(LC_ALL, "en_US");
-        echo setlocale(LC_ALL, 0);
-        */
+        
+        header("location: $redir");
 
-        //$locale_path = './locale/en_US/LC_MESSAGES/en.mo'; 
-        /*if ($_SESSION['lang'] === 'en_US'&& file_exists($locale_path)) {
-            bindtextdomain('en', './locale');
-            textdomain('en');
-            bind_textdomain_codeset('en', 'UTF-8');
-        }*/
+        
+    }
 
+
+    public function editOperation() {
+     
         $permission = parent::securityCheck();
         global $params;
         $par = 0;
@@ -56,11 +53,5 @@ class SettingsController extends Controller
         }
         echo '<script>var ObjID = ' . $par . ';</script>';
         
-        //Debug output:
-        /*
-        echo "<br>lang session: ";
-        var_dump($_SESSION['lang']); 
-        echo "<br>lang cookie: ";
-        var_dump($_COOKIE['lang']); */
     }
 }

@@ -1,5 +1,5 @@
 <?php /* @var $Person Person */ ?> 
-
+<input type="hidden" id = "my_level" value = "<?= CoreLogic::VerifyPermission() ?>">
 <div class='right_col' role='main'>
     <div class=''>
         <div class='page-title'>
@@ -18,67 +18,7 @@
                             </div>
                         </div>
                     </div>
-                    <!--
-                    <div class='x_panel filter-container'>
-                        <div class='x_title filter-title-container collapse-link'>
-                            <div class='filter-title'>
-                                <h2 class='font-15'>Filtra per...</h2>
-                                <ul class='nav navbar-right panel_toolbox'>
-                                    <li><a class='black'><i class='fa fa-chevron-down'></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class='clearfix'></div>
-                        </div>
-                        <div class='x_content filter-content' hidden>
-                            <div class='form-group col-md-3 col-sm-6 col-xs-12 b80bb7740288fda1f201890375a60c8f' hidden>
-                                <div class='form-group'>
-                                    <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('ID')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_id' multiple='multiple' title='<?php echo (_('Filtra per ID')) ?>'>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class='form-group col-md-3 col-sm-6 col-xs-12 14c4b06b824ec593239362517f538b29'>
-                                <div class='form-group'>
-                                    <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('Nome utente')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_username' multiple='multiple' title='<?php echo (_('Filtra per nome utente')) ?>'>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class='form-group col-md-3 col-sm-6 col-xs-12 5f4dcc3b5aa765d61d8327deb882cf99' hidden>
-                                <div class='form-group'>
-                                    <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('Password')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_password' multiple='multiple' title='<?php echo (_('Filtra per password')) ?>'>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class='form-group col-md-3 col-sm-6 col-xs-12 b2c6cc48f97ccd71b16d31d88fc177a6'>
-                                <div class='form-group'>
-                                    <div class='col-xs-12'>
-                                        <small class='text-muted'><?php echo (_('Timezone')) ?></small>
-                                        <select class='form-control filter filter-text' id='F_timezone' multiple='multiple' title='<?php echo (_('Filtra per timezone')) ?>'>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class='form-group col-md-12 col-sm-12 col-xs-12'>
-                                <div class='form-group'>
-                                    <div class='col-xs-12'>
-                                        <button style= 'margin-right: 10px;' class="pull-right btn btn-success btn-blue-success applyFilter" ><?= _("Applica filtri") ?></button>
-                                        <button style= 'margin-right: 10px;' class="pull-right btn btn-warning btn-yellow-warning clearFilter" ><?= _("Pulisci filtri") ?></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>-->
+                
                     <div class='x_content'>
                         <table id='PersonList' class='table table-striped table-bordered' style='width: 100%; '>
                             <thead>

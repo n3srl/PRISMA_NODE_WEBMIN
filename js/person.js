@@ -31,6 +31,15 @@ function editObj(id) {
 }
 
 function allowEditObj() {
+
+    const my_level = parseInt($("#my_level").val());
+    const person_level = parseInt(core_person.level.replaceAll("\n", ""));
+
+    if(my_level < person_level) {
+        alert(_("Non puoi modificare l'utente")+[[user]]+_("in quanto ha un livello superiore al tuo").replace("[[user]]", core_person.username));
+        return;
+    }
+
     enableForm(core_person,false);
 }
 
@@ -98,9 +107,12 @@ $(document).ready(function () {
             {
                 "targets": [-2],
                 render: function (data, type, row, meta) { 
-                    if(data === "1"){
+                    if(data === "2"){
+                        return "Super user";
+                    } else if(data === "1"){
                         return "Admin";
-                    } else {
+                    }
+                     else {
                         return "Agent";
                     }
                 }
