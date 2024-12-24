@@ -52,7 +52,7 @@
                         <div class="row">
                             <!-- Detection Day List -->
                             <div class="col-md-3">
-                                <table id="DetectionDayList" class="table table-striped table-bordered">
+                                <table id="DetectionDayList" class="table table-striped table-bordered noclick">
                                     <thead>
                                         <tr>
                                             <th><?= _('Data') ?></th>
