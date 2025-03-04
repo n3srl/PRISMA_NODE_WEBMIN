@@ -420,12 +420,12 @@ class StackApiLogic {
                 continue;
             }
 
-            $name = explode("_", $file);
 
-            if (isset($name[1])) { // Check if file name is correct
-                $datetime = date_create($name[1]);
-                $day = date('Y-m-d', strtotime($name[1]));
-                $hour = date('H:i:s', strtotime($name[1]));
+            $datePattern = '/\d{4}\d{2}\d{2}/';
+            if(preg_match($datePattern, $file, $matches)) {
+                $datetime = date_create($matches[0]);
+                $day = date('Y-m-d', strtotime($matches[0]));
+                $hour = date('H:i:s', strtotime($matches[0]));
                 $base64 = $enablePreview ? self::processStack($file, $data_dir) : "";
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $day_dir . "_" . $file);
                 $i++;
@@ -471,12 +471,11 @@ class StackApiLogic {
                 return $reply;
             }
           
-            $name = explode("_", $day_dir);
 
-            if (isset($name[1])) {
-
-                $datetime = date_create($name[1]);
-                $day = date('Y-m-d', strtotime($name[1]));
+            $datePattern = '/\d{4}\d{2}\d{2}/';
+            if(preg_match($datePattern, $day_dir, $matches)) {
+                $datetime = date_create($matches[0]);
+                $day = date('Y-m-d', strtotime($matches[0]));
                 $reply[] = array($day, $n_day_files, $day_dir);
                 $i++;
             }

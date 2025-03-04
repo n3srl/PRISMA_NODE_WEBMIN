@@ -14,6 +14,9 @@ if(BASE_ENV == "WIN") {
 
 /* PROD */
 
+define("_WEBMIN_VERSION_NUMBER_", "v1.0.0");
+define("_WEBMIN_VERSION_", "WEBMIN ". _WEBMIN_VERSION_NUMBER_);
+
 $db_rdbms = "inaf";
 $db_name = 'inaf';
 $db_user = 'root';

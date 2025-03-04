@@ -567,11 +567,10 @@ class DetectionApiLogic {
             }
            
 
-            $name = explode("_", $day_dir);
-
-            if (isset($name[1])) {
-                $datetime = date_create($name[1]);
-                $day = date('Y-m-d', strtotime($name[1]));
+            $datePattern = '/\d{4}\d{2}\d{2}/';
+            if(preg_match($datePattern, $day_dir, $matches)) {
+                $datetime = date_create($matches[0]);
+                $day = date('Y-m-d', strtotime($matches[0]));
                 $reply[] = array($day, $n_day_files, $day_dir);
                 $i++;
             }
@@ -609,12 +608,12 @@ class DetectionApiLogic {
                 continue;
             }
 
-            $name = explode("_", $detection);
-
-            if (isset($name[1])) {
-                $datetime = date_create($name[1]);
-                $day = date('Y-m-d', strtotime($name[1]));
-                $hour = date('H:i:s', strtotime($name[1]));
+            $datePattern = '/\d{4}\d{2}\d{2}T\d{6}/';
+            if(preg_match($datePattern, $detection, $matches)) {
+                //var_dump($matches[0]);
+                $datetime = date_create($matches[0]);
+                $day = date('Y-m-d', strtotime($matches[0]));
+                $hour = date('H:i:s', strtotime($matches[0]));
 
                 $processedFiles = $enablePreview ? self::processDetection($detection, $data_dir) : array("", "", "");
 

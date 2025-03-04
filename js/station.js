@@ -5,7 +5,7 @@
 
 $(setFreetureFinalVisibility());
 var freetureObjects = [];
-var keys = ["STATION_CODE", "ACQ_MASK_PATH", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
+var keys = ["STATION_CODE", "DET_DEBUG_PATH", "DATA_PATH", "LOG_PATH", "STATION_NAME", "TELESCOP", "OBSERVER", "SITEELEV", "SITELONG", "SITELAT"];
 
 $(function () {
     disableStationForm();

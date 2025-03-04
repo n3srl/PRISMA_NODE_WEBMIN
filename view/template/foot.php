@@ -1,6 +1,6 @@
 <div class ="col-md-12 col-sm-12 col-xs-12">
     <footer style="bottom: 0px; display: block; clear: both; position: fixed;width:100%;margin-right: 0px; padding: 8px 15px; font-size: 11px; float: right; left:0 !important">
-
+        <?= _WEBMIN_VERSION_ ?>
         <div class="pull-right">
         <?= _('Copyright') ?>  &copy; <?php echo date("Y") ?> &ndash; <?php echo (date("Y") + 1) ?>
             <a href="https://n-3.it/" style="color:black">N3 S.r.l.</a><?= _('All rights reserved ') ?> 

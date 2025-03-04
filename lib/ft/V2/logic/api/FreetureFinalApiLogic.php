@@ -42,6 +42,7 @@ class FreetureFinalApiLogic {
     }
 
     public static function EditMask($request) {
+        
         try {
 
             $Person = CoreLogic::VerifyPerson();
@@ -55,17 +56,19 @@ class FreetureFinalApiLogic {
                 $ob->value = "true";
                 //self::updateValue($ob);
                 $warning = self::checkRes(); 
+
+                $res = CoreLogic::GenerateResponse($res);
+                if (isset($warning)) {
+                    $res->warning = $warning;
+                }
+                return $res;
+            } else {
+                return CoreLogic::GenerateErrorResponse("Impossibile caricare la maschera", 500);
             }
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
             return CoreLogic::GenerateErrorResponse($a->message);
         }
-        $res = CoreLogic::GenerateResponse($res);
-        if (isset($warning)) {
-            $res->warning = $warning;
-
-        }
-        return $res;
     }
     
     public function checkRes() {
@@ -701,7 +704,7 @@ class FreetureFinalApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "sudo docker restart freeture");
+                $stream = ssh2_exec($session, "docker inspect -f '{{.State.Running}}' freeture | grep -q 'true' && docker restart freeture");
                 return true;
             }
             unset($session);

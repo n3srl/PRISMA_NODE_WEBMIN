@@ -308,7 +308,8 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "docker restart " . $ob);
+                $cmd = "docker inspect -f '{{.State.Running}}' $ob | grep -q 'true' && docker restart $ob";
+                $stream = ssh2_exec($session, $cmd);
                 $result = true;
             }
             unset($session);
