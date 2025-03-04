@@ -206,33 +206,42 @@ $("#maskFileForm").on("submit", function (e) {
         processData: false,
         contentType: false,
         success: function (res) {
-            reloadAllDatatable();
-            defaultSuccess(_("Maschera caricata correttamente"));
-            $("#uploadmaskbtn").attr('disabled', true);
-            $('#form-mask').val('');
-            if (typeof res === "string") {
-                res = JSON.parse(res);
-            }
-            if (res.warning) {
-                alert(res.warning); 
+            try {
+                var parsed = JSON.parse(res);
+                if(parsed.result) {
+                    if (parsed.warning) {
+                        alert(parsed.warning); 
+                    }
+                    reloadAllDatatable();
+                    defaultSuccess(_("Maschera caricata correttamente"));
+                    $("#uploadmaskbtn").attr('disabled', true);
+                    $('#form-mask').val('');
+
+                    // Make a POST request to enable mask
+                    $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
+                        var id = JSON.parse(json1).data;
+                        $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
+                            var obj = JSON.parse(json2).data;
+                            //var ft = new FreetureFinalModel('V2');
+                            inaffreeturefinal.id = obj.id.toString();
+                            inaffreeturefinal.key = obj.key;
+                            inaffreeturefinal.value = "true";
+                            inaffreeturefinal.description = obj.description;
+                            inaffreeturefinal.insert(reloadAllDatatable);
+                        });
+
+                    });
+
+                } else {
+                    defaultError(_("Errore durante il caricamento della maschera"));
+                }
+            } catch (e) {
+                defaultError(_("Errore durante il caricamento della maschera"));
             }
         }
     });
 
-    // Make a POST request to enable mask
-    $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
-        var id = JSON.parse(json1).data;
-        $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
-            var obj = JSON.parse(json2).data;
-            //var ft = new FreetureFinalModel('V2');
-            inaffreeturefinal.id = obj.id.toString();
-            inaffreeturefinal.key = obj.key;
-            inaffreeturefinal.value = "true";
-            inaffreeturefinal.description = obj.description;
-            inaffreeturefinal.insert(reloadAllDatatable);
-        });
-
-    });
+    
 
 });
 
