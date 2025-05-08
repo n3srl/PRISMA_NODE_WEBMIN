@@ -566,14 +566,14 @@ class DetectionApiLogic {
                 return $reply;
             }
            
-
-            $datePattern = '/\d{4}\d{2}\d{2}/';
-            if(preg_match($datePattern, $day_dir, $matches)) {
-                $datetime = date_create($matches[0]);
-                $day = date('Y-m-d', strtotime($matches[0]));
-                $reply[] = array($day, $n_day_files, $day_dir);
-                $i++;
-            }
+            $datePattern = '/(\d{8})T(\d{6})/';
+		    if (preg_match($datePattern, $day_dir, $matches)) {
+		    	$datetime = date_create_from_format('YmdHis', $matches[1] . $matches[2]);
+		    	$day = $datetime->format('Y-m-d');
+		    	$reply[] = array($day, $n_day_files, $day_dir);
+		    	$i++;
+		    }
+			
         }
 
         return $reply;
