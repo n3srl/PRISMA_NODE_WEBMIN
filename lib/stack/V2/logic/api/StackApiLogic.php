@@ -421,11 +421,15 @@ class StackApiLogic {
             }
 
 
-            $datePattern = '/\d{4}\d{2}\d{2}/';
+            $datePattern = '/(\d{8})T(\d{6})/';
             if(preg_match($datePattern, $file, $matches)) {
-                $datetime = date_create($matches[0]);
-                $day = date('Y-m-d', strtotime($matches[0]));
-                $hour = date('H:i:s', strtotime($matches[0]));
+                $dateStr = $matches[1]; // YYYYMMDD
+                $timeStr = $matches[2]; // HHMMSS
+                $datetime = date_create_from_format('YmdHis', $dateStr . $timeStr);
+
+                $day = $datetime->format('Y-m-d');
+                $hour = $datetime->format('H:i:s');
+
                 $base64 = $enablePreview ? self::processStack($file, $data_dir) : "";
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $day_dir . "_" . $file);
                 $i++;
