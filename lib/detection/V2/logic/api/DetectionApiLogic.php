@@ -627,7 +627,7 @@ class DetectionApiLogic {
                     $gemap_base64,
                     $date_dir . "_" . $detection,
                     $date_dir . "_" . $detection,
-                    self::GetDetectionDuration($date_dir . "_" . $detection)
+                    self::GetDetectionDuration($detection)
                 ); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
 
                 $i++;
