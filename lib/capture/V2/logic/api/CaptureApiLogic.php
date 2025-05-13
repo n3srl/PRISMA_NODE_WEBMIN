@@ -427,7 +427,7 @@ class CaptureApiLogic {
                 $day = $datetime->format('Y-m-d');
                 $hour = $datetime->format('H:i:s');
 
-                $base64 = $enablePreview ? self::processStack($file, $data_dir) : "";
+                $base64 = $enablePreview ? self::processCapture($file, $data_dir) : "";
                 $reply[] = array($file, $day . ":" . $n_day_files, $hour, $base64, $day_dir . "_" . $file);
                 $i++;
             }
