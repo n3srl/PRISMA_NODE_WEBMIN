@@ -479,10 +479,10 @@ class PrismaMultilanguage {
             function languageChanged() {
                 $("#locale").submit();
             }
-           document.addEventListener("DOMContentLoaded",() => {$("#language_selector").select2();});
-         /*  $(document).ready(function(){
+           //document.addEventListener("DOMContentLoaded",() => {$("#language_selector").select2();});
+           $(document).ready(function(){
                 $("#language_selector").select2();
-            });*/
+            });
 
         </script>
         <?php

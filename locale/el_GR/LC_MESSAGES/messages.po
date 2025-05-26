@@ -247,11 +247,11 @@ msgstr "Σύνδεση VPN ως GUEST"
 msgid "VPN Attiva"
 msgstr "Η VPN είναι ενεργή"
 
-#: js/login.js:21
+#: js/login.js
 msgid "Autenticazione fallita"
 msgstr "Η αυθεντικοποίηση απέτυχε"
 
-#: js/login.js:23
+#: js/login.js
 msgid "Attenzione! Si è verificato un errore"
 msgstr "Προσοχή! Παρουσιάστηκε ένα σφάλμα"
 
@@ -1209,3 +1209,7 @@ msgstr "Διαχειριστής"
 #: view/user/selectLevel.php:3
 msgid "Agente"
 msgstr "Πράκτορας"
+
+#: js/login.js
+msgid "Chiudi"
+msgstr "Κοντά"

@@ -249,11 +249,11 @@ msgstr "Acesso VPN como GUEST"
 msgid "VPN Attiva"
 msgstr "VPN Ativa"
 
-#: js/login.js:21
+#: js/login.js
 msgid "Autenticazione fallita"
 msgstr "Autenticação falhou"
 
-#: js/login.js:23
+#: js/login.js
 msgid "Attenzione! Si è verificato un errore"
 msgstr "Atenção! Ocorreu um erro"
 
@@ -1188,3 +1188,7 @@ msgstr "Administrador"
 #: view/user/selectLevel.php:3
 msgid "Agente"
 msgstr "Agente"
+
+#: js/login.js
+msgid "Chiudi"
+msgstr "Fechar"

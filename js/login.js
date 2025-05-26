@@ -1,3 +1,4 @@
+//const _ = window._;
 $('#LoginForm').submit(function (event) {
     // prevent default browser behaviour
     event.preventDefault();
@@ -13,15 +14,15 @@ $('#LoginForm').submit(function (event) {
             if (data.result) {
                 window.location.reload();
             } else {
-                showErrorPopup("Autenticazione fallita");
+                showErrorPopup(_("Autenticazione fallita"));
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 401) {
-                showErrorPopup("Autenticazione fallita");
+                showErrorPopup(_("Autenticazione fallita"));
                 //alert("Autenticazione fallita");
             } else {
-                showErrorPopup("Attenzione! Si è verificato un errore"); 
+                showErrorPopup(_("Attenzione! Si è verificato un errore")); 
             }
         }
     });

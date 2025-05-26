@@ -133,6 +133,7 @@ class CoreLogic {
                 $data = $dataObj;
             }
         }
+        
 
         return self::GenerateResponse($result, $data);
     }
