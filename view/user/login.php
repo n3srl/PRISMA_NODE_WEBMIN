@@ -6,7 +6,7 @@
 <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/css/custom.css" rel="stylesheet">    
 
 <title><?= CoreLogic::GetStationCode() ?></title>
-
+<?php include __DIR__.'/../etc/errorPopup.html';?>
 <body style="background:#F7F7F7;">
     <!-- Selettore di Lingua -->
     <div class="language_selector_home" style="
@@ -65,8 +65,10 @@
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
-
+    <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/select2/dist/js/select2.min.js"></script>
+    <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/etc/errorPopup.js"></script>
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/login.js<?= _VERSION_ ?>"></script>
+    
 
 </body>
 </html>
