@@ -13,14 +13,15 @@ $('#LoginForm').submit(function (event) {
             if (data.result) {
                 window.location.reload();
             } else {
-                alert("Autenticazione fallita");
+                showErrorPopup("Autenticazione fallita");
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 401) {
-                alert(_("Autenticazione fallita"));
+                showErrorPopup("Autenticazione fallita");
+                //alert("Autenticazione fallita");
             } else {
-                alert(_("Attenzione! Si è verificato un errore"));
+                showErrorPopup("Attenzione! Si è verificato un errore"); 
             }
         }
     });
