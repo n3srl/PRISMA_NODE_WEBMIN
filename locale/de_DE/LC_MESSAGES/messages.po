@@ -247,11 +247,11 @@ msgstr "VPN-Zugang als GUEST"
 msgid "VPN Attiva"
 msgstr "VPN Aktiv"
 
-#: js/login.js:21
+#: js/login.js
 msgid "Autenticazione fallita"
 msgstr "Authentifizierung fehlgeschlagen"
 
-#: js/login.js:23
+#: js/login.js
 msgid "Attenzione! Si è verificato un errore"
 msgstr "Achtung! Ein Fehler ist aufgetreten"
 
@@ -1209,3 +1209,7 @@ msgstr "Administrator"
 #: view/user/selectLevel.php:3
 msgid "Agente"
 msgstr "Agent"
+
+#: js/login.js
+msgid "Chiudi"
+msgstr "Schließen"

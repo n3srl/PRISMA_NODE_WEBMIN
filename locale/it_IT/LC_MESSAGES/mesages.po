@@ -255,11 +255,11 @@ msgstr ""
 msgid "VPN Attiva"
 msgstr ""
 
-#: js/login.js:21
+#: js/login.js
 msgid "Autenticazione fallita"
 msgstr ""
 
-#: js/login.js:23
+#: js/login.js
 msgid "Attenzione! Si è verificato un errore"
 msgstr ""
 
@@ -1217,4 +1217,8 @@ msgstr ""
 
 #: view/user/selectLevel.php:3
 msgid "Agente"
+msgstr ""
+
+#: js/login.js
+msgid "Chiudi"
 msgstr ""
