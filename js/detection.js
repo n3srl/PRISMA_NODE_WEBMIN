@@ -243,6 +243,10 @@ $(document).ready(function () {
         },
         columnDefs: [
             {
+                "targets": 0,
+                "orderable": true
+            },
+            {
                 "targets": "_all",
                 "orderable": false
             },
@@ -288,6 +292,7 @@ $(document).ready(function () {
         sAjaxSource: '/lib/detection/V2/detection/datatable/daylist',
         "paging": true,
         "ordering": true,
+         order : [[0,"desc"]],
         "bLengthChange": false,
         "info": true,
         "searching": false
