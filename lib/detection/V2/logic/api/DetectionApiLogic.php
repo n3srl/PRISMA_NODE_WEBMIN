@@ -243,7 +243,7 @@ class DetectionApiLogic {
 			}
         }
 
-        /* Ordering 
+        
           if (isset($_GET['iSortCol_0'])) {
           if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
           $i = $_GET['iSortCol_0'];
@@ -254,7 +254,7 @@ class DetectionApiLogic {
           array_multisort($sort, SORT_DESC, $reply);
           }
           }
-          } */
+          } 
 
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
@@ -411,7 +411,10 @@ class DetectionApiLogic {
         self::cancelZips();
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
-        $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        $timeT = $detection_info[1];
+        $time = explode("T", $timeT);
+        //$detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        $detection_name = $detection_info[0] ."_".$time[0];
 
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip")) {
             return $detection_name . ".zip";
@@ -440,24 +443,32 @@ class DetectionApiLogic {
 
         $detection_folder = self::getDetectionBasePath($detection);
         $detection_info = explode("_", $detection);
-        $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-
+        $timeT = $detection_info[1];
+        $time = explode("T", $timeT);
+        //$detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        $detection_name = $detection_info[0] ."_".$time[0];
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".mkv")) {
             return $detection_name . ".mkv";
         }
 
-        $video = self::makeVideo($detection_folder . "/", $detection_name);
+        $video = self::makeVideo($detection_folder, $detection_name);
         return $video;
     }
 
     // Get base path to passed detection files
     public static function getDetectionBasePath($detection) {
+       
         $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/";
         $detection_info = explode("_", $detection);
-        $day = $detection_info[0] . "_" . $detection_info[1];
+        $timeT = $detection_info[1];
+        $time = explode("T", $timeT);
+       /* $day = $detection_info[0] . "_" . $detection_info[1];
         $detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
-        $base_path = $data_dir . $day . "/events/" . $detection_name;
+        $base_path = $data_dir . $day . "/events/" . $detection_name;*/
+        $base_path = $data_dir . $detection_info[0] ."_".$time[0] . "/events/";
         return $base_path;
+
+        
     }
 
     // Get the value from the line
