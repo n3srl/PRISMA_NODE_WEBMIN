@@ -4,6 +4,11 @@
 <!-- Font Awesome -->
 <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 <link href="<?php echo $_SERVER['PATH_WEBROOT'] ?>/css/custom.css" rel="stylesheet">    
+<?php 
+$locale = PrismaMultilanguage::getLocale();
+$loc_path = $_SERVER['DOCUMENT_ROOT']."/locale/$locale/LC_MESSAGES/messages.po";
+$poContent = po_read($loc_path); 
+?>
 
 <title><?= CoreLogic::GetStationCode() ?></title>
 
@@ -44,8 +49,10 @@
         </div>
     </div>
     
+    
     <!-- jQuery -->
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/jquery/dist/jquery.min.js"></script>
+    
     <!-- Bootstrap -->
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/bootstrap/dist/js/bootstrap.min.js"></script>
     <!-- FastClick -->
@@ -65,8 +72,18 @@
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
-
+    <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/ext_lib_fe/select2/dist/js/select2.min.js"></script>
+    <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/translations.js<?= _VERSION_ ?>"></script>
+    <script>
+    let prismatranslation = parsePo(`<?php echo $poContent ?>`);
+    </script>
+   
+    <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/etc/errorPopup.js"></script>
+   
     <script src="<?php echo $_SERVER['PATH_WEBROOT'] ?>/js/login.js<?= _VERSION_ ?>"></script>
+    <?php include __DIR__.'/../etc/errorPopup.html';?>
+    
+
 
 </body>
 </html>
