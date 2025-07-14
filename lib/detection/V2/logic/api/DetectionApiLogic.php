@@ -638,7 +638,7 @@ class DetectionApiLogic {
                     $gemap_base64,
                     $date_dir . "_" . $detection,
                     $date_dir . "_" . $detection,
-                    self::GetDetectionDuration($detection)
+                    self::GetDetectionDuration($detection)." [ms]"
                 ); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
 
                 $i++;
@@ -756,15 +756,47 @@ class DetectionApiLogic {
     }
 
 //restituisce la durata in ms di ogni detection
-    public static function GetDetectionDuration($detection) {
-        $detection_folder = self::getDetectionBasePath($detection);
-        $n_files = self::getDirectoryFilesCount($detection_folder);
-        $d = round(($n_files/30)*1000);
-        $duration="$d [ms]";
-        $data = ['duration' => $duration];
-        return $duration;
-    } 
-    
+//apre il file positions.txt e da li calcola la durata in millisecondi.
+public static function GetDetectionDuration($detection) {
+    $detection_folder = self::getDetectionBasePath($detection).$detection."/positions.txt";
+    $filePath = $detection_folder;
+    if (!file_exists($filePath)) {
+        return 0;
+    }
+
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (count($lines) < 2) {
+	return 0;
+    }
+
+    // Extract the timestamp from a line
+    $extractTimestamp = function($line) {
+        if (preg_match('/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+)/', $line, $match)) {
+            return $match[1];
+        }
+        return null;
+    };
+
+    $firstTimestamp = $extractTimestamp($lines[0]);
+    $lastTimestamp = $extractTimestamp($lines[count($lines) - 1]);
+
+    if (!$firstTimestamp || !$lastTimestamp) {
+	return 0;
+    }
+
+    $start = DateTime::createFromFormat('Y-m-d\TH:i:s.u', $firstTimestamp);
+    $end = DateTime::createFromFormat('Y-m-d\TH:i:s.u', $lastTimestamp);
+
+    if (!$start || !$end) {
+	return 0;
+    }
+
+    $durationSeconds = $end->getTimestamp() + ($end->format("u") / 1000000)
+                     - ($start->getTimestamp() + ($start->format("u") / 1000000));
+
+    $durationMs = (int) ($durationSeconds * 1000);
+    return $durationMs; // duration as a float in seconds
+}
 
 function getStartAndEndDate($week, $year) {
     $dto = new DateTime();
