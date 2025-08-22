@@ -133,10 +133,12 @@ function getZip(row) {
 // Create detection video
 function getVideo(row) {
     var data = table2.rows(row).data()[0];
-    defaultSuccess(_("Il download del video inizierà tra qualche minuto"));
+    
     isProcessingVideo = true;
-    videoRow = row;
     $('#DetectionList').dataTable().fnDraw();
+    defaultSuccess(_("Il download del video inizierà tra qualche minuto"));
+    videoRow = row;
+    
 
     createVideoXhr = $.ajax({
         url: "/lib/detection/V2/detection/createvideo/" + data[6],
@@ -144,7 +146,18 @@ function getVideo(row) {
         global: false,
         method: 'POST',
         success: function (json) {
-            downloadVideo(json);
+            var data = JSON.parse(json);
+            if(!data.result) {
+                isProcessingVideo = false;
+                $('#DetectionList').dataTable().fnDraw();
+                defaultError(data.message);
+                return;
+            } else {
+                isProcessingVideo = false;
+                $('#DetectionList').dataTable().fnDraw();
+                downloadVideo(json);
+                return;
+            }
         }
     });
 }
