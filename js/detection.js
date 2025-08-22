@@ -146,7 +146,6 @@ function getVideo(row) {
         global: false,
         method: 'POST',
         success: function (json) {
-            console.log(json);
             var data = JSON.parse(json);
             if(!data.result) {
                 isProcessingVideo = false;
