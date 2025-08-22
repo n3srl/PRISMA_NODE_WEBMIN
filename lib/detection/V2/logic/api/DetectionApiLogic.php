@@ -330,6 +330,7 @@ class DetectionApiLogic {
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
+
         return CoreLogic::GenerateResponse(true, $zip);
     }
 
@@ -445,13 +446,16 @@ class DetectionApiLogic {
         $detection_info = explode("_", $detection);
         $timeT = $detection_info[1];
         $time = explode("T", $timeT);
-        //$detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        
         $detection_name = $detection_info[0] ."_".$time[0];
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".mkv")) {
             return $detection_name . ".mkv";
         }
 
-        $video = self::makeVideo($detection_folder, $detection_name);
+        $detection_name_path = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        $detection_full_path = "$detection_folder$detection_name_path/";
+
+        $video = self::makeVideo($detection_full_path, $detection_name);
         return $video;
     }
 
@@ -705,7 +709,10 @@ class DetectionApiLogic {
         mkdir($frames_dir);
 
         // Convert each frame to png
-        $frames = scandir($detection_dir . "fits2D", SCANDIR_SORT_ASCENDING);
+        $frames = @scandir($detection_dir . "fits2D", SCANDIR_SORT_ASCENDING); // @: suppress warning and leave js response OK
+        if(!$frames) {
+            throw new ApiException(ApiException::$Generic, "Impossibile generare il video, scandir() => error $detection_dir");
+        }
         foreach ($frames as $frame) {
             if ($_SESSION['cancel_video']) {
                 return;
