@@ -525,7 +525,6 @@ function initDetectionsDatatable() {
 
     // Hide zip and video column and enable preview toggle if media processing not enabled
     $.get("/lib/ft/V2/freeturefinal/media/processing", function (json) {
-        console.log("/lib/ft/V2/freeturefinal/media/processing", json);
         var data = JSON.parse(json).data;
         table2.column(6).visible(data);
         table2.column(7).visible(data);
