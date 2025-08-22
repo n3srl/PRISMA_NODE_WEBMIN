@@ -175,11 +175,8 @@ msgstr ""
 "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparando zip...</div>"
 
 #: js/detection.js:340 js/home.js:303
-msgid ""
-"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in "
-"corso...</div>"
-msgstr ""
-"<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparando vídeo...</div>"
+msgid "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparazione video in corso...</div>"
+msgstr "<div class='col-md-1'><div class='loader'></div></div><div class='col-md-11'> Preparando vídeo...</div>"
 
 #: js/docker.js:69
 msgid "Container riavviato correttamente"
