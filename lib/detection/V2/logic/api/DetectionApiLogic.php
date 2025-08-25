@@ -414,17 +414,34 @@ class DetectionApiLogic {
         $detection_info = explode("_", $detection);
         $timeT = $detection_info[1];
         $time = explode("T", $timeT);
-        //$detection_name = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
         $detection_name = $detection_info[0] ."_".$time[0];
-
+/*
         if (file_exists(_WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip")) {
             return $detection_name . ".zip";
-        }
+        }*/
+
+        $detection_name_path = $detection_info[2] . "_" . $detection_info[3] . "_" . $detection_info[4];
+        $detection_full_path = "$detection_folder$detection_name_path/";
+        
+        $folder = basename($detection_full_path);
+        $parent = dirname($detection_full_path);
 
         //shell_exec("rm " . _WEBROOTDIR_ . "tmp-media/" . "*.zip");
-        $zipcreated = _WEBROOTDIR_ . "tmp-media/" . $detection_name . ".zip";
-        shell_exec("zip -r $zipcreated $detection_folder");
-        return $detection_name . ".zip";
+        
+        $zipcreated = _WEBROOTDIR_ . "tmp-media/" . $detection_name_path . ".zip";
+        if (file_exists($zipcreated)) {
+            // Elimino il file se è stato creato più di un'ora fa (in modo da rigenerarlo in caso di modifiche al codice)
+            $mtime = filemtime($zipcreated);
+
+            if ($mtime !== false && (time() - $mtime) > 2) {
+                shell_exec("rm " . $zipcreated);
+            }
+            else {
+                return $detection_name_path . ".zip";
+            }
+        }
+        shell_exec("cd $parent && zip -r $zipcreated $folder");
+        return $detection_name_path . ".zip";
     }
 
     // Kill any active video process
