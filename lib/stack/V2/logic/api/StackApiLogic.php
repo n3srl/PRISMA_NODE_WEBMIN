@@ -207,7 +207,7 @@ class StackApiLogic {
         return $output;
     }
 
-    public static function GetDaysListDatatable($request) {
+    public static function jGetDaysListDatatable($request) {
         $reply = null;
         $iDisplayStart = 1;
         $directory = self::getDataPath() . "*";
@@ -237,7 +237,7 @@ class StackApiLogic {
 			}
         }
 		
-        /*
+        
           //Ordering
           if (isset($_GET['iSortCol_0'])) {
           if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
@@ -247,7 +247,7 @@ class StackApiLogic {
           array_multisort($sort, SORT_ASC, $reply);
           } else {
           array_multisort($sort, SORT_DESC, $reply);}}}
-         */
+         
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
             "pageToShow" => $pageNumber,
@@ -257,6 +257,74 @@ class StackApiLogic {
         );
         return $output;
     }
+        
+
+    public static function GetDaysListDatatable($request)
+    {
+        
+        $draw   = isset($_GET['draw']) ? (int)$_GET['draw'] : (isset($_GET['sEcho']) ? (int)$_GET['sEcho'] : 0);
+        $start  = isset($_GET['start']) ? (int)$_GET['start'] : (isset($_GET['iDisplayStart']) ? (int)$_GET['iDisplayStart'] : 0);
+        $length = isset($_GET['length']) ? (int)$_GET['length'] : (isset($_GET['iDisplayLength']) ? (int)$_GET['iDisplayLength'] : 10);
+        if ($length === -1) { $length = 10; } 
+        if ($start < 0) { $start = 0; }
+
+        if (isset($_GET['order'][0]['column'])) {
+            $orderCol = (int)$_GET['order'][0]['column'];
+            $orderDir = (isset($_GET['order'][0]['dir']) && strtolower($_GET['order'][0]['dir']) === 'desc') ? 'desc' : 'asc';
+        } else {
+            
+            $orderCol = isset($_GET['iSortCol_0']) ? (int)$_GET['iSortCol_0'] : 0;
+            $orderDir = (isset($_GET['sSortDir_0']) && strtolower($_GET['sSortDir_0']) === 'desc') ? 'desc' : 'asc';
+        }
+
+        $all = self::getStacksDays(0, 365); 
+        if (!is_array($all)) { $all = []; }
+
+        $recordsTotal = count($all);
+
+        $filtered = $all;
+
+        $dirMult = ($orderDir === 'desc') ? -1 : 1;
+        usort($filtered, function($a, $b) use ($orderCol, $dirMult) {
+            $va = $a[$orderCol] ?? null;
+            $vb = $b[$orderCol] ?? null;
+
+            
+            $bothNumeric = is_numeric($va) && is_numeric($vb);
+            if ($bothNumeric) {
+                return $dirMult * ($va <=> $vb);
+            }
+
+            return $dirMult * strcasecmp((string)$va, (string)$vb);
+        });
+
+        $recordsFiltered = count($filtered); 
+
+        if ($start >= $recordsFiltered) { $start = 0; }
+        $data = array_slice($filtered, $start, $length);
+
+        $pageNumber = ($length > 0) ? intdiv($start, $length) : 0;
+
+
+        $output = [
+
+            "draw" => $draw,
+            "recordsTotal" => $recordsTotal,
+            "recordsFiltered" => $recordsFiltered,
+            "data" => $data,
+
+            "sEcho" => $draw,
+            "iTotalRecords" => $recordsTotal,
+            "iTotalDisplayRecords" => $recordsFiltered,
+            "aaData" => $data,
+
+
+            "pageToShow" => $pageNumber,
+        ];
+
+        return $output;
+    }
+
 
     // Get fit file path from given file info
     // File info given is 

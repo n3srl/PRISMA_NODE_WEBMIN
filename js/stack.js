@@ -102,7 +102,11 @@ $(document).ready(function () {
 
         columnDefs: [
             {
-                "targets": [-1, -2, -3],
+                "targets": 0,
+                "orderable": true
+            },
+            {
+                "targets": "_all",
                 "orderable": false
             },
             {
