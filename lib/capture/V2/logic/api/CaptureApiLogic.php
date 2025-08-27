@@ -234,7 +234,7 @@ class CaptureApiLogic {
 				$pageNumber = 0;
 			}
         }
-        /*
+        
           //Ordering
           if (isset($_GET['iSortCol_0'])) {
           if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
@@ -244,7 +244,7 @@ class CaptureApiLogic {
           array_multisort($sort, SORT_ASC, $reply);
           } else {
           array_multisort($sort, SORT_DESC, $reply);}}}
-         */
+         
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
             "pageToShow" => $pageNumber,
