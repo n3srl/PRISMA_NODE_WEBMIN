@@ -887,20 +887,15 @@ class FreetureFinalApiLogic {
         fclose($myfile);
     }
 
-    // Get percentage values of cpu, ram and disk usage
+    // Get aggregate percentage values of cpu, ram and disk usage.
+    // CPU is the system-wide non-idle average (mpstat "all" row) — a single
+    // scalar instead of one value per core, so the call is O(1) regardless of
+    // core count and completes in ~1s.
     public static function getStoragePercentage() {
         $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
 
-        $cpu = array();
-        $i = 0;
-        while (true) {
-            $core = shell_exec("mpstat -P $i 1 1 | awk 'FNR==4{print($3+$4+$5+$6+$7+$8+$9+$10+$11)}'");
-            if (is_null($core)) {
-                break;
-            }
-            $cpu[] = (float) str_replace("\n", "", $core);
-            $i++;
-        }
+        $cpuRaw = shell_exec("mpstat 1 1 2>/dev/null | awk 'FNR==4{print($3+$4+$5+$6+$7+$8+$9+$10+$11)}'");
+        $cpu = is_string($cpuRaw) ? (float) trim($cpuRaw) : 0.0;
 
         $free1 = shell_exec('free');
         $free2 = (string) trim($free1);

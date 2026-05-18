@@ -153,60 +153,34 @@ function cancelVideo() {
     $('#DetectionList').dataTable().fnDraw();
 }
 
-// Show data usage progress bars
-function storageInfo() {
+// Refresh storage info (cpu, ram, disk). Single in-flight request; reschedules
+// 5s after the previous one completes, so a slow backend never piles up.
+function updateDataUsage() {
     $.ajax({
-        url: "/lib/ft/V2/freeturefinal/storage/cores",
+        url: "/lib/ft/V2/freeturefinal/storage/info",
         type: "GET",
         dataType: "json",
+        global: false,
         success: function (res) {
-            var cores = res.data;
-            var cpuHtml = "";
-            for (let i = 0; i < cores; i++) {
-                cpuHtml += '<div class="col-md-12 col-sm-12 col-xs-12">' +
-                        '<label>CPU ' + i + '</label>' +
-                        '</div>' +
-                        '<div class="col-md-12 col-sm-12 col-xs-12">' +
-                        '<div class="progress">' +
-                        '<div class="progress-bar progress-bar-success" id="cpu' + i + '" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
-            }
-            $("#cores").html(cpuHtml);
+            var info = res.data;
+            var cpu = Number(info[0]) || 0;
+            var ram = Number(info[1]) || 0;
+            var disk = Number(info[2]) || 0;
+
+            var setBar = function (id, pct) {
+                pct = Math.max(0, Math.min(100, pct));
+                $(id).attr("aria-valuenow", pct)
+                     .attr("style", "width:" + pct + "%")
+                     .html(Math.round(pct) + "%");
+            };
+            setBar("#cpu-percentage", cpu);
+            setBar("#ram-percentage", ram);
+            setBar("#disk-percentage", disk);
+        },
+        complete: function () {
+            setTimeout(updateDataUsage, 5000);
         }
     });
-    updateDataUsage();
-}
-
-// Refresh every 5 seconds storage info (cpu, ram, disk)
-function updateDataUsage() {
-    setTimeout(function () {
-        $.ajax({
-            url: "/lib/ft/V2/freeturefinal/storage/info",
-            type: "GET",
-            dataType: "json",
-            global: false,
-            complete: updateDataUsage,
-            success: function (res) {
-                var info = res.data;
-                $("#ram-percentage").attr("aria-valuenow", info[1]);
-                $("#disk-percentage").attr("aria-valuenow", info[2]);
-                $("#ram-percentage").attr("style", "width:" + info[1] + "%");
-                $("#disk-percentage").attr("style", "width:" + info[2] + "%");
-                $("#ram-percentage").html(Math.round(info[1]) + "%");
-                $("#disk-percentage").html(Math.round(info[2]) + "%");
-                var cores = info[0];
-                i = 0;
-                cores.forEach(core => {
-                    $("#cpu" + i).attr("aria-valuenow", core);
-                    $("#cpu" + i).attr("style", "width:" + core + "%");
-                    $("#cpu" + i).html(Math.round(core) + "%");
-                    i++;
-                });
-            }
-        });
-    }, 5000);
 }
 
 // Show modal with freeture mask
@@ -518,7 +492,7 @@ $(document).ready(function () {
 
     loadStationInfoValues();
 
-    storageInfo();
+    updateDataUsage();
 
     refreshCameraTemperature();
     setInterval(refreshCameraTemperature, 20000);
