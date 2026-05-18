@@ -77,5 +77,24 @@ $app->GET('/ovpn/net_status', function(Application $app, Request $request) {
 	return $resp;
 });
 
+/**
+*
+* GET WIRED NETWORK INFO (structured per-interface state)
+*
+**/
+
+$app->GET('/ovpn/wired_status', function(Application $app, Request $request) {
+
+	$result = OvpnApiLogic::GetWiredNetworkInfo();
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
 $app->run();
 

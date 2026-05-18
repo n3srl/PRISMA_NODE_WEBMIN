@@ -36,6 +36,17 @@ class OvpnApiLogic {
         }
         return CoreLogic::GenerateResponse($res, $ob);
     }
+
+    public static function GetWiredNetworkInfo() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::getWiredNetworkInterfaces();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
     
     // Update ovpn configuration file with given file
     public static function updateConfigurationFile($ob) {
@@ -136,7 +147,75 @@ class OvpnApiLogic {
         }
         
         $text2 = str_replace("\n", "</br>",$text2);
-        
+
         return $text2;
+    }
+
+    // Return structured info for each known wired interface on the docker host.
+    // Uses `ip -j address show <iface>` (iproute2 >= 5.4) and parses JSON, so
+    // there's no fragile text scraping. Each entry: {name, present, operstate,
+    // mac, mtu, ipv4[], ipv6[]}. Interfaces that aren't present on the host
+    // are still returned with present=false so the UI can render a placeholder.
+    public static function getWiredNetworkInterfaces() {
+        $supported = array("enp1s0", "eno2");
+        $result = array();
+
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        if (!$session) {
+            return $result;
+        }
+        if (!ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            unset($session);
+            return $result;
+        }
+
+        foreach ($supported as $iface) {
+            $stream = ssh2_exec($session, "ip -j address show " . escapeshellarg($iface) . " 2>/dev/null");
+            stream_set_blocking($stream, true);
+            $out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+            $raw = trim((string) stream_get_contents($out));
+
+            $entry = array(
+                'name'      => $iface,
+                'present'   => false,
+                'operstate' => null,
+                'mac'       => null,
+                'mtu'       => null,
+                'ipv4'      => array(),
+                'ipv6'      => array(),
+            );
+
+            if ($raw !== '' && $raw[0] === '[') {
+                $data = json_decode($raw, true);
+                if (is_array($data) && !empty($data[0])) {
+                    $d = $data[0];
+                    $entry['present']   = true;
+                    $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
+                    $entry['mac']       = isset($d['address']) ? $d['address'] : null;
+                    $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
+                    if (isset($d['addr_info']) && is_array($d['addr_info'])) {
+                        foreach ($d['addr_info'] as $a) {
+                            $local  = isset($a['local']) ? $a['local'] : '';
+                            $prefix = isset($a['prefixlen']) ? $a['prefixlen'] : '';
+                            if ($local === '') {
+                                continue;
+                            }
+                            $cidr = $local . '/' . $prefix;
+                            $family = isset($a['family']) ? $a['family'] : '';
+                            if ($family === 'inet') {
+                                $entry['ipv4'][] = $cidr;
+                            } else if ($family === 'inet6') {
+                                $entry['ipv6'][] = $cidr;
+                            }
+                        }
+                    }
+                }
+            }
+
+            $result[] = $entry;
+        }
+
+        unset($session);
+        return $result;
     }
 }
