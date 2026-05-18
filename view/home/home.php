@@ -281,6 +281,28 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div class='x_panel'>
+                        <div class='x_title no-padding-lr'>
+                            <div class='clearfix'>
+                                <div class='col-md-6 no-padding-l'>
+                                    <h2><?= _('Stato camera') ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='x_content'>
+                            <div class='col-md-12 col-sm-12 col-xs-12'>
+                                <div id='camera-status-badges' style='margin-bottom:6px;'>
+                                    <span id='camera-status-connection' class='label label-default'><?= _('Stato connessione: --') ?></span>
+                                    <span id='camera-status-overheated' class='label label-default' style='display:none;'></span>
+                                    <span id='camera-status-fps' class='label label-default' style='display:none;'></span>
+                                </div>
+                                <div id="camera-temp-gauge" style="width:100%; height:320px;"></div>
+                                <div id="camera-temp-info" class="text-muted" style="text-align:center; font-size:0.9em;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

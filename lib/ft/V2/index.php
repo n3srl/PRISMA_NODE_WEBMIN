@@ -419,6 +419,25 @@ $app->GET('/freeturefinal/storage/cores', function (Application $app, Request $r
     return $resp;
 });
 
+/**
+ *
+ * GET CAMERA STATUS (connection, overheated, temperature + runtime thresholds)
+ * Sources: configuration.cfg + node_exporter on http://localhost:9100/metrics
+ *
+ * */
+$app->GET('/freeturefinal/camera/status', function (Application $app, Request $request) {
+
+    $result = FreetureFinalApiLogic::GetCameraStatus();
+    if ($result->result) {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(200);
+    } else {
+        $resp = new Response(json_encode($result));
+        $resp->setStatusCode(403);
+    }
+    return $resp;
+});
+
 
 $app->run();
 
