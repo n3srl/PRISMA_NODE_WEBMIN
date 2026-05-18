@@ -163,26 +163,20 @@ class StackApiLogic {
     // Get list of all stacks in a day
     public static function GetFilesListDatatable($request) {
         $reply = array();
-        $iDisplayStart = 1;
+        $iTotal = 0;
+        $pageNumber = 0;
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
             $day_dir = $_GET['dayDir'];
             $enable_preview = $_GET['enablePreview'] === 'true' ? true : false;
-		
-            $directory = self::getDataPath() . $day_dir . "/stacks/*";
-            $iTotal = self::getDirectoryFilesCount($directory);
+
+            $iTotal = count(self::collectStacksFiles($day_dir));
             $reply = self::getStacksFiles($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $day_dir, $enable_preview);
 
-            $test = $reply[0];
-            if (empty($test)) {
-                $iDisplayStart = 0;
-            }
-            if ($iDisplayStart < $iDisplayLength) {
-                $pageNumber = 0;
-            } else {
-                $pageNumber = ($iDisplayStart / $iDisplayLength);
+            if ($iDisplayLength > 0 && $iDisplayStart >= $iDisplayLength) {
+                $pageNumber = intdiv($iDisplayStart, $iDisplayLength);
             }
         }
         /*
@@ -517,63 +511,11 @@ class StackApiLogic {
     // station folders for that date are merged — or an explicit folder name.
     public static function getStacksFiles($start, $end, $day_dir, $enablePreview = false) {
         $base_dir = self::getDataPath();
-        $reply = array();
-        if (!is_dir($base_dir)) {
-            return $reply;
-        }
-
-        // Resolve $day_dir to the list of source folders.
-        $folders = array();
-        if (preg_match('/^\d{8}$/', $day_dir)) {
-            $dateKey = $day_dir;
-            $all = scandir($base_dir, SCANDIR_SORT_DESCENDING);
-            foreach ($all as $d) {
-                if ('.' === $d || '..' === $d) {
-                    continue;
-                }
-                if (!is_dir($base_dir . $d)) {
-                    continue;
-                }
-                if (strpos($d, $dateKey) !== false) {
-                    $folders[] = $d;
-                }
-            }
-        } else {
-            $folders[] = $day_dir;
-        }
-
-        // Collect stack files across all source folders, remembering the owner.
-        $datePattern = '/(\d{8})T(\d{6})/';
-        $stack_files = array();
-        foreach ($folders as $folder) {
-            $stacks_dir = $base_dir . $folder . "/stacks";
-            if (!is_dir($stacks_dir)) {
-                continue;
-            }
-            $entries = scandir($stacks_dir, SCANDIR_SORT_DESCENDING);
-            foreach ($entries as $entry) {
-                if ('.' === $entry || '..' === $entry) {
-                    continue;
-                }
-                if (substr_compare($entry, '.fit', -4, 4, true) !== 0) {
-                    continue;
-                }
-                if (!preg_match($datePattern, $entry)) {
-                    continue;
-                }
-                $stack_files[] = array('folder' => $folder, 'file' => $entry);
-            }
-        }
-
-        // Order by timestamp embedded in filename, most recent first.
-        usort($stack_files, function ($a, $b) use ($datePattern) {
-            preg_match($datePattern, $a['file'], $ma);
-            preg_match($datePattern, $b['file'], $mb);
-            return strcmp($mb[1] . $mb[2], $ma[1] . $ma[2]);
-        });
-
+        $stack_files = self::collectStacksFiles($day_dir);
         $n_day_files = count($stack_files);
+        $datePattern = '/(\d{8})T(\d{6})/';
 
+        $reply = array();
         $i = 0;
         foreach ($stack_files as $row) {
             if ($i < $start) {
@@ -598,6 +540,63 @@ class StackApiLogic {
             $i++;
         }
         return $reply;
+    }
+
+    // Resolve $day_dir (either an 8-digit date key or an explicit folder name)
+    // to the full, timestamp-sorted list of {folder, file} stack entries.
+    // Each entry is a .fit file whose name contains a YYYYMMDDTHHMMSS marker.
+    private static function collectStacksFiles($day_dir) {
+        $base_dir = self::getDataPath();
+        if (!is_dir($base_dir)) {
+            return array();
+        }
+
+        $folders = array();
+        if (preg_match('/^\d{8}$/', $day_dir)) {
+            $dateKey = $day_dir;
+            foreach (scandir($base_dir, SCANDIR_SORT_DESCENDING) as $d) {
+                if ('.' === $d || '..' === $d) {
+                    continue;
+                }
+                if (!is_dir($base_dir . $d)) {
+                    continue;
+                }
+                if (strpos($d, $dateKey) !== false) {
+                    $folders[] = $d;
+                }
+            }
+        } else {
+            $folders[] = $day_dir;
+        }
+
+        $datePattern = '/(\d{8})T(\d{6})/';
+        $stack_files = array();
+        foreach ($folders as $folder) {
+            $stacks_dir = $base_dir . $folder . "/stacks";
+            if (!is_dir($stacks_dir)) {
+                continue;
+            }
+            foreach (scandir($stacks_dir, SCANDIR_SORT_DESCENDING) as $entry) {
+                if ('.' === $entry || '..' === $entry) {
+                    continue;
+                }
+                if (substr_compare($entry, '.fit', -4, 4, true) !== 0) {
+                    continue;
+                }
+                if (!preg_match($datePattern, $entry)) {
+                    continue;
+                }
+                $stack_files[] = array('folder' => $folder, 'file' => $entry);
+            }
+        }
+
+        usort($stack_files, function ($a, $b) use ($datePattern) {
+            preg_match($datePattern, $a['file'], $ma);
+            preg_match($datePattern, $b['file'], $mb);
+            return strcmp($mb[1] . $mb[2], $ma[1] . $ma[2]);
+        });
+
+        return $stack_files;
     }
 
     // Get all days and compute number of stack in that day.
