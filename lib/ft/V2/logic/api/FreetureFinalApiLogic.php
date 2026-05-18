@@ -888,24 +888,163 @@ class FreetureFinalApiLogic {
     }
 
     // Get aggregate percentage values of cpu, ram and disk usage.
-    // CPU is the system-wide non-idle average (mpstat "all" row) — a single
-    // scalar instead of one value per core, so the call is O(1) regardless of
-    // core count and completes in ~1s.
+    // Primary source is node_exporter on http://localhost:9100/metrics (two
+    // scrapes 500 ms apart, needed because node_cpu_seconds_total is a
+    // counter). Falls back to /proc/stat / free / disk_free_space when
+    // node_exporter is unreachable. Returns floats clamped to [0, 100].
     public static function getStoragePercentage() {
-        $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
+        $sys = self::readNodeExporterSystemMetrics();
 
-        $cpuRaw = shell_exec("mpstat 1 1 2>/dev/null | awk 'FNR==4{print($3+$4+$5+$6+$7+$8+$9+$10+$11)}'");
-        $cpu = is_string($cpuRaw) ? (float) trim($cpuRaw) : 0.0;
-
-        $free1 = shell_exec('free');
-        $free2 = (string) trim($free1);
-        $free_arr = explode("\n", $free2);
-        $mem1 = explode(" ", $free_arr[1]);
-        $mem2 = array_filter($mem1);
-        $mem3 = array_merge($mem2);
-        $ram = $mem3[2] / $mem3[1] * 100;
+        $cpu  = $sys['cpu']  !== null ? $sys['cpu']  : self::computeCpuPercentage();
+        $ram  = $sys['ram']  !== null ? $sys['ram']  : self::computeRamPercentage();
+        $disk = $sys['disk'] !== null ? $sys['disk'] : self::computeDiskPercentage();
 
         return array($cpu, $ram, $disk);
+    }
+
+    // Scrape node_exporter twice 500 ms apart and extract CPU%, RAM%, Disk%.
+    // CPU comes from the delta of node_cpu_seconds_total; RAM and Disk are
+    // taken instantly from MemTotal/MemAvailable and filesystem_* on "/".
+    // Any metric that can't be computed is returned as null.
+    private static function readNodeExporterSystemMetrics() {
+        $out = array('cpu' => null, 'ram' => null, 'disk' => null);
+
+        $body1 = self::fetchNodeExporterMetrics();
+        if ($body1 === null) {
+            return $out;
+        }
+        $a = self::parseNodeSystemMetrics($body1);
+
+        if ($a['mem_total'] > 0 && $a['mem_avail'] !== null) {
+            $out['ram'] = self::clampPct((1.0 - $a['mem_avail'] / $a['mem_total']) * 100.0);
+        }
+        if ($a['fs_size'] > 0 && $a['fs_avail'] !== null) {
+            $out['disk'] = self::clampPct((1.0 - $a['fs_avail'] / $a['fs_size']) * 100.0);
+        }
+
+        usleep(500000);
+        $body2 = self::fetchNodeExporterMetrics();
+        if ($body2 !== null) {
+            $b = self::parseNodeSystemMetrics($body2);
+            $dIdle  = $b['cpu_idle']  - $a['cpu_idle'];
+            $dTotal = $b['cpu_total'] - $a['cpu_total'];
+            if ($dTotal > 0) {
+                $out['cpu'] = self::clampPct((1.0 - $dIdle / $dTotal) * 100.0);
+            }
+        }
+        return $out;
+    }
+
+    // Parse a node_exporter exposition body and accumulate the few metrics we
+    // need. cpu_idle includes both idle and iowait, matching the convention
+    // used by mpstat/`top`.
+    private static function parseNodeSystemMetrics($body) {
+        $r = array(
+            'cpu_idle'  => 0.0, 'cpu_total' => 0.0,
+            'mem_total' => 0.0, 'mem_avail' => null,
+            'fs_size'   => 0.0, 'fs_avail'  => null,
+        );
+        foreach (preg_split('/\R/', $body) as $line) {
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            if (strpos($line, 'node_cpu_seconds_total{') === 0) {
+                if (preg_match('/mode="([^"]+)"[^}]*}\s+([-+]?[\d.]+(?:[eE][-+]?\d+)?)/', $line, $m)) {
+                    $val = (float) $m[2];
+                    $r['cpu_total'] += $val;
+                    if ($m[1] === 'idle' || $m[1] === 'iowait') {
+                        $r['cpu_idle'] += $val;
+                    }
+                }
+                continue;
+            }
+            if (strpos($line, 'node_memory_MemTotal_bytes ') === 0) {
+                $r['mem_total'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_memory_MemAvailable_bytes ') === 0) {
+                $r['mem_avail'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_filesystem_size_bytes{') === 0
+                && strpos($line, 'mountpoint="/"') !== false
+                && $r['fs_size'] === 0.0) {
+                $r['fs_size'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_filesystem_avail_bytes{') === 0
+                && strpos($line, 'mountpoint="/"') !== false
+                && $r['fs_avail'] === null) {
+                $r['fs_avail'] = self::lastNumberOnLine($line);
+                continue;
+            }
+        }
+        return $r;
+    }
+
+    private static function lastNumberOnLine($line) {
+        if (preg_match('/([-+]?[\d.]+(?:[eE][-+]?\d+)?)\s*$/', $line, $m)) {
+            return (float) $m[1];
+        }
+        return 0.0;
+    }
+
+    private static function clampPct($v) {
+        if ($v < 0)   { return 0.0; }
+        if ($v > 100) { return 100.0; }
+        return (float) $v;
+    }
+
+    // System-wide CPU utilisation, computed as 1 - (idle_delta / total_delta)
+    // between two reads of /proc/stat 500 ms apart. Used as fallback when
+    // node_exporter is unreachable. Columns are:
+    // cpu user nice system idle iowait irq softirq steal guest guest_nice
+    private static function computeCpuPercentage() {
+        $sample = function () {
+            $raw = @file_get_contents('/proc/stat');
+            if (!is_string($raw)) {
+                return null;
+            }
+            $line = strtok($raw, "\n");
+            if ($line === false) {
+                return null;
+            }
+            $parts = preg_split('/\s+/', trim($line));
+            if (!$parts || $parts[0] !== 'cpu') {
+                return null;
+            }
+            $idle = (float) ($parts[4] ?? 0) + (float) ($parts[5] ?? 0);
+            $total = 0.0;
+            for ($i = 1; $i <= 10; $i++) {
+                $total += (float) ($parts[$i] ?? 0);
+            }
+            return array($idle, $total);
+        };
+        $a = $sample();
+        if ($a === null) { return 0.0; }
+        usleep(500000);
+        $b = $sample();
+        if ($b === null) { return 0.0; }
+        $dTotal = $b[1] - $a[1];
+        if ($dTotal <= 0) { return 0.0; }
+        return self::clampPct((1.0 - ($b[0] - $a[0]) / $dTotal) * 100.0);
+    }
+
+    private static function computeRamPercentage() {
+        $raw = shell_exec('free');
+        if (!is_string($raw)) { return 0.0; }
+        $arr = explode("\n", trim($raw));
+        if (!isset($arr[1])) { return 0.0; }
+        $parts = array_values(array_filter(explode(' ', $arr[1])));
+        if (!isset($parts[1], $parts[2]) || $parts[1] == 0) { return 0.0; }
+        return self::clampPct($parts[2] / $parts[1] * 100.0);
+    }
+
+    private static function computeDiskPercentage() {
+        $total = @disk_total_space("/");
+        $free  = @disk_free_space("/");
+        if (!$total) { return 0.0; }
+        return self::clampPct(($total - $free) / $total * 100.0);
     }
 
     // Get size temp media folder
