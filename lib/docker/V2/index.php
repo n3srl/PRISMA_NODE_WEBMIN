@@ -269,5 +269,29 @@ $app->GET('/docker/freeture/log', function(Application $app, Request $request) {
 	return $resp;
 });
 
+/**
+*
+* FREETURE LOGS — FILTERED FROM FILES
+*
+**/
+
+$app->GET('/docker/freeture/log/filter', function(Application $app, Request $request) {
+
+	$from = (string) $request->query->get('from', '');
+	$to = (string) $request->query->get('to', '');
+	$levelsRaw = (string) $request->query->get('levels', '');
+	$levels = ($levelsRaw === '') ? array() : explode(',', $levelsRaw);
+
+	$result = DockerApiLogic::FilteredFreetureLogs($from, $to, $levels);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
 $app->run();
 
