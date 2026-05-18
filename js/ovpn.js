@@ -107,10 +107,13 @@ function renderWiredInterfaces(list) {
             if (iface.mtu) { rows += '<div><b>MTU:</b> ' + esc(iface.mtu) + '</div>'; }
         }
 
+        var titleSuffix = iface.isDefault
+            ? ' <small class="text-muted" style="color:#666;">(' + _('default route') + ')</small>'
+            : '';
         blocks.push(
             '<div style="margin-bottom:14px;">' +
                 '<h4 style="margin:4px 0; color:' + color + '; font-weight:bold;">' +
-                    esc(iface.name) + ': ' + label +
+                    esc(iface.name) + ': ' + label + titleSuffix +
                 '</h4>' +
                 rows +
             '</div>'

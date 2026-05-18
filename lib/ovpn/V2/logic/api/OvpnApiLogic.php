@@ -151,71 +151,119 @@ class OvpnApiLogic {
         return $text2;
     }
 
-    // Return structured info for each known wired interface on the docker host.
-    // Uses `ip -j address show <iface>` (iproute2 >= 5.4) and parses JSON, so
-    // there's no fragile text scraping. Each entry: {name, present, operstate,
-    // mac, mtu, ipv4[], ipv6[]}. Interfaces that aren't present on the host
-    // are still returned with present=false so the UI can render a placeholder.
+    // Return structured info for the wired interface(s) carrying internet on
+    // the host running webmin. Auto-detected: first the interface(s) of the
+    // default IPv4 route, then a scan of /sys/class/net for physical Ethernet
+    // ports if no default route exists. Uses local `ip -j` (iproute2 JSON
+    // output), no SSH — the host filesystem is already trusted for reading
+    // /freeture/* etc. Each entry: {name, present, operstate, mac, mtu,
+    // ipv4[], ipv6[], isDefault}.
     public static function getWiredNetworkInterfaces() {
-        $supported = array("enp1s0", "eno2");
+        $defaultIfaces = self::findDefaultRouteIfaces();
+        $candidates = !empty($defaultIfaces)
+            ? $defaultIfaces
+            : self::findPhysicalEthernetIfaces();
+
+        $defaultSet = array_flip($defaultIfaces);
         $result = array();
-
-        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
-        if (!$session) {
-            return $result;
-        }
-        if (!ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-            unset($session);
-            return $result;
-        }
-
-        foreach ($supported as $iface) {
-            $stream = ssh2_exec($session, "ip -j address show " . escapeshellarg($iface) . " 2>/dev/null");
-            stream_set_blocking($stream, true);
-            $out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
-            $raw = trim((string) stream_get_contents($out));
-
-            $entry = array(
-                'name'      => $iface,
-                'present'   => false,
-                'operstate' => null,
-                'mac'       => null,
-                'mtu'       => null,
-                'ipv4'      => array(),
-                'ipv6'      => array(),
-            );
-
-            if ($raw !== '' && $raw[0] === '[') {
-                $data = json_decode($raw, true);
-                if (is_array($data) && !empty($data[0])) {
-                    $d = $data[0];
-                    $entry['present']   = true;
-                    $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
-                    $entry['mac']       = isset($d['address']) ? $d['address'] : null;
-                    $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
-                    if (isset($d['addr_info']) && is_array($d['addr_info'])) {
-                        foreach ($d['addr_info'] as $a) {
-                            $local  = isset($a['local']) ? $a['local'] : '';
-                            $prefix = isset($a['prefixlen']) ? $a['prefixlen'] : '';
-                            if ($local === '') {
-                                continue;
-                            }
-                            $cidr = $local . '/' . $prefix;
-                            $family = isset($a['family']) ? $a['family'] : '';
-                            if ($family === 'inet') {
-                                $entry['ipv4'][] = $cidr;
-                            } else if ($family === 'inet6') {
-                                $entry['ipv6'][] = $cidr;
-                            }
-                        }
-                    }
-                }
-            }
-
+        foreach ($candidates as $iface) {
+            $entry = self::probeNetworkInterface($iface);
+            $entry['isDefault'] = isset($defaultSet[$iface]);
             $result[] = $entry;
         }
-
-        unset($session);
         return $result;
+    }
+
+    private static function findDefaultRouteIfaces() {
+        $raw = shell_exec("ip -j route show default 2>/dev/null");
+        if (!is_string($raw) || $raw === '') {
+            return array();
+        }
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            return array();
+        }
+        $seen = array();
+        foreach ($data as $r) {
+            if (!empty($r['dev']) && !isset($seen[$r['dev']])) {
+                $seen[$r['dev']] = true;
+            }
+        }
+        return array_keys($seen);
+    }
+
+    // Physical Ethernet ifaces from /sys/class/net (type==1 and a backing
+    // device link, excluding obvious virtual/wireless name prefixes).
+    private static function findPhysicalEthernetIfaces() {
+        $result = array();
+        $dirs = @scandir('/sys/class/net');
+        if (!is_array($dirs)) {
+            return $result;
+        }
+        $excludeRx = '/^(lo|docker|br-|veth|tun|tap|virbr|lxd|wlan|wlp|wwan|wwp)/i';
+        foreach ($dirs as $name) {
+            if ($name === '.' || $name === '..') {
+                continue;
+            }
+            if (preg_match($excludeRx, $name)) {
+                continue;
+            }
+            $devLink = "/sys/class/net/$name/device";
+            if (!file_exists($devLink)) {
+                continue; // virtual iface — no backing PCI/USB device
+            }
+            $type = trim((string) @file_get_contents("/sys/class/net/$name/type"));
+            if ($type !== '1') {
+                continue; // 1 == ARPHRD_ETHER
+            }
+            $result[] = $name;
+        }
+        return $result;
+    }
+
+    private static function probeNetworkInterface($iface) {
+        $entry = array(
+            'name'      => $iface,
+            'present'   => false,
+            'operstate' => null,
+            'mac'       => null,
+            'mtu'       => null,
+            'ipv4'      => array(),
+            'ipv6'      => array(),
+        );
+        $raw = shell_exec("ip -j address show " . escapeshellarg($iface) . " 2>/dev/null");
+        if (!is_string($raw)) {
+            return $entry;
+        }
+        $raw = trim($raw);
+        if ($raw === '' || $raw[0] !== '[') {
+            return $entry;
+        }
+        $data = json_decode($raw, true);
+        if (!is_array($data) || empty($data[0])) {
+            return $entry;
+        }
+        $d = $data[0];
+        $entry['present']   = true;
+        $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
+        $entry['mac']       = isset($d['address']) ? $d['address'] : null;
+        $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
+        if (isset($d['addr_info']) && is_array($d['addr_info'])) {
+            foreach ($d['addr_info'] as $a) {
+                $local  = isset($a['local']) ? $a['local'] : '';
+                $prefix = isset($a['prefixlen']) ? $a['prefixlen'] : '';
+                if ($local === '') {
+                    continue;
+                }
+                $cidr = $local . '/' . $prefix;
+                $family = isset($a['family']) ? $a['family'] : '';
+                if ($family === 'inet') {
+                    $entry['ipv4'][] = $cidr;
+                } else if ($family === 'inet6') {
+                    $entry['ipv6'][] = $cidr;
+                }
+            }
+        }
+        return $entry;
     }
 }
