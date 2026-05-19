@@ -7,6 +7,7 @@
  */
 
 var pendingAction = null; // {kind: 'node'|'camera', payload: {...}}
+var appliedSuccessfully = false;
 
 function escHtml(s) {
     return $('<div/>').text(s == null ? '' : String(s)).html();
@@ -176,10 +177,11 @@ function previewNode() {
 }
 
 function applyNode(payload) {
+    setApplyRunning(_('Riavvio networking in corso, può richiedere alcuni secondi...'));
     postWithCsrf('/lib/network/V2/network/node/apply', payload)
         .then(function (resp) {
             if (!resp || !resp.result) {
-                alert((resp && resp.message) || _('Apply fallito.'));
+                applyShowError((resp && resp.message) || _('Apply fallito.'));
                 return;
             }
             var d = resp.data;
@@ -189,11 +191,11 @@ function applyNode(payload) {
                 '<p>' + _('Output:') + '</p>' +
                 '<pre style="max-height:200px; overflow:auto;">' + escHtml(d.output || '') + '</pre>'
             );
-            $('#preview-confirm').hide();
+            applyShowDone();
             loadNodeConfig();
         })
         .fail(function () {
-            alert(_('Errore di rete in fase di apply.'));
+            applyShowError(_('Errore di rete in fase di apply.'));
         });
 }
 
@@ -267,12 +269,12 @@ function previewCamera() {
                 return;
             }
             var cmds = (resp.data && resp.data.commands) ? resp.data.commands : [];
-            var body = '<p>' + _('Comandi che verranno eseguiti via SSH:') + '</p>' +
+            var body = '<p>' + _('Comandi che verranno eseguiti via SSH (in ordine):') + '</p>' +
                        '<pre style="max-height:300px; overflow:auto; white-space:pre-wrap;">' +
                        cmds.map(escHtml).join('\n') +
                        '</pre>' +
                        '<p style="color:#b52c1d;"><strong>' +
-                       _("La camera potrebbe richiedere un riavvio per applicare il PersistentIP.") +
+                       _("L'ultimo comando (DeviceReset) riavvia la camera per applicare la nuova configurazione: la camera resterà offline 10-30 secondi.") +
                        '</strong></p>';
             $('#preview-modal-title').text(_('Anteprima: configurazione camera'));
             $('#preview-modal-body').html(body);
@@ -285,10 +287,11 @@ function previewCamera() {
 }
 
 function applyCamera(payload) {
+    setApplyRunning(_('Esecuzione comandi e reset camera in corso (può richiedere 10-30 secondi)...'));
     postWithCsrf('/lib/network/V2/network/camera/apply', payload)
         .then(function (resp) {
             if (!resp || !resp.result) {
-                alert((resp && resp.message) || _('Apply fallito.'));
+                applyShowError((resp && resp.message) || _('Apply fallito.'));
                 return;
             }
             var d = resp.data;
@@ -297,11 +300,51 @@ function applyCamera(payload) {
                 '<p>' + _('Output:') + '</p>' +
                 '<pre style="max-height:300px; overflow:auto;">' + escHtml(d.output || '') + '</pre>'
             );
-            $('#preview-confirm').hide();
+            applyShowDone();
         })
         .fail(function () {
-            alert(_('Errore di rete in fase di apply.'));
+            applyShowError(_('Errore di rete in fase di apply.'));
         });
+}
+
+// ---- Apply lifecycle helpers ----
+// While the request is in flight: disable the confirm button, change its label
+// to a spinner + waiting text, and prepend a running banner above the existing
+// preview content (the diff/commands stay visible so the user can read them).
+function setApplyRunning(message) {
+    var $btn = $('#preview-confirm');
+    if (!$btn.data('orig-html')) {
+        $btn.data('orig-html', $btn.html());
+    }
+    $btn.prop('disabled', true)
+        .html('<i class="fa fa-spinner fa-spin"></i> ' + _('Esecuzione...'));
+    $('#preview-modal-body').prepend(
+        '<div id="apply-running" class="alert alert-info" style="margin-bottom:10px;">' +
+            '<i class="fa fa-spinner fa-spin"></i> ' + escHtml(message) +
+        '</div>'
+    );
+}
+
+function applyShowDone() {
+    $('#apply-running').remove();
+    var $btn = $('#preview-confirm');
+    $btn.hide().prop('disabled', false);
+    if ($btn.data('orig-html')) {
+        $btn.html($btn.data('orig-html'));
+    }
+    appliedSuccessfully = true;
+}
+
+function applyShowError(msg) {
+    $('#apply-running').remove();
+    $('#preview-modal-body').prepend(
+        '<div class="alert alert-danger" style="margin-bottom:10px;">' + escHtml(msg) + '</div>'
+    );
+    var $btn = $('#preview-confirm');
+    $btn.prop('disabled', false);
+    if ($btn.data('orig-html')) {
+        $btn.html($btn.data('orig-html'));
+    }
 }
 
 /* ---------------- WIRING ---------------- */
@@ -323,21 +366,30 @@ $(document).ready(function () {
     $('#cam-preview').on('click', previewCamera);
 
     $('#preview-modal').on('hidden.bs.modal', function () {
-        $('#preview-confirm').show();
+        if (appliedSuccessfully) {
+            // Reload the page to reflect the new applied state.
+            window.location.reload();
+            return;
+        }
+        var $btn = $('#preview-confirm');
+        $btn.show().prop('disabled', false);
+        if ($btn.data('orig-html')) {
+            $btn.html($btn.data('orig-html'));
+        }
+        $('#apply-running').remove();
         pendingAction = null;
     });
     $('#preview-confirm').on('click', function () {
         if (!pendingAction) {
             return;
         }
-        $('#preview-confirm').prop('disabled', true);
+        // applyNode/applyCamera handle the button + status lifecycle themselves.
         var act = pendingAction;
         if (act.kind === 'node') {
             applyNode(act.payload);
         } else if (act.kind === 'camera') {
             applyCamera(act.payload);
         }
-        $('#preview-confirm').prop('disabled', false);
     });
 
     loadNodeConfig();

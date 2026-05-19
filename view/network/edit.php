@@ -102,6 +102,10 @@
                         </div>
                     </div>
                     <div class='x_content'>
+                        <div class='alert alert-warning' style='margin-bottom:14px;'>
+                            <strong><?= _('Attenzione') ?>:</strong>
+                            <?= _("il container freeture deve essere FERMO prima di modificare l'IP della camera, altrimenti sta usando il dispositivo e arv-tool-0.8 non potrà scrivere il PersistentIP. Vai su 'Stato Containers' e ferma il container freeture, applica la modifica qui, poi riavvia il container.") ?>
+                        </div>
                         <div class='alert alert-info' style='margin-bottom:14px;'>
                             <?= _("Le modifiche al PersistentIP vengono scritte tramite arv-tool-0.8 sull'host. La camera applica il nuovo indirizzo al riavvio.") ?>
                         </div>

@@ -667,6 +667,12 @@ class NetworkApiLogic {
     // We always keep LLA enabled as a fallback in case the chosen method
     // fails to yield an address. IP/mask/gateway are uint32 in network byte
     // order — passed to arv-tool as plain decimal integers.
+    //
+    // A DeviceReset command is appended as the final step so the new
+    // configuration takes effect immediately. The camera disconnects during
+    // reset, so arv-tool may report a non-zero exit for that step — that is
+    // expected and not an error. The reset is run with `;` (not `&&`) only
+    // for the previous chain so it always fires after a successful IP write.
     private static function buildCameraCommands($data) {
         $name = $data['name'];
         $base = self::ARV_TOOL . " control --name=" . escapeshellarg($name);
@@ -686,6 +692,8 @@ class NetworkApiLogic {
             // DHCP (0x02) + LLA fallback (0x04) = 6
             $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfiguration=6");
         }
+        // Reset the camera so the new config is applied without manual power-cycle.
+        $cmds[] = $base . " DeviceReset";
         return $cmds;
     }
 }
