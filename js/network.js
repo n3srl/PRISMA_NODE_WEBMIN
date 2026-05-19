@@ -161,11 +161,18 @@ function previewNode() {
                 return;
             }
             var d = resp.data;
-            var body = '<p>' + _('Differenza rispetto a /etc/network/interfaces:') + '</p>' +
-                       diffNodeContents(d.oldContent, d.newContent) +
-                       '<p style="margin-top:10px; color:#b52c1d;"><strong>' +
-                       _("Applicando il networking verrà riavviato. Se ti sei collegato via questa interfaccia, potresti perdere la connessione.") +
-                       '</strong></p>';
+            var body;
+            if (d.canSeeCommands) {
+                body = '<p>' + _('Differenza rispetto a /etc/network/interfaces:') + '</p>' +
+                       diffNodeContents(d.oldContent, d.newContent);
+            } else {
+                body = '<div class="alert alert-info">' +
+                       _('Verrà aggiornata la configurazione di rete del nodo. Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati.') +
+                       '</div>';
+            }
+            body += '<p style="margin-top:10px; color:#b52c1d;"><strong>' +
+                    _("Applicando il networking verrà riavviato. Se ti sei collegato via questa interfaccia, potresti perdere la connessione.") +
+                    '</strong></p>';
             $('#preview-modal-title').text(_('Anteprima: configurazione nodo'));
             $('#preview-modal-body').html(body);
             pendingAction = { kind: 'node', payload: payload };
@@ -184,13 +191,20 @@ function applyNode(payload) {
                 applyShowError((resp && resp.message) || _('Apply fallito.'));
                 return;
             }
-            var d = resp.data;
-            $('#preview-modal-body').html(
-                '<div class="alert alert-success">' + _('Configurazione applicata.') + '</div>' +
-                '<p>' + _('Backup salvato in') + ' <code>' + escHtml(d.backupPath) + '</code></p>' +
-                '<p>' + _('Output:') + '</p>' +
-                '<pre style="max-height:200px; overflow:auto;">' + escHtml(d.output || '') + '</pre>'
-            );
+            var d = resp.data || {};
+            var html = d.applied
+                ? '<div class="alert alert-success"><strong>' + _('Configurazione applicata.') + '</strong> ' + _('Tutti i comandi sono andati a buon fine.') + '</div>'
+                : '<div class="alert alert-warning"><strong>' + _('Esito incerto.') + '</strong> ' + _('Uno o più comandi potrebbero essere falliti — verifica la configurazione manualmente.') + '</div>';
+            if (d.canSeeCommands) {
+                if (d.backupPath) {
+                    html += '<p>' + _('Backup salvato in') + ' <code>' + escHtml(d.backupPath) + '</code></p>';
+                }
+                if (d.output) {
+                    html += '<p>' + _('Output:') + '</p>' +
+                            '<pre style="max-height:200px; overflow:auto;">' + escHtml(d.output) + '</pre>';
+                }
+            }
+            $('#preview-modal-body').html(html);
             applyShowDone();
             loadNodeConfig();
         })
@@ -268,14 +282,24 @@ function previewCamera() {
                 alert((resp && resp.message) || _('Errore di anteprima.'));
                 return;
             }
-            var cmds = (resp.data && resp.data.commands) ? resp.data.commands : [];
-            var body = '<p>' + _('Comandi che verranno eseguiti via SSH (in ordine):') + '</p>' +
+            var d = resp.data || {};
+            var body;
+            if (d.canSeeCommands) {
+                var cmds = d.commands || [];
+                body = '<p>' + _('Comandi che verranno eseguiti via SSH (in ordine):') + '</p>' +
                        '<pre style="max-height:300px; overflow:auto; white-space:pre-wrap;">' +
                        cmds.map(escHtml).join('\n') +
-                       '</pre>' +
-                       '<p style="color:#b52c1d;"><strong>' +
-                       _("L'ultimo comando (DeviceReset) riavvia la camera per applicare la nuova configurazione: la camera resterà offline 10-30 secondi.") +
-                       '</strong></p>';
+                       '</pre>';
+            } else {
+                var modeLabel = (d.mode === 'static') ? _('Statica') : 'DHCP';
+                body = '<div class="alert alert-info">' +
+                       _('Verrà aggiornata la configurazione IP della camera in modalità') + ' <b>' + escHtml(modeLabel) + '</b>. ' +
+                       _('Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati.') +
+                       '</div>';
+            }
+            body += '<p style="color:#b52c1d;"><strong>' +
+                    _("L'ultimo comando (DeviceReset) riavvia la camera per applicare la nuova configurazione: la camera resterà offline 10-30 secondi.") +
+                    '</strong></p>';
             $('#preview-modal-title').text(_('Anteprima: configurazione camera'));
             $('#preview-modal-body').html(body);
             pendingAction = { kind: 'camera', payload: payload };
@@ -294,12 +318,15 @@ function applyCamera(payload) {
                 applyShowError((resp && resp.message) || _('Apply fallito.'));
                 return;
             }
-            var d = resp.data;
-            $('#preview-modal-body').html(
-                '<div class="alert alert-success">' + _('Comandi eseguiti.') + '</div>' +
-                '<p>' + _('Output:') + '</p>' +
-                '<pre style="max-height:300px; overflow:auto;">' + escHtml(d.output || '') + '</pre>'
-            );
+            var d = resp.data || {};
+            var html = d.applied
+                ? '<div class="alert alert-success"><strong>' + _('Comandi eseguiti.') + '</strong> ' + _('La camera è in fase di reset.') + '</div>'
+                : '<div class="alert alert-warning"><strong>' + _('Esito incerto.') + '</strong> ' + _('La scrittura della configurazione potrebbe non essere riuscita.') + '</div>';
+            if (d.canSeeCommands && d.output) {
+                html += '<p>' + _('Output:') + '</p>' +
+                        '<pre style="max-height:300px; overflow:auto;">' + escHtml(d.output) + '</pre>';
+            }
+            $('#preview-modal-body').html(html);
             applyShowDone();
         })
         .fail(function () {
@@ -332,6 +359,13 @@ function applyShowDone() {
     if ($btn.data('orig-html')) {
         $btn.html($btn.data('orig-html'));
     }
+    // Swap "Annulla" → "OK" green so the user can confirm reading the result.
+    var $cancel = $('#preview-cancel');
+    if (!$cancel.data('orig-html')) {
+        $cancel.data('orig-html', $cancel.html());
+        $cancel.data('orig-class', $cancel.attr('class') || '');
+    }
+    $cancel.attr('class', 'btn btn-success').html(_('OK'));
     appliedSuccessfully = true;
 }
 
@@ -375,6 +409,11 @@ $(document).ready(function () {
         $btn.show().prop('disabled', false);
         if ($btn.data('orig-html')) {
             $btn.html($btn.data('orig-html'));
+        }
+        var $cancel = $('#preview-cancel');
+        if ($cancel.data('orig-html')) {
+            $cancel.html($cancel.data('orig-html'));
+            $cancel.attr('class', $cancel.data('orig-class') || 'btn btn-default');
         }
         $('#apply-running').remove();
         pendingAction = null;

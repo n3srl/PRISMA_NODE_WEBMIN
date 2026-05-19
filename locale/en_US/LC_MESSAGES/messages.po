@@ -1630,3 +1630,43 @@ msgstr "Missing temperature parameters for v15"
 #: service/HomeController.php
 msgid "Parametri temperatura v15 tutti configurati"
 msgstr "All v15 temperature parameters configured"
+
+# ---- Level-gated preview messages (network module) ----
+
+#: js/network.js
+msgid "Verrà aggiornata la configurazione di rete del nodo. Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati."
+msgstr "The node network configuration will be updated. Only superusers can see the detail of the commands that will be applied."
+
+#: js/network.js
+msgid "Verrà aggiornata la configurazione IP della camera in modalità"
+msgstr "The camera IP configuration will be updated in mode"
+
+#: js/network.js
+msgid "Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati."
+msgstr "Only superusers can see the detail of the commands that will be applied."
+
+# ---- Apply outcome messages ----
+
+#: js/network.js
+msgid "OK"
+msgstr "OK"
+
+#: js/network.js
+msgid "Tutti i comandi sono andati a buon fine."
+msgstr "All commands completed successfully."
+
+#: js/network.js
+msgid "Esito incerto."
+msgstr "Outcome uncertain."
+
+#: js/network.js
+msgid "Uno o più comandi potrebbero essere falliti — verifica la configurazione manualmente."
+msgstr "One or more commands may have failed — verify the configuration manually."
+
+#: js/network.js
+msgid "La camera è in fase di reset."
+msgstr "The camera is currently resetting."
+
+#: js/network.js
+msgid "La scrittura della configurazione potrebbe non essere riuscita."
+msgstr "Writing the configuration may have failed."

@@ -45,11 +45,18 @@ class NetworkApiLogic {
             }
             $raw = (string) self::sshExec("cat " . self::INTERFACES_PATH . " 2>/dev/null");
             $newContent = self::buildInterfacesFile($raw, $data);
+
+            // Raw file contents leak system details — only superusers (L>=2) get
+            // them. Lower levels still see the modal but with a generic warning.
+            $level = (int) CoreLogic::VerifyPermission();
             $result = array(
-                'iface'      => $data['iface'],
-                'oldContent' => $raw,
-                'newContent' => $newContent,
+                'iface'          => $data['iface'],
+                'canSeeCommands' => $level >= 2,
             );
+            if ($level >= 2) {
+                $result['oldContent'] = $raw;
+                $result['newContent'] = $newContent;
+            }
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
@@ -74,15 +81,23 @@ class NetworkApiLogic {
             $cmd =
                 "sudo cp " . escapeshellarg(self::INTERFACES_PATH) . " " . escapeshellarg($backup) . " && " .
                 "echo " . escapeshellarg($payload) . " | base64 -d | sudo tee " . escapeshellarg(self::INTERFACES_PATH) . " > /dev/null && " .
-                "sudo systemctl restart networking 2>&1";
+                "sudo systemctl restart networking 2>&1 && " .
+                "echo '__APPLIED_OK__'";
             $out = (string) self::sshExec($cmd);
+            $applied = (strpos($out, '__APPLIED_OK__') !== false);
+            $cleanOut = self::scrubShellNoise($out);
 
+            $level = (int) CoreLogic::VerifyPermission();
             $result = array(
-                'iface'      => $data['iface'],
-                'backupPath' => $backup,
-                'newContent' => $newContent,
-                'output'     => $out,
+                'iface'          => $data['iface'],
+                'applied'        => $applied,
+                'canSeeCommands' => $level >= 2,
             );
+            if ($level >= 2) {
+                $result['backupPath'] = $backup;
+                $result['newContent'] = $newContent;
+                $result['output']     = $cleanOut;
+            }
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
@@ -339,10 +354,19 @@ class NetworkApiLogic {
                 return CoreLogic::GenerateErrorResponse($validation['error']);
             }
             $cmds = self::buildCameraCommands($data);
+
+            // Shell commands include arv-tool flags / device identifiers — only
+            // superusers (L>=2) get them. Lower levels still see the modal but
+            // without the command listing.
+            $level = (int) CoreLogic::VerifyPermission();
             $result = array(
-                'name'     => $data['name'],
-                'commands' => $cmds,
+                'name'           => $data['name'],
+                'canSeeCommands' => $level >= 2,
+                'mode'           => $data['mode'],
             );
+            if ($level >= 2) {
+                $result['commands'] = $cmds;
+            }
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
@@ -359,13 +383,26 @@ class NetworkApiLogic {
                 return CoreLogic::GenerateErrorResponse($validation['error']);
             }
             $cmds = self::buildCameraCommands($data);
-            $shell = implode(" && ", $cmds) . " 2>&1";
+            // The last command is DeviceReset; it usually exits non-zero because
+            // the camera drops the connection mid-reset. So insert the success
+            // marker *before* the reset — that way we know the IP write
+            // succeeded even if the reset confirmation never comes back.
+            $resetCmd = array_pop($cmds);
+            $shell = implode(" && ", $cmds) . " && echo '__APPLIED_OK__' && " . $resetCmd . " 2>&1";
             $out = (string) self::sshExec($shell);
+            $applied = (strpos($out, '__APPLIED_OK__') !== false);
+            $cleanOut = self::scrubShellNoise($out);
+
+            $level = (int) CoreLogic::VerifyPermission();
             $result = array(
-                'name'     => $data['name'],
-                'commands' => $cmds,
-                'output'   => $out,
+                'name'           => $data['name'],
+                'applied'        => $applied,
+                'canSeeCommands' => $level >= 2,
             );
+            if ($level >= 2) {
+                $result['commands'] = self::buildCameraCommands($data); // full list incl. reset
+                $result['output']   = $cleanOut;
+            }
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
@@ -375,6 +412,42 @@ class NetworkApiLogic {
     /* ----------------------------------------------------------------
      * Helpers — SSH
      * --------------------------------------------------------------*/
+
+    // Strip cosmetic noise from shell output before showing it to the user:
+    // - sudo hostname-resolution warnings ("sudo: unable to resolve host …")
+    // - the multi-line sudo lecture banner shown the first time sudo is invoked
+    // - the success marker echoed by our chain
+    // The real command output is preserved.
+    private static function scrubShellNoise($raw) {
+        if (!is_string($raw) || $raw === '') {
+            return $raw;
+        }
+        $lines = preg_split('/\R/', $raw);
+        $cleaned = array();
+        $skipLecture = false;
+        foreach ($lines as $line) {
+            if (preg_match('/^sudo: unable to resolve host /', $line)) {
+                continue;
+            }
+            if (strpos($line, '__APPLIED_OK__') !== false) {
+                continue;
+            }
+            // Lecture spans multiple lines from the banner to the rules block.
+            if (preg_match('/^We trust you have received the usual lecture/', $line)) {
+                $skipLecture = true;
+                continue;
+            }
+            if ($skipLecture) {
+                if (preg_match('/^\s*#\d\)/', $line) || trim($line) === '') {
+                    continue;
+                }
+                // First non-rule, non-empty line ends the lecture block.
+                $skipLecture = false;
+            }
+            $cleaned[] = $line;
+        }
+        return trim(implode("\n", $cleaned));
+    }
 
     private static function sshExec($cmd) {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);

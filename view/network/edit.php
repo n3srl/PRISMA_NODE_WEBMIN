@@ -170,7 +170,7 @@
             <div class='modal-body' id='preview-modal-body'>
             </div>
             <div class='modal-footer'>
-                <button type='button' class='btn btn-default' data-dismiss='modal'><?= _('Annulla') ?></button>
+                <button type='button' id='preview-cancel' class='btn btn-default' data-dismiss='modal'><?= _('Annulla') ?></button>
                 <button type='button' id='preview-confirm' class='btn btn-danger'><?= _('Conferma e applica') ?></button>
             </div>
         </div>
