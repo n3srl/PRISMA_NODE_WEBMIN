@@ -233,21 +233,22 @@ class OvpnApiLogic {
     }
 
     // Resolve absolute path to the `ip` binary. Web server PATH commonly
-    // doesn't include /sbin or /usr/sbin, so we try the canonical locations
-    // before falling back to whatever PATH says.
+    // doesn't include /sbin or /usr/sbin, and `is_executable()` may return
+    // false under open_basedir even when shell_exec would work — so we probe
+    // by actually running each candidate with -V and checking the banner.
     private static function ipBin() {
         static $cached = null;
         if ($cached !== null) {
             return $cached;
         }
-        foreach (array('/usr/sbin/ip', '/sbin/ip', '/usr/bin/ip', '/bin/ip') as $p) {
-            if (is_executable($p)) {
+        foreach (array('/usr/sbin/ip', '/sbin/ip', '/usr/bin/ip', '/bin/ip', 'ip') as $p) {
+            $out = @shell_exec($p . ' -V 2>&1');
+            if (is_string($out) && stripos($out, 'iproute2') !== false) {
                 $cached = $p;
                 return $cached;
             }
         }
-        $which = trim((string) @shell_exec('command -v ip 2>/dev/null'));
-        $cached = ($which !== '') ? $which : 'ip';
+        $cached = 'ip';
         return $cached;
     }
 
@@ -262,8 +263,41 @@ class OvpnApiLogic {
             'ipv6'      => array(),
         );
 
-        // Primary path: parse JSON output of `ip -j address show <iface>`.
-        $raw = shell_exec(self::ipBin() . " -j address show " . escapeshellarg($iface) . " 2>/dev/null");
+        // Primary path: PHP's net_get_interfaces() (since 7.3). Pure PHP, no
+        // shell, no SSH, no PATH or open_basedir games. Returns mac, mtu, up
+        // flag and full unicast address list per interface.
+        if (function_exists('net_get_interfaces')) {
+            $all = @net_get_interfaces();
+            if (is_array($all) && isset($all[$iface])) {
+                $d = $all[$iface];
+                $entry['present']   = true;
+                $entry['operstate'] = !empty($d['up']) ? 'UP' : 'DOWN';
+                $entry['mac']       = (isset($d['mac']) && $d['mac'] !== '') ? $d['mac'] : null;
+                $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
+                if (isset($d['unicast']) && is_array($d['unicast'])) {
+                    foreach ($d['unicast'] as $u) {
+                        $addr = isset($u['address']) ? $u['address'] : '';
+                        if ($addr === '') {
+                            continue;
+                        }
+                        $family = isset($u['family']) ? (int) $u['family'] : 0;
+                        $mask   = isset($u['netmask']) ? $u['netmask'] : '';
+                        $prefix = self::netmaskToPrefix($mask);
+                        $cidr   = $addr . ($prefix !== null ? '/' . $prefix : '');
+                        // AF_INET == 2, AF_INET6 == 10 on Linux (30 on BSD).
+                        if ($family === 2) {
+                            $entry['ipv4'][] = $cidr;
+                        } else if ($family === 10 || $family === 30) {
+                            $entry['ipv6'][] = $cidr;
+                        }
+                    }
+                }
+                return $entry;
+            }
+        }
+
+        // Secondary: parse JSON output of `ip -j address show <iface>`.
+        $raw = @shell_exec(self::ipBin() . " -j address show " . escapeshellarg($iface) . " 2>/dev/null");
         if (is_string($raw)) {
             $raw = trim($raw);
             if ($raw !== '' && $raw[0] === '[') {
@@ -271,7 +305,7 @@ class OvpnApiLogic {
                 if (is_array($data) && !empty($data[0])) {
                     $d = $data[0];
                     $entry['present']   = true;
-                    $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
+                    $entry['operstate'] = isset($d['operstate']) ? strtoupper($d['operstate']) : null;
                     $entry['mac']       = isset($d['address']) ? $d['address'] : null;
                     $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
                     if (isset($d['addr_info']) && is_array($d['addr_info'])) {
@@ -295,18 +329,46 @@ class OvpnApiLogic {
             }
         }
 
-        // Fallback when `ip` is unavailable or returned nothing parseable:
-        // gather basic state/mac/mtu from /sys/class/net. IP addresses can't
-        // be read from /sys directly, so they remain empty — caller can still
-        // tell the iface is up.
+        // Tertiary: read state/mac/mtu from /sys/class/net (IP addresses
+        // aren't exposed there).
         $base = "/sys/class/net/" . $iface;
         if (is_dir($base)) {
             $entry['present']   = true;
-            $entry['operstate'] = trim((string) @file_get_contents("$base/operstate")) ?: null;
+            $state = trim((string) @file_get_contents("$base/operstate"));
+            $entry['operstate'] = $state === '' ? null : strtoupper($state);
             $entry['mac']       = trim((string) @file_get_contents("$base/address")) ?: null;
             $mtu = trim((string) @file_get_contents("$base/mtu"));
             $entry['mtu']       = $mtu === '' ? null : (int) $mtu;
         }
         return $entry;
+    }
+
+    // Convert a dotted IPv4 or hex-block IPv6 netmask to its CIDR prefix
+    // length. Returns null if the input isn't a parseable address.
+    private static function netmaskToPrefix($mask) {
+        if (!is_string($mask) || $mask === '') {
+            return null;
+        }
+        $packed = @inet_pton($mask);
+        if ($packed === false) {
+            return null;
+        }
+        $bits = 0;
+        $len = strlen($packed);
+        for ($i = 0; $i < $len; $i++) {
+            $byte = ord($packed[$i]);
+            if ($byte === 0xFF) {
+                $bits += 8;
+                continue;
+            }
+            for ($b = 7; $b >= 0; $b--) {
+                if ($byte & (1 << $b)) {
+                    $bits++;
+                } else {
+                    return $bits;
+                }
+            }
+        }
+        return $bits;
     }
 }
