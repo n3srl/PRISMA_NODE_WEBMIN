@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n 'include.*view\\\\|include.*$class\\\\|include.*operazione' 'D:\\\\RepositoryGit\\\\PRISMA_NODE_WEBMIN\\\\view\\\\template\\\\index.php')"
+    ]
+  }
+}
