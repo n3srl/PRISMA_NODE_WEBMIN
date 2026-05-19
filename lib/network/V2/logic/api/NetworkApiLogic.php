@@ -126,7 +126,7 @@ class NetworkApiLogic {
                 'GevCurrentIPConfigurationPersistentIP',
                 'GevCurrentIPConfigurationLLA',
             );
-            $cmd = self::ARV_TOOL . " control -n=" . escapeshellarg($name);
+            $cmd = self::ARV_TOOL . " control --name=" . escapeshellarg($name);
             foreach ($features as $f) {
                 $cmd .= " " . escapeshellarg($f);
             }
@@ -494,7 +494,7 @@ class NetworkApiLogic {
     // Static: write Persistent* values, set PersistentIP=true, DHCP=false
     private static function buildCameraCommands($data) {
         $name = $data['name'];
-        $base = self::ARV_TOOL . " control -n=" . escapeshellarg($name);
+        $base = self::ARV_TOOL . " control --name=" . escapeshellarg($name);
         $cmds = array();
         if ($data['mode'] === 'static') {
             $cmds[] = $base . " " . escapeshellarg("GevPersistentIPAddress=" . $data['ip']);
