@@ -174,7 +174,7 @@
                         <div class='x_title no-padding-lr'>
                             <div class='clearfix'>
                                 <div class='col-md-6 no-padding-l'>
-                                    <h2><?= _('Stato del nodo') ?></h2>
+                                    <h2><?= _('Stato configurazione') ?></h2>
                                 </div>
                             </div>
                         </div>

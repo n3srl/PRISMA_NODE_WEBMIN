@@ -1608,3 +1608,25 @@ msgstr "All levels"
 #: js/home.js
 msgid "Nessuna immagine disponibile"
 msgstr "No image available"
+
+# ---- Homepage configuration status panel ----
+
+#: view/home/home.php
+msgid "Stato configurazione"
+msgstr "Configuration status"
+
+#: service/HomeController.php
+msgid "Impossibile leggere la versione del container freeture"
+msgstr "Unable to read freeture container version"
+
+#: service/HomeController.php
+msgid "Container freeture"
+msgstr "freeture container"
+
+#: service/HomeController.php
+msgid "Parametri temperatura mancanti per v15"
+msgstr "Missing temperature parameters for v15"
+
+#: service/HomeController.php
+msgid "Parametri temperatura v15 tutti configurati"
+msgstr "All v15 temperature parameters configured"

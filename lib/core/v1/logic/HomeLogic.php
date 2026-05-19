@@ -25,11 +25,87 @@
     public static function checkConfig() {
         $freetureConf = _FREETURE_;
         $Home = CoreLogic::VerifyPerson();
-        if (!file_exists(_FREETURE_)) { 
+        if (!file_exists(_FREETURE_)) {
             return false;
         }else{
             return true;
-        } 
+        }
+    }
+
+    // Inspect the freeture container on the docker host and return its
+    // image string (e.g. "freeture:v15"), or null if SSH/docker fails.
+    public static function getFreetureContainerImage() {
+        $session = @ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        if (!$session) {
+            return null;
+        }
+        if (!@ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            unset($session);
+            return null;
+        }
+        $stream = @ssh2_exec($session, "docker inspect freeture --format='{{.Config.Image}}' 2>/dev/null");
+        if (!$stream) {
+            unset($session);
+            return null;
+        }
+        stream_set_blocking($stream, true);
+        $out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+        $image = trim((string) stream_get_contents($out));
+        unset($session);
+        return $image !== '' ? $image : null;
+    }
+
+    // Heuristic on the image tag to identify the major freeture version.
+    // Returns 'v14', 'v15' or null when undeterminable. Accepts tags like
+    // "v15", "15", "15.0.1", "1.5", "1.5.0".
+    public static function detectFreetureMajor($image) {
+        if (!is_string($image) || $image === '') {
+            return null;
+        }
+        $colon = strrpos($image, ':');
+        $tag = $colon !== false ? substr($image, $colon + 1) : $image;
+        if (preg_match('/^v?15(?:\.|$)/', $tag)) { return 'v15'; }
+        if (preg_match('/^v?14(?:\.|$)/', $tag)) { return 'v14'; }
+        if (preg_match('/^1\.5(?:\.|$)/', $tag)) { return 'v15'; }
+        if (preg_match('/^1\.4(?:\.|$)/', $tag)) { return 'v14'; }
+        return null;
+    }
+
+    // Parse configuration.cfg and return the list of TEMPERATURE_* keys that
+    // are missing (i.e. not present at all). On v15 containers all 9 keys
+    // should be defined.
+    public static function getMissingTemperatureParams() {
+        $required = array(
+            'TEMPERATURE_OVERHEAT_CONTROL_ENABLED',
+            'TEMPERATURE_THRESHOLD',
+            'TEMPERATURE_HYSTERESIS',
+            'TEMPERATURE_WAIT',
+            'TEMPERATURE_SAMPLE_RATE',
+            'TEMPERATURE_POLICY_ENABLED',
+            'TEMPERATURE_POLICY',
+            'TEMPERATURE_POLICY_PARAMETER_1',
+            'TEMPERATURE_POLICY_PARAMETER_2',
+        );
+        $conf = _FREETURE_;
+        if (!file_exists($conf) || !is_file($conf)) {
+            return $required;
+        }
+        $present = array();
+        foreach (file($conf) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            if (strpos($line, '=') === false) {
+                continue;
+            }
+            $parts = explode('=', $line, 2);
+            $key = trim($parts[0]);
+            if (in_array($key, $required, true)) {
+                $present[] = $key;
+            }
+        }
+        return array_values(array_diff($required, $present));
     }
 
 

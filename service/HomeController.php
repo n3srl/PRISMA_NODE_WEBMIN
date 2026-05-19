@@ -51,6 +51,25 @@ class HomeController extends Controller {
     }else{
         $vstatus[] = _('File di configurazione presente');
     }
+
+    // Freeture container version + v15 temperature-config validation.
+    $freetureImage = HomeLogic::getFreetureContainerImage();
+    if ($freetureImage === null) {
+        $verrors[] = _('Impossibile leggere la versione del container freeture');
+    } else {
+        $major = HomeLogic::detectFreetureMajor($freetureImage);
+        $label = $major !== null ? " ($major)" : "";
+        $vstatus[] = _('Container freeture') . ': ' . $freetureImage . $label;
+
+        if ($major === 'v15') {
+            $missing = HomeLogic::getMissingTemperatureParams();
+            if (!empty($missing)) {
+                $verrors[] = _('Parametri temperatura mancanti per v15') . ': ' . implode(', ', $missing);
+            } else {
+                $vstatus[] = _('Parametri temperatura v15 tutti configurati');
+            }
+        }
+    }
 }
 }
 
