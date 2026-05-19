@@ -174,19 +174,30 @@ class OvpnApiLogic {
         return $result;
     }
 
+    // Read default-route interfaces straight from /proc/net/route. This avoids
+    // depending on the `ip` binary being on the web server's PATH (PHP-FPM and
+    // Apache usually don't include /sbin or /usr/sbin). Destination==00000000
+    // is the IPv4 default route; the first column is the interface name.
     private static function findDefaultRouteIfaces() {
-        $raw = shell_exec("ip -j route show default 2>/dev/null");
-        if (!is_string($raw) || $raw === '') {
-            return array();
-        }
-        $data = json_decode($raw, true);
-        if (!is_array($data)) {
+        $raw = @file_get_contents('/proc/net/route');
+        if (!is_string($raw)) {
             return array();
         }
         $seen = array();
-        foreach ($data as $r) {
-            if (!empty($r['dev']) && !isset($seen[$r['dev']])) {
-                $seen[$r['dev']] = true;
+        $lines = preg_split('/\R/', trim($raw));
+        foreach ($lines as $idx => $line) {
+            if ($idx === 0) {
+                continue; // header
+            }
+            $cols = preg_split('/\s+/', trim($line));
+            if (count($cols) < 2) {
+                continue;
+            }
+            if ($cols[1] !== '00000000') {
+                continue;
+            }
+            if (!isset($seen[$cols[0]])) {
+                $seen[$cols[0]] = true;
             }
         }
         return array_keys($seen);
@@ -221,6 +232,25 @@ class OvpnApiLogic {
         return $result;
     }
 
+    // Resolve absolute path to the `ip` binary. Web server PATH commonly
+    // doesn't include /sbin or /usr/sbin, so we try the canonical locations
+    // before falling back to whatever PATH says.
+    private static function ipBin() {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        foreach (array('/usr/sbin/ip', '/sbin/ip', '/usr/bin/ip', '/bin/ip') as $p) {
+            if (is_executable($p)) {
+                $cached = $p;
+                return $cached;
+            }
+        }
+        $which = trim((string) @shell_exec('command -v ip 2>/dev/null'));
+        $cached = ($which !== '') ? $which : 'ip';
+        return $cached;
+    }
+
     private static function probeNetworkInterface($iface) {
         $entry = array(
             'name'      => $iface,
@@ -231,38 +261,51 @@ class OvpnApiLogic {
             'ipv4'      => array(),
             'ipv6'      => array(),
         );
-        $raw = shell_exec("ip -j address show " . escapeshellarg($iface) . " 2>/dev/null");
-        if (!is_string($raw)) {
-            return $entry;
-        }
-        $raw = trim($raw);
-        if ($raw === '' || $raw[0] !== '[') {
-            return $entry;
-        }
-        $data = json_decode($raw, true);
-        if (!is_array($data) || empty($data[0])) {
-            return $entry;
-        }
-        $d = $data[0];
-        $entry['present']   = true;
-        $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
-        $entry['mac']       = isset($d['address']) ? $d['address'] : null;
-        $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
-        if (isset($d['addr_info']) && is_array($d['addr_info'])) {
-            foreach ($d['addr_info'] as $a) {
-                $local  = isset($a['local']) ? $a['local'] : '';
-                $prefix = isset($a['prefixlen']) ? $a['prefixlen'] : '';
-                if ($local === '') {
-                    continue;
-                }
-                $cidr = $local . '/' . $prefix;
-                $family = isset($a['family']) ? $a['family'] : '';
-                if ($family === 'inet') {
-                    $entry['ipv4'][] = $cidr;
-                } else if ($family === 'inet6') {
-                    $entry['ipv6'][] = $cidr;
+
+        // Primary path: parse JSON output of `ip -j address show <iface>`.
+        $raw = shell_exec(self::ipBin() . " -j address show " . escapeshellarg($iface) . " 2>/dev/null");
+        if (is_string($raw)) {
+            $raw = trim($raw);
+            if ($raw !== '' && $raw[0] === '[') {
+                $data = json_decode($raw, true);
+                if (is_array($data) && !empty($data[0])) {
+                    $d = $data[0];
+                    $entry['present']   = true;
+                    $entry['operstate'] = isset($d['operstate']) ? $d['operstate'] : null;
+                    $entry['mac']       = isset($d['address']) ? $d['address'] : null;
+                    $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
+                    if (isset($d['addr_info']) && is_array($d['addr_info'])) {
+                        foreach ($d['addr_info'] as $a) {
+                            $local  = isset($a['local']) ? $a['local'] : '';
+                            $prefix = isset($a['prefixlen']) ? $a['prefixlen'] : '';
+                            if ($local === '') {
+                                continue;
+                            }
+                            $cidr = $local . '/' . $prefix;
+                            $family = isset($a['family']) ? $a['family'] : '';
+                            if ($family === 'inet') {
+                                $entry['ipv4'][] = $cidr;
+                            } else if ($family === 'inet6') {
+                                $entry['ipv6'][] = $cidr;
+                            }
+                        }
+                    }
+                    return $entry;
                 }
             }
+        }
+
+        // Fallback when `ip` is unavailable or returned nothing parseable:
+        // gather basic state/mac/mtu from /sys/class/net. IP addresses can't
+        // be read from /sys directly, so they remain empty — caller can still
+        // tell the iface is up.
+        $base = "/sys/class/net/" . $iface;
+        if (is_dir($base)) {
+            $entry['present']   = true;
+            $entry['operstate'] = trim((string) @file_get_contents("$base/operstate")) ?: null;
+            $entry['mac']       = trim((string) @file_get_contents("$base/address")) ?: null;
+            $mtu = trim((string) @file_get_contents("$base/mtu"));
+            $entry['mtu']       = $mtu === '' ? null : (int) $mtu;
         }
         return $entry;
     }

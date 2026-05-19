@@ -146,12 +146,24 @@ $(document).ready(function () {
             }
         },
 
+        "order": [[0, 'desc']],
         "iDisplayLength": 10,
         "iDisplayStart": 0,
         "pageLength": 10,
         bProcessing: true,
         bServerSide: true,
         bStateSave: true,
+        "stateSaveParams": function (settings, data) {
+            data._stackDayDefaultsV2 = true;
+        },
+        "stateLoadParams": function (settings, data) {
+            // Old saved states (pre-default-desc release) had ascending order
+            // baked in via bStateSave. Reset them once to the new default; the
+            // marker below ensures subsequent user overrides are preserved.
+            if (!data._stackDayDefaultsV2) {
+                data.order = [[0, 'desc']];
+            }
+        },
         sAjaxSource: '/lib/stack/V2/stack/datatable/daylist',
         "paging": true,
         "ordering": true,

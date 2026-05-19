@@ -146,12 +146,21 @@ $(document).ready(function () {
             }
         },
 
+        "order": [[0, 'desc']],
         "iDisplayLength": 10,
         "iDisplayStart": 0,
         "pageLength": 10,
         bProcessing: true,
         bServerSide: true,
         bStateSave: true,
+        "stateSaveParams": function (settings, data) {
+            data._captureDayDefaultsV2 = true;
+        },
+        "stateLoadParams": function (settings, data) {
+            if (!data._captureDayDefaultsV2) {
+                data.order = [[0, 'desc']];
+            }
+        },
         sAjaxSource: '/lib/capture/V2/capture/datatable/daylist',
         "paging": true,
         "ordering": true,
