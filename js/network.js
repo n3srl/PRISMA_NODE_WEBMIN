@@ -62,6 +62,66 @@ function postWithCsrf(url, data) {
     });
 }
 
+/* ---------------- WIRED STATUS ---------------- */
+
+function showWiredNetworkStatus() {
+    var $el = $('#status-wired-content');
+    $.ajax({
+        url: '/lib/network/V2/network/wired_status',
+        type: 'GET',
+        success: function (res) {
+            var data;
+            try { data = JSON.parse(res).data || []; } catch (e) { data = []; }
+            $el.html(renderWiredInterfaces(data));
+        },
+        error: function () {
+            $el.html('<p class="text-muted">' + _('Impossibile leggere lo stato della rete') + '</p>');
+        }
+    });
+}
+
+function renderWiredInterfaces(list) {
+    if (!list.length) {
+        return '<p class="text-muted">' + _('Nessuna interfaccia configurata') + '</p>';
+    }
+    var blocks = [];
+    list.forEach(function (iface) {
+        var label, color;
+        if (!iface.present) {
+            label = _('NON PRESENTE');
+            color = '#999';
+        } else if (iface.operstate === 'UP') {
+            label = _('ATTIVA');
+            color = '#35b85a';
+        } else {
+            label = _('NON ATTIVA') + (iface.operstate ? ' (' + iface.operstate + ')' : '');
+            color = '#b52c1d';
+        }
+        var rows = '';
+        if (iface.present) {
+            var v4 = (iface.ipv4 && iface.ipv4.length) ? iface.ipv4.join(', ') : '—';
+            rows += '<div><b>IPv4:</b> ' + escHtml(v4) + '</div>';
+            if (iface.ipv6 && iface.ipv6.length) {
+                rows += '<div><b>IPv6:</b> ' + escHtml(iface.ipv6.join(', ')) + '</div>';
+            }
+            if (iface.mac) { rows += '<div><b>MAC:</b> ' + escHtml(iface.mac) + '</div>'; }
+            if (iface.mtu) { rows += '<div><b>MTU:</b> ' + escHtml(iface.mtu) + '</div>'; }
+        }
+        var titleSuffix = iface.isDefault
+            ? ' <small class="text-muted" style="color:#666;">(' + _('default route') + ')</small>'
+            : '';
+        blocks.push(
+            '<div style="margin-bottom:14px;">' +
+                '<h4 style="margin:4px 0; color:' + color + '; font-weight:bold;">' +
+                    escHtml(iface.name) + ': ' + label + titleSuffix +
+                '</h4>' +
+                rows +
+            '</div>'
+        );
+    });
+    return blocks.join('');
+}
+
 /* ---------------- NODE ---------------- */
 
 function loadNodeConfig() {
@@ -281,4 +341,5 @@ $(document).ready(function () {
     });
 
     loadNodeConfig();
+    showWiredNetworkStatus();
 });

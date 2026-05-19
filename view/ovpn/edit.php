@@ -59,22 +59,6 @@
                 </div>
             </div>
 
-            <div class='col-md-12 col-sm-12 col-xs-12'>
-                <div id="status-wired-panel" class='x_panel'>
-                    <div class='x_title no-padding-lr'>
-                        <div class='clearfix'>
-                            <div class='col-md-6 no-padding-l'>
-                                <h2><?= _('Stato rete cablata') ?></h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="x_content">
-                        <div id="status-wired-content" class='col-md-12 col-sm-12 col-xs-12 no-padding'>
-                            <p class='text-muted'><?= _('Caricamento...') ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

@@ -26,6 +26,12 @@ $respond = function ($result) {
     return $resp;
 };
 
+/* ----- WIRED ----- */
+
+$app->GET('/network/wired_status', function (Application $app, Request $request) use ($respond) {
+    return $respond(NetworkApiLogic::GetWiredNetworkInfo());
+});
+
 /* ----- NODE ----- */
 
 $app->GET('/network/node', function (Application $app, Request $request) use ($respond) {

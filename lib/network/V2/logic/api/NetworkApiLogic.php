@@ -90,6 +90,149 @@ class NetworkApiLogic {
     }
 
     /* ----------------------------------------------------------------
+     * WIRED — read structured status of physical Ethernet interfaces
+     * --------------------------------------------------------------*/
+
+    public static function GetWiredNetworkInfo() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ob = self::collectWiredInterfaces();
+            $res = true;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res, $ob);
+    }
+
+    // Return structured info for the wired interface(s) carrying internet on
+    // the host running webmin. Auto-detected: first the interface(s) of the
+    // default IPv4 route from /proc/net/route, then a scan of /sys/class/net
+    // for physical Ethernet ports. Each entry: {name, present, operstate,
+    // mac, mtu, ipv4[], ipv6[], isDefault}.
+    private static function collectWiredInterfaces() {
+        $defaultIfaces = self::findDefaultRouteIfacesLocal();
+        $candidates = !empty($defaultIfaces)
+            ? $defaultIfaces
+            : self::findPhysicalEthernetIfaces();
+
+        $defaultSet = array_flip($defaultIfaces);
+        $result = array();
+        foreach ($candidates as $iface) {
+            $entry = self::probeWiredInterface($iface);
+            $entry['isDefault'] = isset($defaultSet[$iface]);
+            $result[] = $entry;
+        }
+        return $result;
+    }
+
+    // Read default-route interfaces straight from /proc/net/route. This avoids
+    // depending on the `ip` binary being on the web server's PATH.
+    private static function findDefaultRouteIfacesLocal() {
+        $raw = @file_get_contents('/proc/net/route');
+        if (!is_string($raw)) {
+            return array();
+        }
+        $seen = array();
+        $lines = preg_split('/\R/', trim($raw));
+        foreach ($lines as $idx => $line) {
+            if ($idx === 0) { continue; }
+            $cols = preg_split('/\s+/', trim($line));
+            if (count($cols) < 2 || $cols[1] !== '00000000') { continue; }
+            if (!isset($seen[$cols[0]])) {
+                $seen[$cols[0]] = true;
+            }
+        }
+        return array_keys($seen);
+    }
+
+    private static function findPhysicalEthernetIfaces() {
+        $result = array();
+        $dirs = @scandir('/sys/class/net');
+        if (!is_array($dirs)) {
+            return $result;
+        }
+        $excludeRx = '/^(lo|docker|br-|veth|tun|tap|virbr|lxd|wlan|wlp|wwan|wwp)/i';
+        foreach ($dirs as $name) {
+            if ($name === '.' || $name === '..') { continue; }
+            if (preg_match($excludeRx, $name)) { continue; }
+            $devLink = "/sys/class/net/$name/device";
+            if (!file_exists($devLink)) { continue; }
+            $type = trim((string) @file_get_contents("/sys/class/net/$name/type"));
+            if ($type !== '1') { continue; }
+            $result[] = $name;
+        }
+        return $result;
+    }
+
+    private static function probeWiredInterface($iface) {
+        $entry = array(
+            'name'      => $iface,
+            'present'   => false,
+            'operstate' => null,
+            'mac'       => null,
+            'mtu'       => null,
+            'ipv4'      => array(),
+            'ipv6'      => array(),
+        );
+
+        // Primary: net_get_interfaces() (PHP >= 7.3). No shell, no SSH.
+        if (function_exists('net_get_interfaces')) {
+            $all = @net_get_interfaces();
+            if (is_array($all) && isset($all[$iface])) {
+                $d = $all[$iface];
+                $entry['present']   = true;
+                $entry['operstate'] = !empty($d['up']) ? 'UP' : 'DOWN';
+                $entry['mac']       = (isset($d['mac']) && $d['mac'] !== '') ? $d['mac'] : null;
+                $entry['mtu']       = isset($d['mtu']) ? (int) $d['mtu'] : null;
+                if (isset($d['unicast']) && is_array($d['unicast'])) {
+                    foreach ($d['unicast'] as $u) {
+                        $addr = isset($u['address']) ? $u['address'] : '';
+                        if ($addr === '') { continue; }
+                        $family = isset($u['family']) ? (int) $u['family'] : 0;
+                        $prefix = self::wiredNetmaskToPrefix(isset($u['netmask']) ? $u['netmask'] : '');
+                        $cidr   = $addr . ($prefix !== null ? '/' . $prefix : '');
+                        if ($family === 2) {
+                            $entry['ipv4'][] = $cidr;
+                        } else if ($family === 10 || $family === 30) {
+                            $entry['ipv6'][] = $cidr;
+                        }
+                    }
+                }
+                return $entry;
+            }
+        }
+
+        // Fallback: read /sys/class/net for basic state (no IPs).
+        $base = "/sys/class/net/" . $iface;
+        if (is_dir($base)) {
+            $entry['present']   = true;
+            $state = trim((string) @file_get_contents("$base/operstate"));
+            $entry['operstate'] = $state === '' ? null : strtoupper($state);
+            $entry['mac']       = trim((string) @file_get_contents("$base/address")) ?: null;
+            $mtu = trim((string) @file_get_contents("$base/mtu"));
+            $entry['mtu']       = $mtu === '' ? null : (int) $mtu;
+        }
+        return $entry;
+    }
+
+    private static function wiredNetmaskToPrefix($mask) {
+        if (!is_string($mask) || $mask === '') { return null; }
+        $packed = @inet_pton($mask);
+        if ($packed === false) { return null; }
+        $bits = 0;
+        $len = strlen($packed);
+        for ($i = 0; $i < $len; $i++) {
+            $byte = ord($packed[$i]);
+            if ($byte === 0xFF) { $bits += 8; continue; }
+            for ($b = 7; $b >= 0; $b--) {
+                if ($byte & (1 << $b)) { $bits++; }
+                else { return $bits; }
+            }
+        }
+        return $bits;
+    }
+
+    /* ----------------------------------------------------------------
      * CAMERA — discover / read / preview / apply via arv-tool-0.8
      * --------------------------------------------------------------*/
 
@@ -115,16 +258,18 @@ class NetworkApiLogic {
             if ($name === '') {
                 return CoreLogic::GenerateErrorResponse('camera name missing');
             }
+            // GenICam / GigE Vision standard features (per Basler/Aravis):
+            // GevCurrentIPConfiguration is a uint32 bitmask:
+            //   bit 0 (0x01) = PersistentIP, bit 1 (0x02) = DHCP, bit 2 (0x04) = LLA
+            // GevCurrent/Persistent*Address are uint32 IPs in network byte order.
             $features = array(
+                'GevCurrentIPConfiguration',
                 'GevCurrentIPAddress',
                 'GevCurrentSubnetMask',
                 'GevCurrentDefaultGateway',
                 'GevPersistentIPAddress',
                 'GevPersistentSubnetMask',
                 'GevPersistentDefaultGateway',
-                'GevCurrentIPConfigurationDHCP',
-                'GevCurrentIPConfigurationPersistentIP',
-                'GevCurrentIPConfigurationLLA',
             );
             $cmd = self::ARV_TOOL . " control --name=" . escapeshellarg($name);
             foreach ($features as $f) {
@@ -134,27 +279,54 @@ class NetworkApiLogic {
             $out = (string) self::sshExec($cmd);
             $values = self::parseArvFeatures($out);
 
-            $mode = 'unknown';
-            if (!empty($values['GevCurrentIPConfigurationDHCP'])) {
-                $mode = 'dhcp';
-            } else if (!empty($values['GevCurrentIPConfigurationPersistentIP'])) {
-                $mode = 'static';
-            }
+            $configBits = isset($values['GevCurrentIPConfiguration']) ? (int) $values['GevCurrentIPConfiguration'] : 0;
+            $pick = function ($k) use ($values) {
+                return isset($values[$k]) ? $values[$k] : null;
+            };
             $result = array(
                 'name'              => $name,
-                'mode'              => $mode,
-                'currentIp'         => $values['GevCurrentIPAddress'] ?? null,
-                'currentMask'       => $values['GevCurrentSubnetMask'] ?? null,
-                'currentGateway'    => $values['GevCurrentDefaultGateway'] ?? null,
-                'persistentIp'      => $values['GevPersistentIPAddress'] ?? null,
-                'persistentMask'    => $values['GevPersistentSubnetMask'] ?? null,
-                'persistentGateway' => $values['GevPersistentDefaultGateway'] ?? null,
+                'mode'              => self::decodeIpConfig($configBits),
+                'configBits'        => $configBits,
+                'currentIp'         => self::longToIp($pick('GevCurrentIPAddress')),
+                'currentMask'       => self::longToIp($pick('GevCurrentSubnetMask')),
+                'currentGateway'    => self::longToIp($pick('GevCurrentDefaultGateway')),
+                'persistentIp'      => self::longToIp($pick('GevPersistentIPAddress')),
+                'persistentMask'    => self::longToIp($pick('GevPersistentSubnetMask')),
+                'persistentGateway' => self::longToIp($pick('GevPersistentDefaultGateway')),
                 'raw'               => $out,
             );
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
         return CoreLogic::GenerateResponse(true, $result);
+    }
+
+    // GigE Vision IP configuration bitmask:
+    //   bit 0 (0x01) PersistentIP, bit 1 (0x02) DHCP, bit 2 (0x04) LLA.
+    // DHCP wins over PersistentIP for display purposes; LLA alone is a
+    // fallback mode the camera uses when neither DHCP nor PersistentIP yields
+    // an address.
+    private static function decodeIpConfig($bits) {
+        if ($bits & 0x02) { return 'dhcp'; }
+        if ($bits & 0x01) { return 'static'; }
+        if ($bits & 0x04) { return 'lla'; }
+        return 'unknown';
+    }
+
+    private static function longToIp($val) {
+        if ($val === null || $val === '' || !is_numeric($val)) {
+            return null;
+        }
+        // long2ip accepts both signed and unsigned int32 representations.
+        return long2ip((int) $val);
+    }
+
+    private static function ipToUnsignedLong($ip) {
+        $v = ip2long($ip);
+        if ($v === false) {
+            return null;
+        }
+        return sprintf('%u', $v);
     }
 
     public static function PreviewCameraConfig($request) {
@@ -490,23 +662,29 @@ class NetworkApiLogic {
     }
 
     // Build the list of arv-tool-0.8 commands to apply the requested config.
-    // DHCP:   set DHCP=true, PersistentIP=false
-    // Static: write Persistent* values, set PersistentIP=true, DHCP=false
+    // GigE Vision encodes the IP-config mode as a uint32 bitmask in
+    // GevCurrentIPConfiguration (bit0=PersistentIP, bit1=DHCP, bit2=LLA).
+    // We always keep LLA enabled as a fallback in case the chosen method
+    // fails to yield an address. IP/mask/gateway are uint32 in network byte
+    // order — passed to arv-tool as plain decimal integers.
     private static function buildCameraCommands($data) {
         $name = $data['name'];
         $base = self::ARV_TOOL . " control --name=" . escapeshellarg($name);
         $cmds = array();
         if ($data['mode'] === 'static') {
-            $cmds[] = $base . " " . escapeshellarg("GevPersistentIPAddress=" . $data['ip']);
-            $cmds[] = $base . " " . escapeshellarg("GevPersistentSubnetMask=" . $data['mask']);
+            $ipInt   = self::ipToUnsignedLong($data['ip']);
+            $maskInt = self::ipToUnsignedLong($data['mask']);
+            $cmds[] = $base . " " . escapeshellarg("GevPersistentIPAddress=" . $ipInt);
+            $cmds[] = $base . " " . escapeshellarg("GevPersistentSubnetMask=" . $maskInt);
             if (!empty($data['gateway'])) {
-                $cmds[] = $base . " " . escapeshellarg("GevPersistentDefaultGateway=" . $data['gateway']);
+                $gwInt = self::ipToUnsignedLong($data['gateway']);
+                $cmds[] = $base . " " . escapeshellarg("GevPersistentDefaultGateway=" . $gwInt);
             }
-            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfigurationPersistentIP=true");
-            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfigurationDHCP=false");
+            // PersistentIP (0x01) + LLA fallback (0x04) = 5
+            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfiguration=5");
         } else {
-            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfigurationDHCP=true");
-            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfigurationPersistentIP=false");
+            // DHCP (0x02) + LLA fallback (0x04) = 6
+            $cmds[] = $base . " " . escapeshellarg("GevCurrentIPConfiguration=6");
         }
         return $cmds;
     }
