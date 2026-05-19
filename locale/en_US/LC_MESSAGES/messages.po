@@ -1602,3 +1602,9 @@ msgstr "Clear"
 #: js/docker.js
 msgid "Tutti i livelli"
 msgstr "All levels"
+
+# ---- Last image (stack vs capture) on homepage ----
+
+#: js/home.js
+msgid "Nessuna immagine disponibile"
+msgstr "No image available"

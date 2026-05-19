@@ -283,13 +283,65 @@ class CaptureApiLogic {
         return $path;
     }
 
-    // Get last capture in time data
+    // Get last capture in time data.
+    // Scans every station/day folder under the data root and picks the file
+    // with the most recent timestamp embedded in its name, regardless of which
+    // folder holds it.
     public static function GetLastCapture() {
         try {
             $Person = CoreLogic::VerifyPerson();
-            $days = self::getCapturesDays(0, 0, false);
-            $files = self::getCapturesFiles(0, 0, $days[0][2], true);
-            $lastcapture = $files[0];
+            $lastcapture = null;
+
+            $base_dir = self::getDataPath();
+            if (is_dir($base_dir)) {
+                $datePattern = '/(\d{8})T(\d{6})/';
+                $bestKey = '';
+                $bestFile = null;
+                $bestFolder = null;
+                $bestCapturesDir = null;
+
+                foreach (scandir($base_dir) as $folder) {
+                    if ('.' === $folder || '..' === $folder) {
+                        continue;
+                    }
+                    $captures_dir = $base_dir . $folder . "/captures";
+                    if (!is_dir($captures_dir)) {
+                        continue;
+                    }
+                    foreach (scandir($captures_dir) as $entry) {
+                        if ('.' === $entry || '..' === $entry) {
+                            continue;
+                        }
+                        if (substr_compare($entry, '.fit', -4, 4, true) !== 0) {
+                            continue;
+                        }
+                        if (!preg_match($datePattern, $entry, $m)) {
+                            continue;
+                        }
+                        $key = $m[1] . $m[2];
+                        if ($bestFile === null || strcmp($key, $bestKey) > 0) {
+                            $bestKey = $key;
+                            $bestFile = $entry;
+                            $bestFolder = $folder;
+                            $bestCapturesDir = $captures_dir;
+                        }
+                    }
+                }
+
+                if ($bestFile !== null) {
+                    $datetime = date_create_from_format('YmdHis', $bestKey);
+                    $day = $datetime->format('Y-m-d');
+                    $hour = $datetime->format('H:i:s');
+                    $base64 = self::processCapture($bestFile, $bestCapturesDir);
+                    $lastcapture = array(
+                        $bestFile,
+                        $day . ":1",
+                        $hour,
+                        $base64,
+                        $bestFolder . "_" . $bestFile,
+                    );
+                }
+            }
         } catch (ApiException $a) {
             return CoreLogic::GenerateErrorResponse($a->message);
         }

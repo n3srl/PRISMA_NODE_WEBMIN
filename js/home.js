@@ -466,15 +466,11 @@ $(document).ready(function () {
         });
     });
 
-    // Get last image base64 encoded and its timestamp (last stack)
-    $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
-        var data = JSON.parse(json).data;
-        if (data) {
-            var info = data[1].split(":");
-            $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
-            $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
-        }
-    });
+    // Get the most recent between the last stack and the last capture, render
+    // it. Two endpoints are queried in parallel; whichever has the newer
+    // timestamp wins. The data shape from both endpoints is identical:
+    //   [filename, "YYYY-MM-DD:N", "HH:MM:SS", base64, id]
+    loadLastImage();
 
     // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
@@ -497,6 +493,69 @@ $(document).ready(function () {
     refreshCameraTemperature();
     setInterval(refreshCameraTemperature, 20000);
 });
+
+// Last image (stack vs capture) ----------------------------------------------
+
+var lastImageState = { stackDone: false, captureDone: false, stack: null, capture: null };
+
+function loadLastImage() {
+    lastImageState.stackDone = false;
+    lastImageState.captureDone = false;
+    lastImageState.stack = null;
+    lastImageState.capture = null;
+
+    $.get('/lib/stack/V2/stack/preview/laststack')
+        .done(function (json) { lastImageState.stack = parseLastImageResp(json); })
+        .fail(function () { lastImageState.stack = null; })
+        .always(function () { lastImageState.stackDone = true; renderLastImage(); });
+
+    $.get('/lib/capture/V2/capture/preview/lastcapture')
+        .done(function (json) { lastImageState.capture = parseLastImageResp(json); })
+        .fail(function () { lastImageState.capture = null; })
+        .always(function () { lastImageState.captureDone = true; renderLastImage(); });
+}
+
+function parseLastImageResp(json) {
+    try {
+        var parsed = (typeof json === 'string') ? JSON.parse(json) : json;
+        return parsed && parsed.data ? parsed.data : null;
+    } catch (e) { return null; }
+}
+
+// Build a sortable "YYYY-MM-DD HH:MM:SS" key from the [_, "day:N", "hour", ...] tuple.
+function lastImageTimestamp(data) {
+    if (!data || !data[1] || !data[2]) return null;
+    var day = String(data[1]).split(':')[0];
+    return day + ' ' + data[2];
+}
+
+function renderLastImage() {
+    if (!lastImageState.stackDone || !lastImageState.captureDone) {
+        return; // wait for both
+    }
+    var sTs = lastImageTimestamp(lastImageState.stack);
+    var cTs = lastImageTimestamp(lastImageState.capture);
+
+    var pick = null;
+    var label = '';
+    if (sTs && cTs) {
+        if (sTs >= cTs) { pick = lastImageState.stack;   label = 'Stack'; }
+        else            { pick = lastImageState.capture; label = 'Capture'; }
+    } else if (sTs) {
+        pick = lastImageState.stack;   label = 'Stack';
+    } else if (cTs) {
+        pick = lastImageState.capture; label = 'Capture';
+    }
+
+    if (!pick) {
+        $('#last-image-description').html(_('Nessuna immagine disponibile'));
+        $('#last-image-preview').html('');
+        return;
+    }
+    var info = String(pick[1]).split(':');
+    $('#last-image-description').html(label + ' del ' + info[0] + ' (' + pick[2] + ')');
+    $('#last-image-preview').html("<img class='img-responsive' src='" + pick[3] + "'/>");
+}
 
 // Camera temperature gauge ---------------------------------------------------
 

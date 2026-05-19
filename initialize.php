@@ -9,7 +9,7 @@ PrismaMultilanguage::GetCurrentLocaleFromHeader();
 $language = $_SESSION["lang"] ?? PrismaMultilanguage::GetCurrentLocaleFromHeader();
 
 $multilanguageInstance = PrismaMultilanguage::getInstance($language);
-define('_VERSION_', '?ver=5.3.4');
+define('_VERSION_', '?ver=5.4.1');
 session_start();
 
 if ($db_rdbms == 'PostgreSQL'){
