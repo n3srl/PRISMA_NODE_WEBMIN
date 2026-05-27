@@ -78,10 +78,11 @@ function _renderMigrationRows(items, opts) {
         else if (it.conflict) { stateLabel = _('Conflitto: destinazione esistente'); stateColor = '#b07d00'; }
         else { stateLabel = _('Da migrare'); stateColor = '#666'; }
 
+        var afterPath = it.final_path || it.new_path;
         return '<tr>' +
             '<td>' + _escHtml(typeLabel) + '</td>' +
             '<td style="word-break:break-all"><code>' + _escHtml(it.old_path) + '</code></td>' +
-            '<td style="word-break:break-all"><code>' + _escHtml(it.new_path) + '</code></td>' +
+            '<td style="word-break:break-all"><code>' + _escHtml(afterPath) + '</code></td>' +
             '<td style="color:' + stateColor + '">' + _escHtml(stateLabel) + '</td>' +
             '</tr>';
     }).join('');

@@ -76,6 +76,7 @@ class ManutenzioneApiLogic {
 			}
 
 			$plan = self::buildPlan($stationCode, $stationName);
+			self::applyParentRenames($plan);
 			$results = self::executePlan($plan);
 		} catch (ApiException $a) {
 			return CoreLogic::GenerateErrorResponse($a->message);
@@ -111,6 +112,8 @@ class ManutenzioneApiLogic {
 		$planName = $configIsValid ? $stationName : '<STATION_NAME>';
 
 		$plan = self::buildPlan($planCode, $planName);
+		self::applyParentRenames($plan); // aggiunge 'final_path' a ogni item
+
 		$preview = array();
 		foreach ($plan as $idx => $item) {
 			$preview[] = array_merge($item, array(
@@ -121,6 +124,47 @@ class ManutenzioneApiLogic {
 		}
 		$payload['items'] = $preview;
 		return $payload;
+	}
+
+	/**
+	 * Per ogni item del piano calcola il "final_path", cioe' il path finale dove
+	 * l'elemento si trovera' DOPO che TUTTI gli step di rinomino sono stati eseguiti
+	 * (compresi quelli sulle cartelle parent). Utile per la preview UI.
+	 *
+	 * Il piano viene eseguito depth-first reverse (file -> event-dir -> day-dir -> root):
+	 * al momento del rename di un singolo file il parent path e' ancora quello vecchio,
+	 * quindi 'new_path' contiene "DEFAULT/..." sui parent. 'final_path' applica anche
+	 * i rinomini dei parent presenti piu' avanti nel piano.
+	 */
+	private static function applyParentRenames(&$plan) {
+		$dirRenames = array();
+		foreach ($plan as $item) {
+			if ($item['type'] === self::TYPE_EVENT_DIR
+				|| $item['type'] === self::TYPE_DAY_DIR
+				|| $item['type'] === self::TYPE_ROOT_DIR) {
+				$dirRenames[] = array($item['old_path'], $item['new_path']);
+			}
+		}
+		// Ordino dal path piu' lungo al piu' corto: cosi' il match parente avviene
+		// sempre sulla cartella piu' specifica per prima.
+		usort($dirRenames, function ($a, $b) {
+			return strlen($b[0]) - strlen($a[0]);
+		});
+
+		foreach ($plan as &$item) {
+			$final = $item['new_path'];
+			foreach ($dirRenames as $pair) {
+				$oldDir = $pair[0];
+				$newDir = $pair[1];
+				if ($final === $oldDir) {
+					$final = $newDir;
+				} elseif (strpos($final, $oldDir . '/') === 0) {
+					$final = $newDir . substr($final, strlen($oldDir));
+				}
+			}
+			$item['final_path'] = $final;
+		}
+		unset($item);
 	}
 
 	/**
@@ -278,12 +322,13 @@ class ManutenzioneApiLogic {
 		$results = array();
 		foreach ($plan as $idx => $item) {
 			$res = array(
-				'id'       => $idx,
-				'type'     => $item['type'],
-				'old_path' => $item['old_path'],
-				'new_path' => $item['new_path'],
-				'status'   => self::STATUS_SKIPPED,
-				'message'  => '',
+				'id'         => $idx,
+				'type'       => $item['type'],
+				'old_path'   => $item['old_path'],
+				'new_path'   => $item['new_path'],
+				'final_path' => isset($item['final_path']) ? $item['final_path'] : $item['new_path'],
+				'status'     => self::STATUS_SKIPPED,
+				'message'    => '',
 			);
 
 			if (!file_exists($item['old_path'])) {
