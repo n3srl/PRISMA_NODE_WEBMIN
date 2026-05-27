@@ -68,13 +68,16 @@ function _renderMigrationRows(items, opts) {
         var typeLabel = it.type === 'file' ? _('File')
                       : it.type === 'event_dir' ? _('Cartella evento')
                       : it.type === 'day_dir' ? _('Cartella giorno')
+                      : it.type === 'root_merge' ? _('Unione contenuto root')
                       : it.type === 'root_dir' ? _('Cartella root') : it.type;
 
         var stateLabel, stateColor;
         if (it.status === 'renamed') { stateLabel = _('Rinominato'); stateColor = '#1d7a44'; }
+        else if (it.status === 'merged') { stateLabel = _('Unito') + (it.message ? ' (' + it.message + ')' : ''); stateColor = '#1d7a44'; }
         else if (it.status === 'error') { stateLabel = _('Errore') + ': ' + (it.message || ''); stateColor = '#b52c1d'; }
         else if (it.status === 'skipped') { stateLabel = _('Saltato') + ': ' + (it.message || ''); stateColor = '#b07d00'; }
         else if (previewOnly) { stateLabel = _('Anteprima (config non ancora valida)'); stateColor = '#666'; }
+        else if (it.type === 'root_merge') { stateLabel = _('Da unire (destinazione gia\' esistente)'); stateColor = '#666'; }
         else if (it.conflict) { stateLabel = _('Conflitto: destinazione esistente'); stateColor = '#b07d00'; }
         else { stateLabel = _('Da migrare'); stateColor = '#666'; }
 

@@ -11,8 +11,11 @@
  *
  * Questa logica:
  *  - Scansiona ricorsivamente /freeture/DEFAULT/ producendo un piano di rinomino
- *  - Applica il rinomino in ordine depth-first reverse (file -> event-folder -> day-folder -> root)
+ *  - Applica il rinomino in ordine depth-first reverse (file -> event-folder -> day-folder)
  *    cosi i path parent restano validi finche il loro turno non arriva.
+ *  - Step finale = merge ricorsivo (NON rename) del contenuto di /freeture/DEFAULT/ dentro
+ *    /freeture/<STATION_CODE>/, perche' la destinazione esiste gia' nel 99% dei casi e
+ *    rename() su destinazione esistente fallisce.
  *
  * @author: N3 S.r.l.
  */
@@ -25,10 +28,14 @@ class ManutenzioneApiLogic {
 	const TYPE_FILE       = 'file';
 	const TYPE_EVENT_DIR  = 'event_dir';
 	const TYPE_DAY_DIR    = 'day_dir';
-	const TYPE_ROOT_DIR   = 'root_dir';
+	// L'ultimo step e' un merge ricorsivo del contenuto di /freeture/DEFAULT/ dentro
+	// /freeture/<STATION_CODE>/ (NON un rename atomico), perche' la dir di destinazione
+	// esiste quasi sempre gia' (freeture la crea appena configurato).
+	const TYPE_ROOT_MERGE = 'root_merge';
 
 	// Stati esecuzione.
 	const STATUS_RENAMED = 'renamed';
+	const STATUS_MERGED  = 'merged';
 	const STATUS_SKIPPED = 'skipped';
 	const STATUS_ERROR   = 'error';
 
@@ -141,7 +148,7 @@ class ManutenzioneApiLogic {
 		foreach ($plan as $item) {
 			if ($item['type'] === self::TYPE_EVENT_DIR
 				|| $item['type'] === self::TYPE_DAY_DIR
-				|| $item['type'] === self::TYPE_ROOT_DIR) {
+				|| $item['type'] === self::TYPE_ROOT_MERGE) {
 				$dirRenames[] = array($item['old_path'], $item['new_path']);
 			}
 		}
@@ -240,9 +247,9 @@ class ManutenzioneApiLogic {
 		// 4) File DEFAULT_* direttamente sotto /freeture/DEFAULT/ (raro): STATION_CODE.
 		self::collectDefaultFiles($root, $stationCode, $plan);
 
-		// 5) Root: /freeture/DEFAULT -> /freeture/<STATION_CODE>.
+		// 5) Root: merge ricorsivo /freeture/DEFAULT/* -> /freeture/<STATION_CODE>/* e rmdir DEFAULT.
 		$plan[] = array(
-			'type'     => self::TYPE_ROOT_DIR,
+			'type'     => self::TYPE_ROOT_MERGE,
 			'old_path' => $root,
 			'new_path' => rtrim(_FREETURE_DATA_, "/") . "/" . $stationCode,
 		);
@@ -338,6 +345,27 @@ class ManutenzioneApiLogic {
 				continue;
 			}
 
+			// Step finale: merge ricorsivo del contenuto di old_path dentro new_path
+			// (che esiste gia' nel 99% dei casi).
+			if ($item['type'] === self::TYPE_ROOT_MERGE) {
+				$errors = array();
+				$moved = self::mergeDirectory($item['old_path'], $item['new_path'], $errors);
+				$srcGone = !file_exists($item['old_path']);
+				if (empty($errors)) {
+					$res['status']  = self::STATUS_MERGED;
+					$res['message'] = $moved . " elementi spostati"
+						. ($srcGone ? "" : "; cartella sorgente non rimossa (non vuota o permessi).");
+				} else {
+					$res['status']  = self::STATUS_ERROR;
+					$res['message'] = "Merge completato con errori (" . count($errors) . "): "
+						. implode(' | ', array_slice($errors, 0, 5))
+						. (count($errors) > 5 ? ' [...]' : '');
+				}
+				$results[] = $res;
+				continue;
+			}
+
+			// Tutti gli altri step: rename atomico.
 			if (file_exists($item['new_path'])) {
 				$res['status']  = self::STATUS_SKIPPED;
 				$res['message'] = "Destinazione gia' esistente: skip per evitare sovrascrittura.";
@@ -357,6 +385,75 @@ class ManutenzioneApiLogic {
 			$results[] = $res;
 		}
 		return $results;
+	}
+
+	/**
+	 * Sposta ricorsivamente tutto il contenuto di $srcDir dentro $dstDir, poi prova
+	 * a rimuovere $srcDir se vuota.
+	 *
+	 * Regole:
+	 *  - Se $dstDir non esiste viene creato.
+	 *  - Per ogni elemento in $srcDir:
+	 *      - destinazione assente             -> rename atomico (veloce)
+	 *      - entrambe dir                     -> ricorsione (merge)
+	 *      - entrambe file / tipi misti       -> conflitto, registrato in $errors,
+	 *                                            il sorgente resta dov'e'.
+	 *
+	 * Ritorna il numero di elementi spostati con successo al primo livello
+	 * (i merge ricorsivi contano come 1 elemento di primo livello).
+	 */
+	private static function mergeDirectory($srcDir, $dstDir, &$errors) {
+		$moved = 0;
+		if (!is_dir($srcDir)) {
+			$errors[] = "Sorgente non e' una directory: $srcDir";
+			return 0;
+		}
+		if (!is_dir($dstDir)) {
+			if (!@mkdir($dstDir, 0775, true) && !is_dir($dstDir)) {
+				$errors[] = "Impossibile creare destinazione: $dstDir";
+				return 0;
+			}
+		}
+
+		$entries = @scandir($srcDir);
+		if ($entries === false) {
+			$errors[] = "Impossibile leggere: $srcDir";
+			return 0;
+		}
+
+		foreach ($entries as $entry) {
+			if ($entry === '.' || $entry === '..') {
+				continue;
+			}
+			$srcPath = $srcDir . '/' . $entry;
+			$dstPath = $dstDir . '/' . $entry;
+
+			if (!file_exists($dstPath)) {
+				if (@rename($srcPath, $dstPath)) {
+					$moved++;
+				} else {
+					$err = error_get_last();
+					$errors[] = "rename $srcPath -> $dstPath: "
+						. ($err && isset($err['message']) ? $err['message'] : 'errore sconosciuto');
+				}
+				continue;
+			}
+
+			if (is_dir($srcPath) && is_dir($dstPath)) {
+				$before = count($errors);
+				self::mergeDirectory($srcPath, $dstPath, $errors);
+				if (count($errors) === $before) {
+					$moved++;
+				}
+				continue;
+			}
+
+			$errors[] = "Conflitto, destinazione esistente: $dstPath";
+		}
+
+		// Tenta cleanup: rmdir riesce solo se ora $srcDir e' vuota.
+		@rmdir($srcDir);
+		return $moved;
 	}
 
 	/**
