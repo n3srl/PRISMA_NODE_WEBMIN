@@ -127,6 +127,14 @@ class ManutenzioneApiLogic {
 	 * Costruisce il piano di rinomino in ordine di esecuzione (depth-first reverse).
 	 * Il "new_path" di ciascun item utilizza il path PARENT VECCHIO + nome nuovo:
 	 * cosi quando viene eseguito il rinomino in ordine, ogni step trova path validi.
+	 *
+	 * Regole di prefisso (context-dependent):
+	 *   - root folder       -> STATION_CODE
+	 *   - day folder        -> STATION_CODE
+	 *   - captures/*.fit    -> STATION_CODE
+	 *   - stacks/*.fit      -> STATION_NAME
+	 *   - events/<evt>/     -> STATION_NAME (nome cartella evento)
+	 *   - events/<evt>/*    -> STATION_NAME (file dentro la cartella evento)
 	 */
 	private static function buildPlan($stationCode, $stationName) {
 		$plan = array();
@@ -145,12 +153,10 @@ class ManutenzioneApiLogic {
 				$subPath = $dayPath . "/" . $subDir;
 
 				if ($subDir === 'events') {
-					// Cartelle evento: prima i file dentro, poi rinomino la cartella evento.
+					// Cartelle evento + file interni: prefisso STATION_NAME.
 					foreach (self::listDirs($subPath) as $eventDir) {
 						$eventPath = $subPath . "/" . $eventDir;
-						// File .fit (e altri) con prefisso DEFAULT dentro la cartella evento.
 						self::collectDefaultFiles($eventPath, $stationName, $plan);
-						// Rinomino della cartella evento.
 						$newEventName = self::replacePrefix($eventDir, $stationName);
 						if ($newEventName !== null && $newEventName !== $eventDir) {
 							$plan[] = array(
@@ -160,17 +166,24 @@ class ManutenzioneApiLogic {
 							);
 						}
 					}
+				} elseif ($subDir === 'captures') {
+					// captures/*.fit -> prefisso STATION_CODE.
+					self::collectDefaultFiles($subPath, $stationCode, $plan);
+				} elseif ($subDir === 'stacks') {
+					// stacks/*.fit -> prefisso STATION_NAME.
+					self::collectDefaultFiles($subPath, $stationName, $plan);
 				} else {
-					// captures/stacks/logs/... : rinomino solo i file con prefisso DEFAULT (la sub-folder no).
+					// Sub-folder generiche (logs/, sessions/, ...): fallback su STATION_NAME.
 					self::collectDefaultFiles($subPath, $stationName, $plan);
 				}
 			}
 
-			// File con prefisso DEFAULT direttamente nella day folder (raro ma possibile).
-			self::collectDefaultFiles($dayPath, $stationName, $plan);
+			// File DEFAULT_* direttamente nella day folder (raro): fallback su STATION_CODE
+			// per coerenza con il nome della day folder a cui appartengono.
+			self::collectDefaultFiles($dayPath, $stationCode, $plan);
 
-			// 3) Rinomino della day folder (DEFAULT_YYYYMMDD -> STATION_NAME_YYYYMMDD).
-			$newDayName = self::replacePrefix($dayDir, $stationName);
+			// 3) Day folder DEFAULT_YYYYMMDD -> STATION_CODE_YYYYMMDD.
+			$newDayName = self::replacePrefix($dayDir, $stationCode);
 			if ($newDayName !== null && $newDayName !== $dayDir) {
 				$plan[] = array(
 					'type'     => self::TYPE_DAY_DIR,
@@ -180,10 +193,10 @@ class ManutenzioneApiLogic {
 			}
 		}
 
-		// 4) File con prefisso DEFAULT direttamente sotto /freeture/DEFAULT/ (raro).
-		self::collectDefaultFiles($root, $stationName, $plan);
+		// 4) File DEFAULT_* direttamente sotto /freeture/DEFAULT/ (raro): STATION_CODE.
+		self::collectDefaultFiles($root, $stationCode, $plan);
 
-		// 5) Rinomino della root: /freeture/DEFAULT -> /freeture/<STATION_CODE>.
+		// 5) Root: /freeture/DEFAULT -> /freeture/<STATION_CODE>.
 		$plan[] = array(
 			'type'     => self::TYPE_ROOT_DIR,
 			'old_path' => $root,
