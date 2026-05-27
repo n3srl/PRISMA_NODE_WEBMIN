@@ -300,7 +300,7 @@ class DockerApiLogic {
         return CoreLogic::GenerateResponse($result, $ob);
     }
 
-    //Access SSH container and get a single Container
+    //Access SSH container and restart a single Container (stop + start)
     public static function sshContainerRestart($ob) {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
@@ -308,8 +308,18 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $cmd = "docker inspect -f '{{.State.Running}}' $ob | grep -q 'true' && docker restart $ob";
-                $stream = ssh2_exec($session, $cmd);
+                // stop + start is more reliable than `docker restart` over a one-shot ssh2_exec:
+                // reading each stream to EOF forces the command to actually complete before the session is closed.
+                $stopStream = ssh2_exec($session, "docker stop " . $ob);
+                if ($stopStream) {
+                    stream_set_blocking($stopStream, true);
+                    stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+                }
+                $startStream = ssh2_exec($session, "docker start " . $ob);
+                if ($startStream) {
+                    stream_set_blocking($startStream, true);
+                    stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+                }
                 $result = true;
             }
             unset($session);
