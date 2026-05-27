@@ -89,31 +89,34 @@ class ManutenzioneApiLogic {
 
 	private static function buildScanPayload($stationCode, $stationName) {
 		$defaultRoot = rtrim(_FREETURE_DATA_, "/") . "/" . self::DEFAULT_TOKEN;
+		$configIsValid = ($stationCode !== self::DEFAULT_TOKEN && $stationName !== self::DEFAULT_TOKEN
+						&& $stationCode !== '' && $stationName !== '');
 
 		$payload = array(
 			'stationCode'    => $stationCode,
 			'stationName'    => $stationName,
 			'defaultRoot'    => $defaultRoot,
 			'rootExists'     => is_dir($defaultRoot),
-			'configIsValid'  => ($stationCode !== self::DEFAULT_TOKEN && $stationName !== self::DEFAULT_TOKEN
-								&& $stationCode !== '' && $stationName !== ''),
+			'configIsValid'  => $configIsValid,
 			'items'          => array(),
 		);
 
 		if (!$payload['rootExists']) {
 			return $payload;
 		}
-		if (!$payload['configIsValid']) {
-			return $payload;
-		}
 
-		$plan = self::buildPlan($stationCode, $stationName);
-		// Aggiungo flag conflict per la preview UI.
+		// Se la config non e' ancora valida costruiamo comunque la preview usando placeholder
+		// testuali, cosi l'utente vede l'elenco di cosa verra' rinominato (in sola lettura).
+		$planCode = $configIsValid ? $stationCode : '<STATION_CODE>';
+		$planName = $configIsValid ? $stationName : '<STATION_NAME>';
+
+		$plan = self::buildPlan($planCode, $planName);
 		$preview = array();
 		foreach ($plan as $idx => $item) {
 			$preview[] = array_merge($item, array(
 				'id'       => $idx,
-				'conflict' => file_exists($item['new_path']),
+				// Il check conflitto ha senso solo con path reali.
+				'conflict' => $configIsValid ? file_exists($item['new_path']) : false,
 			));
 		}
 		$payload['items'] = $preview;

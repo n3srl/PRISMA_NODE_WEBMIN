@@ -55,7 +55,9 @@ function _csrfTokenForMigration() {
     });
 }
 
-function _renderMigrationRows(items) {
+function _renderMigrationRows(items, opts) {
+    opts = opts || {};
+    var previewOnly = !!opts.previewOnly;
     var $tbody = $('#DefaultMigrationList tbody');
     if (!items || !items.length) {
         $tbody.html('<tr><td colspan="4" class="text-center text-muted">' +
@@ -72,6 +74,7 @@ function _renderMigrationRows(items) {
         if (it.status === 'renamed') { stateLabel = _('Rinominato'); stateColor = '#1d7a44'; }
         else if (it.status === 'error') { stateLabel = _('Errore') + ': ' + (it.message || ''); stateColor = '#b52c1d'; }
         else if (it.status === 'skipped') { stateLabel = _('Saltato') + ': ' + (it.message || ''); stateColor = '#b07d00'; }
+        else if (previewOnly) { stateLabel = _('Anteprima (config non ancora valida)'); stateColor = '#666'; }
         else if (it.conflict) { stateLabel = _('Conflitto: destinazione esistente'); stateColor = '#b07d00'; }
         else { stateLabel = _('Da migrare'); stateColor = '#666'; }
 
@@ -94,15 +97,18 @@ function _renderMigrationStatus(payload) {
             '</div>');
         return;
     }
+    var nItems = (payload.items || []).length;
     if (!payload.configIsValid) {
         $s.html('<div class="alert alert-warning">' +
             _('La configurazione freeture corrente è ancora DEFAULT') +
             ' (STATION_CODE=<b>' + _escHtml(payload.stationCode) + '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>). ' +
-            _('Configura prima la stazione, poi torna qui.') +
+            _('Configura prima la stazione per poter eseguire la migrazione.') + ' ' +
+            _('Qui sotto trovi comunque l\'anteprima dei dataset DEFAULT presenti sul nodo') +
+            ' (<b>' + nItems + '</b> ' + _('elementi') + '): ' +
+            _('i path "dopo migrazione" usano segnaposto <STATION_CODE> / <STATION_NAME> che verranno sostituiti con i valori reali una volta configurata la stazione.') +
             '</div>');
         return;
     }
-    var nItems = (payload.items || []).length;
     $s.html('<div class="alert alert-success">' +
         _('Configurazione attuale') + ': STATION_CODE=<b>' + _escHtml(payload.stationCode) +
         '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>. ' +
@@ -136,7 +142,7 @@ function loadDefaultMigrationPreview() {
         var payload = resp.data || {};
         defaultMigrationLastScan = payload;
         _renderMigrationStatus(payload);
-        _renderMigrationRows(payload.items || []);
+        _renderMigrationRows(payload.items || [], { previewOnly: !payload.configIsValid });
         var canRun = payload.rootExists && payload.configIsValid && (payload.items || []).length > 0;
         $btnRun.prop('disabled', !canRun);
     }).fail(function (xhr) {
