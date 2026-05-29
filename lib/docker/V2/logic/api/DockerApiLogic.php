@@ -300,7 +300,7 @@ class DockerApiLogic {
         return CoreLogic::GenerateResponse($result, $ob);
     }
 
-    //Access SSH container and get a single Container
+    //Access SSH container and restart a single Container (stop + start)
     public static function sshContainerRestart($ob) {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         $print = ssh2_fingerprint($session);
@@ -308,8 +308,18 @@ class DockerApiLogic {
         if ($session) {
             //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
             if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $cmd = "docker inspect -f '{{.State.Running}}' $ob | grep -q 'true' && docker restart $ob";
-                $stream = ssh2_exec($session, $cmd);
+                // stop + start is more reliable than `docker restart` over a one-shot ssh2_exec:
+                // reading each stream to EOF forces the command to actually complete before the session is closed.
+                $stopStream = ssh2_exec($session, "docker stop " . $ob);
+                if ($stopStream) {
+                    stream_set_blocking($stopStream, true);
+                    stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+                }
+                $startStream = ssh2_exec($session, "docker start " . $ob);
+                if ($startStream) {
+                    stream_set_blocking($startStream, true);
+                    stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+                }
                 $result = true;
             }
             unset($session);
@@ -369,6 +379,97 @@ class DockerApiLogic {
             return CoreLogic::GenerateErrorResponse($a->message);
         }
         return CoreLogic::GenerateResponse($res['res'], $res['data']);
+    }
+
+    // Read & filter freeture log4cpp output files for the current station.
+    // $from / $to are "YYYY-MM-DD HH:MM:SS" strings (or empty for open bound).
+    // $levels is an array of uppercase level names (empty = no level filter).
+    // Returns at most LOG_FILTER_LIMIT records, sorted by timestamp ascending,
+    // each shaped as {timestamp, level, thread, message}.
+    const LOG_FILTER_LIMIT = 5000;
+
+    public static function FilteredFreetureLogs($from, $to, $levels) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+
+            $stationCode = CoreLogic::GetStationCode();
+            $logsDir = _FREETURE_DATA_ . $stationCode . "/logs/";
+
+            $result = self::readFilteredLogs($logsDir, $from, $to, $levels);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $result);
+    }
+
+    private static function readFilteredLogs($logsDir, $from, $to, $levels) {
+        $out = array('records' => array(), 'truncated' => false, 'total' => 0);
+        if (!is_dir($logsDir)) {
+            return $out;
+        }
+
+        $fromTs = (is_string($from) && $from !== '') ? strtotime($from) : null;
+        $toTs   = (is_string($to)   && $to   !== '') ? strtotime($to)   : null;
+        if ($fromTs === false) { $fromTs = null; }
+        if ($toTs   === false) { $toTs   = null; }
+
+        $levelSet = array();
+        if (is_array($levels)) {
+            foreach ($levels as $lvl) {
+                $lvl = strtoupper(trim($lvl));
+                if ($lvl !== '') {
+                    $levelSet[$lvl] = true;
+                }
+            }
+        }
+        $filterLevels = !empty($levelSet);
+
+        $linePattern = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}); ([A-Z]+); (.*)$/';
+        $records = array();
+
+        foreach (glob($logsDir . "*.log") as $filePath) {
+            $thread = pathinfo($filePath, PATHINFO_FILENAME);
+            $fh = @fopen($filePath, 'r');
+            if (!$fh) {
+                continue;
+            }
+            while (($line = fgets($fh)) !== false) {
+                $line = rtrim($line, "\r\n");
+                if ($line === '' || !preg_match($linePattern, $line, $m)) {
+                    continue;
+                }
+                $ts = strtotime($m[1]);
+                if ($fromTs !== null && $ts < $fromTs) {
+                    continue;
+                }
+                if ($toTs !== null && $ts > $toTs) {
+                    continue;
+                }
+                if ($filterLevels && !isset($levelSet[$m[2]])) {
+                    continue;
+                }
+                $records[] = array(
+                    'timestamp' => $m[1],
+                    'level'     => $m[2],
+                    'thread'    => $thread,
+                    'message'   => $m[3],
+                );
+            }
+            fclose($fh);
+        }
+
+        usort($records, function ($a, $b) {
+            $c = strcmp($a['timestamp'], $b['timestamp']);
+            return ($c !== 0) ? $c : strcmp($a['thread'], $b['thread']);
+        });
+
+        $out['total'] = count($records);
+        if ($out['total'] > self::LOG_FILTER_LIMIT) {
+            $records = array_slice($records, -self::LOG_FILTER_LIMIT);
+            $out['truncated'] = true;
+        }
+        $out['records'] = $records;
+        return $out;
     }
 
 }

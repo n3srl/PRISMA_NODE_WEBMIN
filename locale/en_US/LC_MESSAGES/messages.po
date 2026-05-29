@@ -1226,3 +1226,447 @@ msgstr "Agent"
 #: js/login.js
 msgid "Chiudi"
 msgstr "Close"
+
+# ============================================================
+# Network configuration page (view/network/edit.php, js/network.js)
+# ============================================================
+
+#: view/network/edit.php view/template/menu.php
+msgid "Configurazione IP"
+msgstr "IP Configuration"
+
+#: view/network/edit.php
+msgid "Indirizzo IP del nodo"
+msgstr "Node IP Address"
+
+#: view/network/edit.php view/docker/edit.php
+msgid "Attenzione"
+msgstr "Warning"
+
+#: view/network/edit.php
+msgid ""
+"una configurazione errata può rendere il nodo irraggiungibile via rete. "
+"Verrà fatto un backup di /etc/network/interfaces prima di applicare; usa il "
+"bottone Anteprima per controllare il diff."
+msgstr ""
+"an incorrect configuration can make the node unreachable over the network. "
+"A backup of /etc/network/interfaces will be created before applying; use "
+"the Preview button to check the diff."
+
+#: view/network/edit.php
+msgid "Interfaccia"
+msgstr "Interface"
+
+#: view/network/edit.php view/docker/edit.php
+msgid "Modalità"
+msgstr "Mode"
+
+#: view/network/edit.php
+msgid "Statica"
+msgstr "Static"
+
+#: view/network/edit.php
+msgid "Indirizzo (CIDR es. 192.168.1.10/24)"
+msgstr "Address (CIDR e.g. 192.168.1.10/24)"
+
+#: view/network/edit.php
+msgid "Netmask (se non in CIDR)"
+msgstr "Netmask (if not in CIDR)"
+
+#: view/network/edit.php js/network.js
+msgid "Gateway"
+msgstr "Gateway"
+
+#: view/network/edit.php
+msgid "DNS (separati da spazio)"
+msgstr "DNS (space-separated)"
+
+#: view/network/edit.php
+msgid "Ricarica"
+msgstr "Reload"
+
+#: view/network/edit.php
+msgid "Indirizzo IP della camera"
+msgstr "Camera IP Address"
+
+#: view/network/edit.php
+msgid "Scopri"
+msgstr "Discover"
+
+#: view/network/edit.php
+msgid ""
+"il container freeture deve essere FERMO prima di modificare l'IP della "
+"camera, altrimenti sta usando il dispositivo e arv-tool-0.8 non potrà "
+"scrivere il PersistentIP. Vai su 'Stato Containers' e ferma il container "
+"freeture, applica la modifica qui, poi riavvia il container."
+msgstr ""
+"the freeture container must be STOPPED before changing the camera IP, "
+"otherwise it is using the device and arv-tool-0.8 will not be able to "
+"write the PersistentIP. Go to 'Container Status', stop the freeture "
+"container, apply the change here, then restart the container."
+
+#: view/network/edit.php
+msgid ""
+"Le modifiche al PersistentIP vengono scritte tramite arv-tool-0.8 sull'host."
+" La camera applica il nuovo indirizzo al riavvio."
+msgstr ""
+"Changes to PersistentIP are written via arv-tool-0.8 on the host. The "
+"camera applies the new address on reboot."
+
+#: view/network/edit.php
+msgid "Camera"
+msgstr "Camera"
+
+#: view/network/edit.php
+msgid "Premi Scopri per elencare le camere"
+msgstr "Press Discover to list cameras"
+
+#: view/network/edit.php js/network.js
+msgid "IP"
+msgstr "IP"
+
+#: view/network/edit.php
+msgid "Netmask"
+msgstr "Netmask"
+
+#: view/network/edit.php
+msgid "Gateway (opzionale)"
+msgstr "Gateway (optional)"
+
+#: view/network/edit.php
+msgid "Stato rete cablata"
+msgstr "Wired Network Status"
+
+#: view/network/edit.php view/docker/edit.php js/network.js js/ovpn.js
+msgid "Caricamento..."
+msgstr "Loading..."
+
+#: view/network/edit.php
+msgid "Anteprima modifiche"
+msgstr "Preview Changes"
+
+#: view/network/edit.php
+msgid "Annulla"
+msgstr "Cancel"
+
+#: view/network/edit.php
+msgid "Conferma e applica"
+msgstr "Confirm and apply"
+
+# ---- network.js runtime messages ----
+
+#: js/network.js
+msgid "Differenza rispetto a /etc/network/interfaces:"
+msgstr "Diff against /etc/network/interfaces:"
+
+#: js/network.js
+msgid ""
+"Applicando il networking verrà riavviato. Se ti sei collegato via questa "
+"interfaccia, potresti perdere la connessione."
+msgstr ""
+"Networking will be restarted on apply. If you connected through this "
+"interface, you may lose the connection."
+
+#: js/network.js
+msgid "Anteprima: configurazione nodo"
+msgstr "Preview: node configuration"
+
+#: js/network.js
+msgid "Errore di anteprima."
+msgstr "Preview error."
+
+#: js/network.js
+msgid "Errore di rete in fase di anteprima."
+msgstr "Network error during preview."
+
+#: js/network.js
+msgid "Errore di rete in fase di apply."
+msgstr "Network error during apply."
+
+#: js/network.js
+msgid "Apply fallito."
+msgstr "Apply failed."
+
+#: js/network.js
+msgid "Configurazione applicata."
+msgstr "Configuration applied."
+
+#: js/network.js
+msgid "Backup salvato in"
+msgstr "Backup saved in"
+
+#: js/network.js js/docker.js
+msgid "Output:"
+msgstr "Output:"
+
+#: js/network.js
+msgid "Riavvio networking in corso, può richiedere alcuni secondi..."
+msgstr "Restarting networking, this may take a few seconds..."
+
+#: js/network.js
+msgid "-- seleziona --"
+msgstr "-- select --"
+
+#: js/network.js
+msgid "Nessuna camera trovata"
+msgstr "No camera found"
+
+#: js/network.js
+msgid "Errore di scoperta"
+msgstr "Discovery error"
+
+#: js/network.js
+msgid "Modalità corrente:"
+msgstr "Current mode:"
+
+#: js/network.js
+msgid "IP:"
+msgstr "IP:"
+
+#: js/network.js
+msgid "Mask:"
+msgstr "Mask:"
+
+#: js/network.js
+msgid "Gateway:"
+msgstr "Gateway:"
+
+#: js/network.js
+msgid "Impossibile leggere la configurazione corrente."
+msgstr "Unable to read the current configuration."
+
+#: js/network.js
+msgid "Seleziona prima una camera."
+msgstr "Select a camera first."
+
+#: js/network.js
+msgid "Comandi che verranno eseguiti via SSH (in ordine):"
+msgstr "Commands that will be executed via SSH (in order):"
+
+#: js/network.js
+msgid ""
+"L'ultimo comando (DeviceReset) riavvia la camera per applicare la nuova "
+"configurazione: la camera resterà offline 10-30 secondi."
+msgstr ""
+"The last command (DeviceReset) reboots the camera to apply the new "
+"configuration: the camera will remain offline for 10-30 seconds."
+
+#: js/network.js
+msgid "Anteprima: configurazione camera"
+msgstr "Preview: camera configuration"
+
+#: js/network.js
+msgid "Comandi eseguiti."
+msgstr "Commands executed."
+
+#: js/network.js
+msgid "Esecuzione comandi e reset camera in corso (può richiedere 10-30 secondi)..."
+msgstr "Executing commands and resetting the camera (may take 10-30 seconds)..."
+
+#: js/network.js
+msgid "Esecuzione..."
+msgstr "Running..."
+
+#: js/network.js
+msgid "Impossibile leggere lo stato della rete"
+msgstr "Unable to read the network status"
+
+#: js/network.js
+msgid "Nessuna interfaccia configurata"
+msgstr "No interface configured"
+
+#: js/network.js
+msgid "NON PRESENTE"
+msgstr "NOT PRESENT"
+
+#: js/network.js
+msgid "ATTIVA"
+msgstr "UP"
+
+#: js/network.js
+msgid "NON ATTIVA"
+msgstr "DOWN"
+
+#: js/network.js
+msgid "default route"
+msgstr "default route"
+
+#: js/network.js
+msgid "Impossibile leggere la configurazione del nodo."
+msgstr "Unable to read the node configuration."
+
+# ============================================================
+# Homepage — camera temperature gauge & status badges
+# ============================================================
+
+#: view/home/home.php
+msgid "Stato camera"
+msgstr "Camera Status"
+
+#: view/home/home.php
+msgid "Stato connessione: --"
+msgstr "Connection status: --"
+
+#: view/home/home.php
+msgid "CPU"
+msgstr "CPU"
+
+#: js/home.js
+msgid "N/D"
+msgstr "N/A"
+
+#: js/home.js
+msgid "Soglia"
+msgstr "Threshold"
+
+#: js/home.js
+msgid "Policy"
+msgstr "Policy"
+
+#: js/home.js
+msgid "Attuale"
+msgstr "Current"
+
+#: js/home.js
+msgid "Nessun dato"
+msgstr "No data"
+
+#: js/home.js
+msgid "temperatura non disponibile"
+msgstr "temperature unavailable"
+
+#: js/home.js
+msgid "Camera connessa"
+msgstr "Camera connected"
+
+#: js/home.js
+msgid "Camera disconnessa"
+msgstr "Camera disconnected"
+
+#: js/home.js
+msgid "Stato connessione: N/D"
+msgstr "Connection status: N/A"
+
+#: js/home.js
+msgid "Sensore surriscaldato"
+msgstr "Sensor overheated"
+
+# ============================================================
+# Docker page — freeture log filter
+# ============================================================
+
+#: view/docker/edit.php
+msgid "Analisi log"
+msgstr "Log analysis"
+
+#: view/docker/edit.php
+msgid "Da"
+msgstr "From"
+
+#: view/docker/edit.php
+msgid "A"
+msgstr "To"
+
+#: view/docker/edit.php
+msgid "vuoto = nessun limite"
+msgstr "empty = no limit"
+
+#: view/docker/edit.php
+msgid "Livelli"
+msgstr "Levels"
+
+#: view/docker/edit.php
+msgid "Filtra"
+msgstr "Filter"
+
+#: js/docker.js
+msgid "record"
+msgstr "records"
+
+#: js/docker.js
+msgid "risultati troncati"
+msgstr "results truncated"
+
+#: js/docker.js
+msgid "Errore di caricamento"
+msgstr "Loading error"
+
+#: js/docker.js
+msgid "Applica"
+msgstr "Apply"
+
+#: js/docker.js
+msgid "Cancella"
+msgstr "Clear"
+
+#: js/docker.js
+msgid "Tutti i livelli"
+msgstr "All levels"
+
+# ---- Last image (stack vs capture) on homepage ----
+
+#: js/home.js
+msgid "Nessuna immagine disponibile"
+msgstr "No image available"
+
+# ---- Homepage configuration status panel ----
+
+#: view/home/home.php
+msgid "Stato configurazione"
+msgstr "Configuration status"
+
+#: service/HomeController.php
+msgid "Impossibile leggere la versione del container freeture"
+msgstr "Unable to read freeture container version"
+
+#: service/HomeController.php
+msgid "Container freeture"
+msgstr "freeture container"
+
+#: service/HomeController.php
+msgid "Parametri temperatura mancanti per v15"
+msgstr "Missing temperature parameters for v15"
+
+#: service/HomeController.php
+msgid "Parametri temperatura v15 tutti configurati"
+msgstr "All v15 temperature parameters configured"
+
+# ---- Level-gated preview messages (network module) ----
+
+#: js/network.js
+msgid "Verrà aggiornata la configurazione di rete del nodo. Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati."
+msgstr "The node network configuration will be updated. Only superusers can see the detail of the commands that will be applied."
+
+#: js/network.js
+msgid "Verrà aggiornata la configurazione IP della camera in modalità"
+msgstr "The camera IP configuration will be updated in mode"
+
+#: js/network.js
+msgid "Solo gli utenti superuser possono vedere il dettaglio dei comandi applicati."
+msgstr "Only superusers can see the detail of the commands that will be applied."
+
+# ---- Apply outcome messages ----
+
+#: js/network.js
+msgid "OK"
+msgstr "OK"
+
+#: js/network.js
+msgid "Tutti i comandi sono andati a buon fine."
+msgstr "All commands completed successfully."
+
+#: js/network.js
+msgid "Esito incerto."
+msgstr "Outcome uncertain."
+
+#: js/network.js
+msgid "Uno o più comandi potrebbero essere falliti — verifica la configurazione manualmente."
+msgstr "One or more commands may have failed — verify the configuration manually."
+
+#: js/network.js
+msgid "La camera è in fase di reset."
+msgstr "The camera is currently resetting."
+
+#: js/network.js
+msgid "La scrittura della configurazione potrebbe non essere riuscita."
+msgstr "Writing the configuration may have failed."

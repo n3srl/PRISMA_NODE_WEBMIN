@@ -153,60 +153,34 @@ function cancelVideo() {
     $('#DetectionList').dataTable().fnDraw();
 }
 
-// Show data usage progress bars
-function storageInfo() {
+// Refresh storage info (cpu, ram, disk). Single in-flight request; reschedules
+// 5s after the previous one completes, so a slow backend never piles up.
+function updateDataUsage() {
     $.ajax({
-        url: "/lib/ft/V2/freeturefinal/storage/cores",
+        url: "/lib/ft/V2/freeturefinal/storage/info",
         type: "GET",
         dataType: "json",
+        global: false,
         success: function (res) {
-            var cores = res.data;
-            var cpuHtml = "";
-            for (let i = 0; i < cores; i++) {
-                cpuHtml += '<div class="col-md-12 col-sm-12 col-xs-12">' +
-                        '<label>CPU ' + i + '</label>' +
-                        '</div>' +
-                        '<div class="col-md-12 col-sm-12 col-xs-12">' +
-                        '<div class="progress">' +
-                        '<div class="progress-bar progress-bar-success" id="cpu' + i + '" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>';
-            }
-            $("#cores").html(cpuHtml);
+            var info = res.data;
+            var cpu = Number(info[0]) || 0;
+            var ram = Number(info[1]) || 0;
+            var disk = Number(info[2]) || 0;
+
+            var setBar = function (id, pct) {
+                pct = Math.max(0, Math.min(100, pct));
+                $(id).attr("aria-valuenow", pct)
+                     .attr("style", "width:" + pct + "%")
+                     .html(Math.round(pct) + "%");
+            };
+            setBar("#cpu-percentage", cpu);
+            setBar("#ram-percentage", ram);
+            setBar("#disk-percentage", disk);
+        },
+        complete: function () {
+            setTimeout(updateDataUsage, 5000);
         }
     });
-    updateDataUsage();
-}
-
-// Refresh every 5 seconds storage info (cpu, ram, disk)
-function updateDataUsage() {
-    setTimeout(function () {
-        $.ajax({
-            url: "/lib/ft/V2/freeturefinal/storage/info",
-            type: "GET",
-            dataType: "json",
-            global: false,
-            complete: updateDataUsage,
-            success: function (res) {
-                var info = res.data;
-                $("#ram-percentage").attr("aria-valuenow", info[1]);
-                $("#disk-percentage").attr("aria-valuenow", info[2]);
-                $("#ram-percentage").attr("style", "width:" + info[1] + "%");
-                $("#disk-percentage").attr("style", "width:" + info[2] + "%");
-                $("#ram-percentage").html(Math.round(info[1]) + "%");
-                $("#disk-percentage").html(Math.round(info[2]) + "%");
-                var cores = info[0];
-                i = 0;
-                cores.forEach(core => {
-                    $("#cpu" + i).attr("aria-valuenow", core);
-                    $("#cpu" + i).attr("style", "width:" + core + "%");
-                    $("#cpu" + i).html(Math.round(core) + "%");
-                    i++;
-                });
-            }
-        });
-    }, 5000);
 }
 
 // Show modal with freeture mask
@@ -492,15 +466,11 @@ $(document).ready(function () {
         });
     });
 
-    // Get last image base64 encoded and its timestamp (last stack)
-    $.get("/lib/stack/V2/stack/preview/laststack", function (json) {
-        var data = JSON.parse(json).data;
-        if (data) {
-            var info = data[1].split(":");
-            $('#last-image-description').html("Stack del " + info[0] + " (" + data[2] + ")");
-            $('#last-image-preview').html("<img class='img-responsive' src='" + data[3] + "'/>");
-        }
-    });
+    // Get the most recent between the last stack and the last capture, render
+    // it. Two endpoints are queried in parallel; whichever has the newer
+    // timestamp wins. The data shape from both endpoints is identical:
+    //   [filename, "YYYY-MM-DD:N", "HH:MM:SS", base64, id]
+    loadLastImage();
 
     // Set toggle switch unchecked 
     $("#enable-detection-preview").attr("checked", false);
@@ -518,8 +488,225 @@ $(document).ready(function () {
 
     loadStationInfoValues();
 
-    storageInfo();
+    updateDataUsage();
+
+    refreshCameraTemperature();
+    setInterval(refreshCameraTemperature, 20000);
 });
+
+// Last image (stack vs capture) ----------------------------------------------
+
+var lastImageState = { stackDone: false, captureDone: false, stack: null, capture: null };
+
+function loadLastImage() {
+    lastImageState.stackDone = false;
+    lastImageState.captureDone = false;
+    lastImageState.stack = null;
+    lastImageState.capture = null;
+
+    $.get('/lib/stack/V2/stack/preview/laststack')
+        .done(function (json) { lastImageState.stack = parseLastImageResp(json); })
+        .fail(function () { lastImageState.stack = null; })
+        .always(function () { lastImageState.stackDone = true; renderLastImage(); });
+
+    $.get('/lib/capture/V2/capture/preview/lastcapture')
+        .done(function (json) { lastImageState.capture = parseLastImageResp(json); })
+        .fail(function () { lastImageState.capture = null; })
+        .always(function () { lastImageState.captureDone = true; renderLastImage(); });
+}
+
+function parseLastImageResp(json) {
+    try {
+        var parsed = (typeof json === 'string') ? JSON.parse(json) : json;
+        return parsed && parsed.data ? parsed.data : null;
+    } catch (e) { return null; }
+}
+
+// Build a sortable "YYYY-MM-DD HH:MM:SS" key from the [_, "day:N", "hour", ...] tuple.
+function lastImageTimestamp(data) {
+    if (!data || !data[1] || !data[2]) return null;
+    var day = String(data[1]).split(':')[0];
+    return day + ' ' + data[2];
+}
+
+function renderLastImage() {
+    if (!lastImageState.stackDone || !lastImageState.captureDone) {
+        return; // wait for both
+    }
+    var sTs = lastImageTimestamp(lastImageState.stack);
+    var cTs = lastImageTimestamp(lastImageState.capture);
+
+    var pick = null;
+    var label = '';
+    if (sTs && cTs) {
+        if (sTs >= cTs) { pick = lastImageState.stack;   label = 'Stack'; }
+        else            { pick = lastImageState.capture; label = 'Capture'; }
+    } else if (sTs) {
+        pick = lastImageState.stack;   label = 'Stack';
+    } else if (cTs) {
+        pick = lastImageState.capture; label = 'Capture';
+    }
+
+    if (!pick) {
+        $('#last-image-description').html(_('Nessuna immagine disponibile'));
+        $('#last-image-preview').html('');
+        return;
+    }
+    var info = String(pick[1]).split(':');
+    $('#last-image-description').html(label + ' del ' + info[0] + ' (' + pick[2] + ')');
+    $('#last-image-preview').html("<img class='img-responsive' src='" + pick[3] + "'/>");
+}
+
+// Camera temperature gauge ---------------------------------------------------
+
+var cameraTempChart = null;
+
+function refreshCameraTemperature() {
+    $.get('/lib/ft/V2/freeturefinal/camera/status', function (json) {
+        var data = null;
+        try {
+            var resp = (typeof json === 'string') ? JSON.parse(json) : json;
+            data = resp && resp.data ? resp.data : null;
+        } catch (e) { data = null; }
+        renderCameraStatusBadges(data);
+        renderCameraTempGauge(data);
+    }).fail(function () {
+        renderCameraStatusBadges(null);
+        renderCameraTempGauge(null);
+    });
+}
+
+function renderCameraStatusBadges(data) {
+    var $conn = $('#camera-status-connection');
+    var $over = $('#camera-status-overheated');
+    var $fps  = $('#camera-status-fps');
+
+    var connected = data ? data.connected : null;
+    if (connected === true) {
+        $conn.removeClass('label-default label-danger').addClass('label-success')
+             .text(_('Camera connessa'));
+    } else if (connected === false) {
+        $conn.removeClass('label-default label-success').addClass('label-danger')
+             .text(_('Camera disconnessa'));
+    } else {
+        $conn.removeClass('label-success label-danger').addClass('label-default')
+             .text(_('Stato connessione: N/D'));
+    }
+
+    var overheated = data ? data.overheated : null;
+    if (overheated === true) {
+        $over.removeClass('label-default').addClass('label-danger')
+             .text(_('Sensore surriscaldato')).show();
+    } else {
+        $over.hide();
+    }
+
+    var fps = data ? data.fps : null;
+    if (typeof fps === 'number' && isFinite(fps)) {
+        $fps.removeClass('label-default').addClass('label-info')
+            .text(fps.toFixed(1) + ' fps').show();
+    } else {
+        $fps.hide();
+    }
+}
+
+function renderCameraTempGauge(data) {
+    var el = document.getElementById('camera-temp-gauge');
+    if (!el || typeof echarts === 'undefined') {
+        return;
+    }
+    if (!cameraTempChart) {
+        cameraTempChart = echarts.init(el);
+        $(window).on('resize.cameraTempGauge', function () { cameraTempChart.resize(); });
+    }
+
+    var asNum = function (v) { return (typeof v === 'number' && isFinite(v)) ? v : null; };
+    // Prefer runtime thresholds (what the camera is actually using) over the
+    // configured ones; fall back to the config when node_exporter is offline.
+    var threshold = data ? (asNum(data.runtimeThreshold)  != null ? asNum(data.runtimeThreshold)  : asNum(data.threshold))  : null;
+    var hyst      = data ? (asNum(data.runtimeHysteresis) != null ? asNum(data.runtimeHysteresis) : (asNum(data.hysteresis) || 0)) : 0;
+    var p1        = data ? asNum(data.policyParam1) : null;
+    var p2        = data ? (asNum(data.policyParam2) || 0) : 0;
+    var current   = data ? asNum(data.currentTemperature) : null;
+
+    var minV = 0;
+    var maxV = 100;
+    if (threshold !== null) {
+        maxV = Math.max(maxV, Math.ceil((threshold + Math.max(hyst, 0) + 10) / 10) * 10);
+    }
+
+    // Color bands as eCharts gauge axisLine.lineStyle.color: [[fraction, color], ...]
+    var stops = [];
+    var pushStop = function (atValue, color) {
+        if (atValue === null) return;
+        var frac = (atValue - minV) / (maxV - minV);
+        if (frac < 0) frac = 0;
+        if (frac > 1) frac = 1;
+        stops.push([frac, color]);
+    };
+    pushStop(p1 !== null ? (p1 - p2) : null, '#4CAF50');         // safe
+    pushStop(p1 !== null ? (p1 + p2) : null, '#FFC107');         // policy band
+    pushStop(threshold !== null ? (threshold - hyst) : null, '#FF9800'); // approaching
+    pushStop(threshold !== null ? (threshold + hyst) : null, '#F44336'); // threshold band
+    stops.push([1, '#7A1313']);                                  // overheated tail
+    stops.sort(function (a, b) { return a[0] - b[0]; });
+    // Drop duplicate fractions keeping the last color
+    var dedup = [];
+    for (var i = 0; i < stops.length; i++) {
+        if (i > 0 && Math.abs(stops[i][0] - stops[i - 1][0]) < 1e-6) {
+            dedup[dedup.length - 1] = stops[i];
+        } else {
+            dedup.push(stops[i]);
+        }
+    }
+
+    var displayValue = current !== null ? current : 0;
+    var detailFormatter = current !== null
+        ? function (v) { return v.toFixed(1) + ' °C'; }
+        : function () { return _('N/D'); };
+
+    var option = {
+        tooltip: {
+            formatter: function () {
+                var lines = [];
+                if (threshold !== null) lines.push('<b>' + _('Soglia') + ':</b> ' + threshold + ' °C ± ' + hyst);
+                if (p1 !== null) lines.push('<b>' + _('Policy') + ':</b> ' + p1 + ' °C ± ' + p2);
+                if (current !== null) lines.push('<b>' + _('Attuale') + ':</b> ' + current.toFixed(1) + ' °C');
+                return lines.length ? lines.join('<br/>') : _('Nessun dato');
+            }
+        },
+        series: [{
+            type: 'gauge',
+            min: minV,
+            max: maxV,
+            startAngle: 210,
+            endAngle: -30,
+            splitNumber: 10,
+            axisLine: { lineStyle: { width: 18, color: dedup } },
+            axisTick: { length: 6, lineStyle: { color: '#999' } },
+            splitLine: { length: 14, lineStyle: { color: '#666' } },
+            axisLabel: { color: '#333', fontSize: 11, distance: 22 },
+            pointer: { length: '65%', width: 5 },
+            detail: {
+                formatter: detailFormatter,
+                fontSize: 22,
+                offsetCenter: [0, '72%'],
+                color: '#222'
+            },
+            title: { show: false },
+            data: [{ value: displayValue, name: '' }]
+        }]
+    };
+
+    cameraTempChart.setOption(option, true);
+
+    var caption = [];
+    if (threshold !== null) caption.push(_('Soglia') + ' ' + threshold + '°C ± ' + hyst);
+    if (p1 !== null) caption.push(_('Policy') + ' ' + p1 + '°C ± ' + p2);
+    if (data && data.policy) caption.push(data.policy);
+    if (current === null) caption.push('(' + _('temperatura non disponibile') + ')');
+    $('#camera-temp-info').text(caption.join(' — '));
+}
 
 
 

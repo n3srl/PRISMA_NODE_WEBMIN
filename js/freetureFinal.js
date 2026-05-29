@@ -227,7 +227,14 @@ $("#maskFileForm").on("submit", function (e) {
                             inaffreeturefinal.key = obj.key;
                             inaffreeturefinal.value = "true";
                             inaffreeturefinal.description = obj.description;
-                            inaffreeturefinal.insert(reloadAllDatatable);
+                            inaffreeturefinal.insert(function () {
+                                reloadAllDatatable();
+                                // Brief delay so the success toast remains visible
+                                // before the page reloads to reflect the new mask.
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1500);
+                            });
                         });
 
                     });

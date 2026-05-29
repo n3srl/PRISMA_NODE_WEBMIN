@@ -167,16 +167,81 @@ setInterval(function() {
     getFreetureLogs();
 }, 2000);
 
+// Fetch and render filtered freeture logs from the .log files on disk.
+function applyFreetureLogFilter() {
+    var from = $.trim($('#log-filter-from').val());
+    var to = $.trim($('#log-filter-to').val());
+    var levels = $('#log-filter-levels').val() || [];
+
+    var params = {};
+    if (from) { params.from = from; }
+    if (to) { params.to = to; }
+    if (levels.length) { params.levels = levels.join(','); }
+
+    $('#log-filter-apply').prop('disabled', true);
+    $('#log-filter-info').text(_('Caricamento...'));
+    $('#log-filter-result').text('');
+
+    $.get('/lib/docker/V2/docker/freeture/log/filter', params, function (json) {
+        var resp = (typeof json === 'string') ? JSON.parse(json) : json;
+        var payload = (resp && resp.data) ? resp.data : { records: [], total: 0, truncated: false };
+        var records = payload.records || [];
+        var lines = new Array(records.length);
+        for (var i = 0; i < records.length; i++) {
+            var r = records[i];
+            lines[i] = r.timestamp + ' [' + r.level + '] [' + r.thread + '] ' + r.message;
+        }
+        $('#log-filter-result').text(lines.join('\n'));
+
+        var info = records.length + ' / ' + payload.total + ' ' + _('record');
+        if (payload.truncated) {
+            info += ' — ' + _('risultati troncati');
+        }
+        $('#log-filter-info').text(info);
+    }).fail(function () {
+        $('#log-filter-info').text(_('Errore di caricamento'));
+    }).always(function () {
+        $('#log-filter-apply').prop('disabled', false);
+    });
+}
+
 $(document).ready(function () {
 
     // Docker freeture logs
     getFreetureLogs();
 
-    
-
     $("#freeture-log-download").click(function() {
         downloadFreetureLog();
     });
+
+    // Freeture log filter panel
+    var logFilterPickerOpts = {
+        singleDatePicker: true,
+        timePicker: true,
+        timePicker24Hour: true,
+        timePickerSeconds: true,
+        autoUpdateInput: false,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss',
+            applyLabel: _('Applica'),
+            cancelLabel: _('Cancella')
+        }
+    };
+    $('#log-filter-from, #log-filter-to').daterangepicker(logFilterPickerOpts);
+    $('#log-filter-from, #log-filter-to').on('apply.daterangepicker', function (ev, picker) {
+        $(this).val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
+    });
+    $('#log-filter-from, #log-filter-to').on('cancel.daterangepicker', function () {
+        $(this).val('');
+    });
+
+    $('#log-filter-levels').select2({
+        placeholder: _('Tutti i livelli'),
+        allowClear: true,
+        width: '100%'
+    });
+
+    $('#log-filter-apply').on('click', applyFreetureLogFilter);
     //
     table = $('#DockerList').DataTable({
         "oLanguage": {

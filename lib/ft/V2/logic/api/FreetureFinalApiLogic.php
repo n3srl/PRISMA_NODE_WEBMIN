@@ -674,6 +674,146 @@ class FreetureFinalApiLogic {
         return CoreLogic::GetMaskPath();
     }
 
+    // Read camera status & temperature: thresholds/policy from configuration.cfg
+    // plus runtime values scraped from node_exporter (textfile-collector).
+    // Runtime fields take precedence over configured ones when both exist.
+    public static function GetCameraStatus() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+
+            $data = self::parseTemperatureThresholds();
+            $runtime = self::readRuntimeCameraMetrics();
+
+            // Runtime fields (may be null if node_exporter is unreachable).
+            $data['connected']         = $runtime['connected'];
+            $data['overheated']        = $runtime['overheated'];
+            $data['currentTemperature']= $runtime['temperature'];
+            $data['runtimeThreshold']  = $runtime['threshold'];
+            $data['runtimeHysteresis'] = $runtime['hysteresis'];
+            $data['fps']               = $runtime['fps'];
+            $data['metricsTimestamp']  = $runtime['metricsTimestamp'];
+            $data['runtimeAvailable']  = $runtime['available'];
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $data);
+    }
+
+    private static function parseTemperatureThresholds() {
+        $map = array(
+            'TEMPERATURE_OVERHEAT_CONTROL_ENABLED' => 'controlEnabled',
+            'TEMPERATURE_THRESHOLD'                => 'threshold',
+            'TEMPERATURE_HYSTERESIS'               => 'hysteresis',
+            'TEMPERATURE_WAIT'                     => 'wait',
+            'TEMPERATURE_SAMPLE_RATE'              => 'sampleRate',
+            'TEMPERATURE_POLICY_ENABLED'           => 'policyEnabled',
+            'TEMPERATURE_POLICY'                   => 'policy',
+            'TEMPERATURE_POLICY_PARAMETER_1'       => 'policyParam1',
+            'TEMPERATURE_POLICY_PARAMETER_2'       => 'policyParam2',
+        );
+        $out = array_fill_keys(array_values($map), null);
+
+        $conf = _FREETURE_;
+        if (!file_exists($conf) || !is_file($conf)) {
+            return $out;
+        }
+        foreach (file($conf) as $line) {
+            if (!isset($line[0]) || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                continue;
+            }
+            if (strpos($line, '=') === false) {
+                continue;
+            }
+            $key = self::getKey($line);
+            if (!isset($map[$key])) {
+                continue;
+            }
+            $out[$map[$key]] = self::getValue($line);
+        }
+
+        foreach (array('threshold', 'hysteresis', 'wait', 'sampleRate', 'policyParam1', 'policyParam2') as $k) {
+            if ($out[$k] !== null && is_numeric($out[$k])) {
+                $out[$k] = floatval($out[$k]);
+            }
+        }
+        foreach (array('controlEnabled', 'policyEnabled') as $k) {
+            if ($out[$k] !== null) {
+                $out[$k] = strtolower(trim((string) $out[$k])) === 'true';
+            }
+        }
+        return $out;
+    }
+
+    // Scrape node_exporter on :9100/metrics and pull the camera-related
+    // freeture metrics. Returns nulls if the scrape fails.
+    private static function readRuntimeCameraMetrics() {
+        $out = array(
+            'connected'        => null,
+            'overheated'       => null,
+            'temperature'      => null,
+            'threshold'        => null,
+            'hysteresis'       => null,
+            'fps'              => null,
+            'metricsTimestamp' => null,
+            'available'        => false,
+        );
+
+        $body = self::fetchNodeExporterMetrics();
+        if ($body === null) {
+            return $out;
+        }
+
+        $wanted = array(
+            'freeture_acq_thread_camera_is_connected'                     => 'connected',
+            'freeture_acq_thread_camera_sensor_overheated'                => 'overheated',
+            'freeture_acq_thread_camera_sensor_temperature'               => 'temperature',
+            'freeture_acq_thread_camera_sensor_temperature_hysteresis_threshold' => 'threshold',
+            'freeture_acq_thread_camera_sensor_temperature_hysteresis'    => 'hysteresis',
+            'freeture_acq_thread_fps'                                     => 'fps',
+            'freeture_acq_thread_metric_ts'                               => 'metricsTimestamp',
+        );
+
+        foreach (preg_split('/\R/', $body) as $line) {
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            $stripped = preg_replace('/\{[^}]*\}/', '', $line);
+            if (!preg_match('/^([a-zA-Z_:][a-zA-Z0-9_:]*)\s+([-+]?[\d.]+(?:[eE][-+]?\d+)?)/', $stripped, $m)) {
+                continue;
+            }
+            if (!isset($wanted[$m[1]])) {
+                continue;
+            }
+            $out[$wanted[$m[1]]] = floatval($m[2]);
+        }
+
+        // Cast 0/1 metrics to booleans for clarity on the client side.
+        if ($out['connected'] !== null)  { $out['connected']  = ($out['connected']  > 0.5); }
+        if ($out['overheated'] !== null) { $out['overheated'] = ($out['overheated'] > 0.5); }
+
+        $out['available'] = $out['temperature'] !== null
+            || $out['connected'] !== null
+            || $out['overheated'] !== null;
+        return $out;
+    }
+
+    private static function fetchNodeExporterMetrics() {
+        $url = 'http://localhost:9100/metrics';
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        $body = curl_exec($ch);
+        $err = curl_errno($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($err !== 0 || $body === false || $code < 200 || $code >= 300) {
+            return null;
+        }
+        return $body;
+    }
+
     // Check if mask is enabled parsing freeture configuration
     public static function isMaskEnabled() {
         $freetureConf = _FREETURE_;
@@ -747,30 +887,164 @@ class FreetureFinalApiLogic {
         fclose($myfile);
     }
 
-    // Get percentage values of cpu, ram and disk usage
+    // Get aggregate percentage values of cpu, ram and disk usage.
+    // Primary source is node_exporter on http://localhost:9100/metrics (two
+    // scrapes 500 ms apart, needed because node_cpu_seconds_total is a
+    // counter). Falls back to /proc/stat / free / disk_free_space when
+    // node_exporter is unreachable. Returns floats clamped to [0, 100].
     public static function getStoragePercentage() {
-        $disk = ((disk_total_space("/") - disk_free_space("/")) / disk_total_space("/")) * 100;
+        $sys = self::readNodeExporterSystemMetrics();
 
-        $cpu = array();
-        $i = 0;
-        while (true) {
-            $core = shell_exec("mpstat -P $i 1 1 | awk 'FNR==4{print($3+$4+$5+$6+$7+$8+$9+$10+$11)}'");
-            if (is_null($core)) {
-                break;
-            }
-            $cpu[] = (float) str_replace("\n", "", $core);
-            $i++;
-        }
-
-        $free1 = shell_exec('free');
-        $free2 = (string) trim($free1);
-        $free_arr = explode("\n", $free2);
-        $mem1 = explode(" ", $free_arr[1]);
-        $mem2 = array_filter($mem1);
-        $mem3 = array_merge($mem2);
-        $ram = $mem3[2] / $mem3[1] * 100;
+        $cpu  = $sys['cpu']  !== null ? $sys['cpu']  : self::computeCpuPercentage();
+        $ram  = $sys['ram']  !== null ? $sys['ram']  : self::computeRamPercentage();
+        $disk = $sys['disk'] !== null ? $sys['disk'] : self::computeDiskPercentage();
 
         return array($cpu, $ram, $disk);
+    }
+
+    // Scrape node_exporter twice 500 ms apart and extract CPU%, RAM%, Disk%.
+    // CPU comes from the delta of node_cpu_seconds_total; RAM and Disk are
+    // taken instantly from MemTotal/MemAvailable and filesystem_* on "/".
+    // Any metric that can't be computed is returned as null.
+    private static function readNodeExporterSystemMetrics() {
+        $out = array('cpu' => null, 'ram' => null, 'disk' => null);
+
+        $body1 = self::fetchNodeExporterMetrics();
+        if ($body1 === null) {
+            return $out;
+        }
+        $a = self::parseNodeSystemMetrics($body1);
+
+        if ($a['mem_total'] > 0 && $a['mem_avail'] !== null) {
+            $out['ram'] = self::clampPct((1.0 - $a['mem_avail'] / $a['mem_total']) * 100.0);
+        }
+        if ($a['fs_size'] > 0 && $a['fs_avail'] !== null) {
+            $out['disk'] = self::clampPct((1.0 - $a['fs_avail'] / $a['fs_size']) * 100.0);
+        }
+
+        usleep(500000);
+        $body2 = self::fetchNodeExporterMetrics();
+        if ($body2 !== null) {
+            $b = self::parseNodeSystemMetrics($body2);
+            $dIdle  = $b['cpu_idle']  - $a['cpu_idle'];
+            $dTotal = $b['cpu_total'] - $a['cpu_total'];
+            if ($dTotal > 0) {
+                $out['cpu'] = self::clampPct((1.0 - $dIdle / $dTotal) * 100.0);
+            }
+        }
+        return $out;
+    }
+
+    // Parse a node_exporter exposition body and accumulate the few metrics we
+    // need. cpu_idle includes both idle and iowait, matching the convention
+    // used by mpstat/`top`.
+    private static function parseNodeSystemMetrics($body) {
+        $r = array(
+            'cpu_idle'  => 0.0, 'cpu_total' => 0.0,
+            'mem_total' => 0.0, 'mem_avail' => null,
+            'fs_size'   => 0.0, 'fs_avail'  => null,
+        );
+        foreach (preg_split('/\R/', $body) as $line) {
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            if (strpos($line, 'node_cpu_seconds_total{') === 0) {
+                if (preg_match('/mode="([^"]+)"[^}]*}\s+([-+]?[\d.]+(?:[eE][-+]?\d+)?)/', $line, $m)) {
+                    $val = (float) $m[2];
+                    $r['cpu_total'] += $val;
+                    if ($m[1] === 'idle' || $m[1] === 'iowait') {
+                        $r['cpu_idle'] += $val;
+                    }
+                }
+                continue;
+            }
+            if (strpos($line, 'node_memory_MemTotal_bytes ') === 0) {
+                $r['mem_total'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_memory_MemAvailable_bytes ') === 0) {
+                $r['mem_avail'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_filesystem_size_bytes{') === 0
+                && strpos($line, 'mountpoint="/"') !== false
+                && $r['fs_size'] === 0.0) {
+                $r['fs_size'] = self::lastNumberOnLine($line);
+                continue;
+            }
+            if (strpos($line, 'node_filesystem_avail_bytes{') === 0
+                && strpos($line, 'mountpoint="/"') !== false
+                && $r['fs_avail'] === null) {
+                $r['fs_avail'] = self::lastNumberOnLine($line);
+                continue;
+            }
+        }
+        return $r;
+    }
+
+    private static function lastNumberOnLine($line) {
+        if (preg_match('/([-+]?[\d.]+(?:[eE][-+]?\d+)?)\s*$/', $line, $m)) {
+            return (float) $m[1];
+        }
+        return 0.0;
+    }
+
+    private static function clampPct($v) {
+        if ($v < 0)   { return 0.0; }
+        if ($v > 100) { return 100.0; }
+        return (float) $v;
+    }
+
+    // System-wide CPU utilisation, computed as 1 - (idle_delta / total_delta)
+    // between two reads of /proc/stat 500 ms apart. Used as fallback when
+    // node_exporter is unreachable. Columns are:
+    // cpu user nice system idle iowait irq softirq steal guest guest_nice
+    private static function computeCpuPercentage() {
+        $sample = function () {
+            $raw = @file_get_contents('/proc/stat');
+            if (!is_string($raw)) {
+                return null;
+            }
+            $line = strtok($raw, "\n");
+            if ($line === false) {
+                return null;
+            }
+            $parts = preg_split('/\s+/', trim($line));
+            if (!$parts || $parts[0] !== 'cpu') {
+                return null;
+            }
+            $idle = (float) ($parts[4] ?? 0) + (float) ($parts[5] ?? 0);
+            $total = 0.0;
+            for ($i = 1; $i <= 10; $i++) {
+                $total += (float) ($parts[$i] ?? 0);
+            }
+            return array($idle, $total);
+        };
+        $a = $sample();
+        if ($a === null) { return 0.0; }
+        usleep(500000);
+        $b = $sample();
+        if ($b === null) { return 0.0; }
+        $dTotal = $b[1] - $a[1];
+        if ($dTotal <= 0) { return 0.0; }
+        return self::clampPct((1.0 - ($b[0] - $a[0]) / $dTotal) * 100.0);
+    }
+
+    private static function computeRamPercentage() {
+        $raw = shell_exec('free');
+        if (!is_string($raw)) { return 0.0; }
+        $arr = explode("\n", trim($raw));
+        if (!isset($arr[1])) { return 0.0; }
+        $parts = array_values(array_filter(explode(' ', $arr[1])));
+        if (!isset($parts[1], $parts[2]) || $parts[1] == 0) { return 0.0; }
+        return self::clampPct($parts[2] / $parts[1] * 100.0);
+    }
+
+    private static function computeDiskPercentage() {
+        $total = @disk_total_space("/");
+        $free  = @disk_free_space("/");
+        if (!$total) { return 0.0; }
+        return self::clampPct(($total - $free) / $total * 100.0);
     }
 
     // Get size temp media folder

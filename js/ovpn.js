@@ -1,9 +1,8 @@
 $(document).ready(function () {
 
     showStatus();
-    showNetworkStatus();
-    
-    // Enable upload button if user has chosen a file 
+
+    // Enable upload button if user has chosen a file
     $("#form-ovpncfg").on('change', function (event) {
         filename = $(this).val();
         if (filename !== '') {
@@ -29,7 +28,6 @@ $(document).ready(function () {
                 $("#uploadovpnbtn").attr('disabled', true);
                 $('#form-ovpncfg').val('');
                 showStatus();
-                showNetworkStatus();
                 console.log(res);
             }
         });
@@ -58,16 +56,4 @@ function showStatus() {
 
 }
 
-// Show network status
-function showNetworkStatus() {
-    $.ajax({
-        url: "/lib/ovpn/V2/ovpn/net_status",
-        type: "GET",
-        success: function (res) {
-            var netStatus = JSON.parse(res).data;
-            $('#status-network-description').html(netStatus);
-        }
-    });
-
-}
 

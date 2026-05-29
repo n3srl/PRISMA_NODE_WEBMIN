@@ -36,6 +36,7 @@ class OvpnApiLogic {
         }
         return CoreLogic::GenerateResponse($res, $ob);
     }
+
     
     // Update ovpn configuration file with given file
     public static function updateConfigurationFile($ob) {
@@ -136,7 +137,8 @@ class OvpnApiLogic {
         }
         
         $text2 = str_replace("\n", "</br>",$text2);
-        
+
         return $text2;
     }
+
 }

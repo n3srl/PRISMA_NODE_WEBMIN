@@ -36,6 +36,7 @@
                         <li><a href="/person/edit"><i class="fa fa-user"></i><?= _('Utenti') ?></a></li>
                         <li><a href="/docker/edit"><i class="fa fa-suitcase"></i><?= _('Stato Containers') ?></a></li>
                         <li><a href="/station/edit"><i class="fa fa-building"></i><?= _('Configurazione Freeture')?></a></li>
+                        <li><a href="/network/edit"><i class="fa fa-sitemap"></i><?= _('Configurazione IP') ?></a></li>
                         <li><a href="/manutenzione/edit"><i class="fa fa-wrench"></i><?= _('Manutenzione') ?></a></li>
                     <?php } 
                           //Guest?>

@@ -302,6 +302,14 @@ $(document).ready(function () {
         bProcessing: true,
         bServerSide: true,
         bStateSave: true,
+        "stateSaveParams": function (settings, data) {
+            data._detectionDayDefaultsV2 = true;
+        },
+        "stateLoadParams": function (settings, data) {
+            if (!data._detectionDayDefaultsV2) {
+                data.order = [[0, 'desc']];
+            }
+        },
         sAjaxSource: '/lib/detection/V2/detection/datatable/daylist',
         "paging": true,
         "ordering": true,
