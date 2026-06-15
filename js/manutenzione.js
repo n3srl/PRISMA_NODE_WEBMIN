@@ -4,7 +4,13 @@
  */
 
 $(document).ready(function () {
-
+    // Solo nella pagina di manutenzione (dove esistono i pannelli).
+    if ($('#migration-src-code').length) {
+        loadMigrationSources();
+    }
+    if ($('#fits-src-code').length) {
+        loadFitsSources();
+    }
 });
 
 function exec_reboot() {
@@ -31,11 +37,84 @@ function exec_reboot() {
 }
 
 /* ============================================================
- * Migrazione configurazione DEFAULT -> configurazione attuale
+ * Migrazione dati stazione: SORGENTE -> configurazione attuale
  * ============================================================ */
 
 // Cache dell'ultimo scan (per evitare di rifare il GET prima del run).
 var defaultMigrationLastScan = null;
+
+// Token usato come sorgente di default (nodo non ancora configurato).
+var migrationDefaultToken = 'DEFAULT';
+
+function _selectedMigrationSrcCode() {
+    return ($('#migration-src-code').val() || '').trim();
+}
+
+function _selectedMigrationSrcName() {
+    return ($('#migration-src-name').val() || '').trim();
+}
+
+// Popola il dropdown delle cartelle stazione sorgenti presenti sotto /freeture.
+function loadMigrationSources() {
+    var $sel = $('#migration-src-code');
+    $sel.html('<option value="">' + _('Caricamento...') + '</option>');
+
+    $.ajax({
+        url: '/lib/manutenzione/V2/manutenzione/migration/sources',
+        method: 'GET',
+        dataType: 'json'
+    }).done(function (resp) {
+        if (!resp || !resp.result) {
+            $sel.html('<option value="">' + _('Errore nel caricamento delle sorgenti') + '</option>');
+            return;
+        }
+        var payload = resp.data || {};
+        migrationDefaultToken = payload.defaultToken || 'DEFAULT';
+        var sources = payload.sources || [];
+        var dstCode = payload.stationCode;
+
+        if (!sources.length) {
+            $sel.html('<option value="">' + _('Nessuna cartella in /freeture') + '</option>');
+        } else {
+            var opts = sources.map(function (s) {
+                // Marca la cartella corrispondente alla destinazione corrente (non migrabile su se stessa).
+                var isDst = (s === dstCode);
+                var label = _escHtml(s) + (isDst ? ' (' + _('destinazione attuale') + ')' : '');
+                return '<option value="' + _escHtml(s) + '">' + label + '</option>';
+            }).join('');
+            $sel.html(opts);
+
+            // Preseleziona DEFAULT se presente, altrimenti la prima sorgente != destinazione.
+            if (sources.indexOf(migrationDefaultToken) !== -1) {
+                $sel.val(migrationDefaultToken);
+            } else {
+                var firstNonDst = sources.filter(function (s) { return s !== dstCode; });
+                $sel.val(firstNonDst.length ? firstNonDst[0] : sources[0]);
+            }
+        }
+        onMigrationSourceChange();
+        // Carica subito l'anteprima per la sorgente preselezionata.
+        loadDefaultMigrationPreview();
+    }).fail(function () {
+        $sel.html('<option value="">' + _('Errore HTTP nel caricamento delle sorgenti') + '</option>');
+    });
+}
+
+// Quando cambia la cartella sorgente: precompila il nome (per DEFAULT coincide col codice)
+// e invalida la cache dello scan precedente.
+function onMigrationSourceChange() {
+    var code = _selectedMigrationSrcCode();
+    var $name = $('#migration-src-name');
+    // Suggerimento: per la sorgente DEFAULT codice e nome coincidono.
+    if (code === migrationDefaultToken) {
+        $name.val(migrationDefaultToken);
+    } else if (!$name.val() || $name.val() === migrationDefaultToken) {
+        // Per una sorgente reale il nome di solito differisce dal codice: lascio modificare.
+        $name.val(code);
+    }
+    defaultMigrationLastScan = null;
+    $('#btn-run-default-migration').prop('disabled', true);
+}
 
 function _escHtml(s) {
     return $('<div>').text(s == null ? '' : String(s)).html();
@@ -97,24 +176,27 @@ function _renderMigrationStatus(payload) {
     if (!payload) { $s.empty(); return; }
     if (!payload.rootExists) {
         $s.html('<div class="alert alert-info">' +
-            _('Nessuna cartella /freeture/DEFAULT trovata: niente da migrare.') +
+            _('Nessuna cartella') + ' <code>' + _escHtml(payload.sourceRoot) + '</code> ' +
+            _('trovata: niente da migrare per questa sorgente.') +
             '</div>');
         return;
     }
     var nItems = (payload.items || []).length;
     if (!payload.configIsValid) {
         $s.html('<div class="alert alert-warning">' +
-            _('La configurazione freeture corrente è ancora DEFAULT') +
+            _('La configurazione freeture di destinazione è ancora DEFAULT') +
             ' (STATION_CODE=<b>' + _escHtml(payload.stationCode) + '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>). ' +
             _('Configura prima la stazione per poter eseguire la migrazione.') + ' ' +
-            _('Qui sotto trovi comunque l\'anteprima dei dataset DEFAULT presenti sul nodo') +
-            ' (<b>' + nItems + '</b> ' + _('elementi') + '): ' +
+            _('Qui sotto trovi comunque l\'anteprima dei dataset della sorgente') +
+            ' <b>' + _escHtml(payload.srcCode) + '</b> (<b>' + nItems + '</b> ' + _('elementi') + '): ' +
             _('i path "dopo migrazione" usano segnaposto <STATION_CODE> / <STATION_NAME> che verranno sostituiti con i valori reali una volta configurata la stazione.') +
             '</div>');
         return;
     }
     $s.html('<div class="alert alert-success">' +
-        _('Configurazione attuale') + ': STATION_CODE=<b>' + _escHtml(payload.stationCode) +
+        _('Sorgente') + ': STATION_CODE=<b>' + _escHtml(payload.srcCode) +
+        '</b>, STATION_NAME=<b>' + _escHtml(payload.srcName) + '</b> &rarr; ' +
+        _('Destinazione') + ': STATION_CODE=<b>' + _escHtml(payload.stationCode) +
         '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>. ' +
         _('Elementi da migrare') + ': <b>' + nItems + '</b>.' +
         '</div>');
@@ -123,6 +205,18 @@ function _renderMigrationStatus(payload) {
 function loadDefaultMigrationPreview() {
     var $status = $('#default-migration-status');
     var $btnRun = $('#btn-run-default-migration');
+    var srcCode = _selectedMigrationSrcCode();
+    var srcName = _selectedMigrationSrcName();
+
+    if (!srcCode) {
+        $status.html('<div class="alert alert-info">' + _('Seleziona una cartella stazione sorgente.') + '</div>');
+        $('#DefaultMigrationList tbody').html(
+            '<tr><td colspan="4" class="text-center text-muted">—</td></tr>'
+        );
+        $btnRun.prop('disabled', true);
+        return;
+    }
+
     $btnRun.prop('disabled', true);
     $status.html('<div class="alert alert-info">' + _('Scansione in corso...') + '</div>');
     $('#DefaultMigrationList tbody').html(
@@ -130,8 +224,9 @@ function loadDefaultMigrationPreview() {
     );
 
     $.ajax({
-        url: '/lib/manutenzione/V2/manutenzione/migration/default/scan',
+        url: '/lib/manutenzione/V2/manutenzione/migration/scan',
         method: 'GET',
+        data: { srcCode: srcCode, srcName: srcName },
         dataType: 'json'
     }).done(function (resp) {
         if (!resp || !resp.result) {
@@ -162,11 +257,14 @@ function runDefaultMigration() {
         return;
     }
     var nItems = defaultMigrationLastScan.items.length;
+    var srcCode = defaultMigrationLastScan.srcCode;
+    var srcName = defaultMigrationLastScan.srcName;
     var stationCode = defaultMigrationLastScan.stationCode;
     var stationName = defaultMigrationLastScan.stationName;
 
     var msg = _('Confermi la migrazione di') + ' ' + nItems + ' ' +
-              _('elementi verso STATION_CODE=') + stationCode +
+              _('elementi dalla sorgente') + ' ' + srcCode + ' / ' + srcName +
+              ' ' + _('verso STATION_CODE=') + stationCode +
               ' / STATION_NAME=' + stationName + '?\n\n' +
               _('Eventuali destinazioni già esistenti verranno saltate.');
     if (!confirm(msg)) {
@@ -180,9 +278,9 @@ function runDefaultMigration() {
 
     _csrfTokenForMigration().then(function (token) {
         return $.ajax({
-            url: '/lib/manutenzione/V2/manutenzione/migration/default/run',
+            url: '/lib/manutenzione/V2/manutenzione/migration/run',
             method: 'POST',
-            data: JSON.stringify({ token: token }),
+            data: JSON.stringify({ token: token, srcCode: srcCode, srcName: srcName }),
             contentType: 'application/json; charset=utf-8',
             dataType: 'json'
         });

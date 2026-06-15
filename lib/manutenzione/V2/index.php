@@ -22,18 +22,37 @@ $app->before(function (Request $request) {
 
 /************************************************************
 
-MANUTENZIONE - MIGRAZIONE DEFAULT -> CONFIGURAZIONE ATTUALE
+MANUTENZIONE - MIGRAZIONE STAZIONE SORGENTE -> CONFIGURAZIONE ATTUALE
 
 ************************************************************/
 
 /**
 *
-* SCAN: lista folder/file con valori DEFAULT + anteprima rinomino
+* SOURCES: elenco cartelle stazione candidate sorgenti + config destinazione
 *
 **/
-$app->GET('/manutenzione/migration/default/scan', function(Application $app, Request $request) {
+$app->GET('/manutenzione/migration/sources', function(Application $app, Request $request) {
 
-	$result = ManutenzioneApiLogic::ScanDefaults();
+	$result = ManutenzioneApiLogic::ListSources();
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
+* SCAN: lista folder/file della sorgente + anteprima rinomino
+* Parametri (query): srcCode, srcName (default DEFAULT/DEFAULT).
+*
+**/
+$app->GET('/manutenzione/migration/scan', function(Application $app, Request $request) {
+
+	$result = ManutenzioneApiLogic::ScanDefaults($request->query);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
@@ -47,11 +66,56 @@ $app->GET('/manutenzione/migration/default/scan', function(Application $app, Req
 /**
 *
 * RUN: applica il piano di rinomino
+* Parametri (body): token, srcCode, srcName.
 *
 **/
-$app->POST('/manutenzione/migration/default/run', function(Application $app, Request $request) {
+$app->POST('/manutenzione/migration/run', function(Application $app, Request $request) {
 
 	$result = ManutenzioneApiLogic::RunMigration($request->request);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/************************************************************
+
+MANUTENZIONE - RIALLINEAMENTO HEADER FITS A configuration.cfg
+
+************************************************************/
+
+/**
+*
+* SCAN: anteprima aggregata delle keyword da aggiornare
+* Parametri (query): srcCode (default DEFAULT).
+*
+**/
+$app->GET('/manutenzione/fits/scan', function(Application $app, Request $request) {
+
+	$result = FitsHeaderApiLogic::Scan($request->query);
+	if ($result->result) {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(200);
+	} else {
+		$resp = new Response(json_encode($result));
+		$resp->setStatusCode(403);
+	}
+	return $resp;
+});
+
+/**
+*
+* RUN: applica i valori di configuration.cfg agli header FITS
+* Parametri (body): token, srcCode.
+*
+**/
+$app->POST('/manutenzione/fits/run', function(Application $app, Request $request) {
+
+	$result = FitsHeaderApiLogic::Run($request->request);
 	if ($result->result) {
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(200);
