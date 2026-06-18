@@ -96,7 +96,7 @@
                     </div>
                     <div class="x_content">
                         <p class="text-muted">
-                            <?= _("Riscrive i valori delle keyword dell'header dei file .fit (TELESCOP, OBSERVER, INSTRUME, SITELAT, SITELONG, ecc.) allineandoli alla configurazione attuale letta dalla sezione FITS di configuration.cfg. Viene modificato solo il valore di keyword gia' presenti nell'header (la dimensione del file e i dati immagine restano invariati); STATION_NAME e COMMENT sono escluse. Seleziona la cartella stazione su cui operare.") ?>
+                            <?= _("Riscrive i valori delle keyword dell'header dei file .fit (TELESCOP, OBSERVER, INSTRUME, SITELAT, SITELONG, ecc.) allineandoli alla configurazione attuale letta dalla sezione FITS di configuration.cfg. Inoltre riallinea la keyword FILENAME al nome reale del file (utile dopo una migrazione che ha rinominato i file). Viene modificato solo il valore di keyword gia' presenti nell'header (la dimensione del file e i dati immagine restano invariati); STATION_NAME e COMMENT sono escluse. Seleziona la cartella stazione su cui operare.") ?>
                         </p>
 
                         <div class="form-inline" style="margin-bottom: 12px;">

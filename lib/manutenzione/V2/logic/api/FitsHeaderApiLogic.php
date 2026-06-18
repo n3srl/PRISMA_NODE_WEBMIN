@@ -36,6 +36,12 @@ class FitsHeaderApiLogic {
 	// campione). L'APPLICAZIONE invece processa tutti i file senza tetto.
 	const PREVIEW_FILE_CAP = 4000;
 
+	// Keyword "dinamica": il suo valore target NON viene da configuration.cfg ma e' il nome
+	// reale del file su disco (basename). Serve a riallineare l'header dopo una migrazione
+	// che ha rinominato i file. E' l'unica keyword dell'header freeture che contiene il
+	// nome-file (e quindi il prefisso stazione).
+	const FILENAME_KW = 'FILENAME';
+
 	// Mappa: chiave in configuration.cfg => keyword FITS scritta nell'header.
 	// Identita' tranne APERTURE -> APERTUR. STATION_NAME e COMMENT volutamente escluse.
 	private static $KEY_MAP = array(
@@ -44,7 +50,7 @@ class FitsHeaderApiLogic {
 		'INSTRUME' => 'INSTRUME',
 		'CAMERA'   => 'CAMERA',
 		'FOCAL'    => 'FOCAL',
-		'APERTURE' => 'APERTUR',
+		'APERTURE' => 'APERTURE',
 		'SITELONG' => 'SITELONG',
 		'SITELAT'  => 'SITELAT',
 		'SITEELEV' => 'SITEELEV',
@@ -92,10 +98,9 @@ class FitsHeaderApiLogic {
 				throw new ApiException("Codice stazione sorgente non valido (consentiti solo [A-Za-z0-9._-]).");
 			}
 
+			// Anche senza keyword in configuration.cfg c'e' comunque il target dinamico
+			// FILENAME, quindi l'operazione ha sempre potenzialmente qualcosa da fare.
 			$fitsCfg = self::getFitsConfig();
-			if (empty($fitsCfg)) {
-				throw new ApiException("Nessuna keyword FITS valorizzata in configuration.cfg: niente da applicare.");
-			}
 
 			$root = self::sourceRoot($srcCode);
 			if (!is_dir($root)) {
@@ -141,6 +146,16 @@ class FitsHeaderApiLogic {
 		return $cfg;
 	}
 
+	/**
+	 * Target effettivi per un singolo file: keyword da configuration.cfg + il target
+	 * dinamico FILENAME = nome reale del file su disco.
+	 */
+	private static function fileTargets($path, $fitsCfg) {
+		$targets = $fitsCfg;
+		$targets[self::FILENAME_KW] = basename($path);
+		return $targets;
+	}
+
 	//-------------------------------------------------------------------------
 	// Scan / anteprima
 	//-------------------------------------------------------------------------
@@ -160,13 +175,17 @@ class FitsHeaderApiLogic {
 			'errors'       => array(),
 		);
 
-		if (!$payload['rootExists'] || empty($fitsCfg)) {
+		if (!$payload['rootExists']) {
 			return $payload;
 		}
 
+		// Keyword da riepilogare: quelle da config + il target dinamico FILENAME.
+		$aggKeys = array_keys($fitsCfg);
+		$aggKeys[] = self::FILENAME_KW;
+
 		// Accumulatori per keyword.
 		$agg = array(); // kw => ['found'=>int,'change'=>int,'sampleOld'=>string,'distinct'=>[val=>1]]
-		foreach ($fitsCfg as $kw => $newVal) {
+		foreach ($aggKeys as $kw) {
 			$agg[$kw] = array('found' => 0, 'change' => 0, 'sampleOld' => null, 'distinct' => array());
 		}
 
@@ -202,11 +221,14 @@ class FitsHeaderApiLogic {
 		}
 
 		$summary = array();
-		foreach ($fitsCfg as $kw => $newVal) {
+		foreach ($aggKeys as $kw) {
 			$a = $agg[$kw];
+			$isFilename = ($kw === self::FILENAME_KW);
 			$summary[] = array(
 				'keyword'         => $kw,
-				'newValue'        => $newVal,
+				// FILENAME ha valore per-file (il nome del file stesso): mostro un segnaposto.
+				'newValue'        => $isFilename ? '(nome del file stesso)' : $fitsCfg[$kw],
+				'perFile'         => $isFilename,
 				'filesWithKey'    => $a['found'],
 				'filesToChange'   => $a['change'],
 				'sampleOldValue'  => $a['sampleOld'],
@@ -231,10 +253,11 @@ class FitsHeaderApiLogic {
 		if ($cards === null) {
 			return null;
 		}
+		$targets = self::fileTargets($path, $fitsCfg);
 		$out = array();
 		foreach ($cards as $card) {
 			$kw = rtrim(substr($card, 0, 8));
-			if (!isset($fitsCfg[$kw]) || isset($out[$kw])) {
+			if (!isset($targets[$kw]) || isset($out[$kw])) {
 				continue;
 			}
 			if (substr($card, 8, 2) !== '= ') {
@@ -242,11 +265,11 @@ class FitsHeaderApiLogic {
 			}
 			$parsed   = self::parseValueField($card);
 			$oldVal   = $parsed['value'];
-			$newRaw   = $fitsCfg[$kw];
+			$newRaw   = $targets[$kw];
 			$newCard  = self::buildCard($kw, $newRaw, $parsed['isString'], $parsed['comment']);
 			$out[$kw] = array(
 				'old'        => $oldVal,
-				'willChange' => ($newCard !== null && $newCard !== $card),
+				'willChange' => ($newCard !== null && !self::valuesEqual($oldVal, $newRaw, $parsed['isString'])),
 			);
 		}
 		return $out;
@@ -270,6 +293,7 @@ class FitsHeaderApiLogic {
 		foreach ($fitsCfg as $kw => $v) {
 			$result['perKeyword'][$kw] = 0;
 		}
+		$result['perKeyword'][self::FILENAME_KW] = 0;
 
 		foreach ($files as $file) {
 			$err = '';
@@ -301,13 +325,14 @@ class FitsHeaderApiLogic {
 		if ($cards === null) {
 			return null;
 		}
+		$targets = self::fileTargets($path, $fitsCfg);
 
 		// Calcola le card da riscrivere (offset = indice * 80, header a offset 0).
 		$writes = array(); // [offset => newCard]
 		$seen   = array();
 		foreach ($cards as $idx => $card) {
 			$kw = rtrim(substr($card, 0, 8));
-			if (!isset($fitsCfg[$kw]) || isset($seen[$kw])) {
+			if (!isset($targets[$kw]) || isset($seen[$kw])) {
 				continue;
 			}
 			if (substr($card, 8, 2) !== '= ') {
@@ -315,16 +340,17 @@ class FitsHeaderApiLogic {
 			}
 			$seen[$kw] = true;
 			$parsed  = self::parseValueField($card);
-			$newCard = self::buildCard($kw, $fitsCfg[$kw], $parsed['isString'], $parsed['comment']);
+			if (self::valuesEqual($parsed['value'], $targets[$kw], $parsed['isString'])) {
+				continue; // valore gia' allineato: nessuna riscrittura (evita churn)
+			}
+			$newCard = self::buildCard($kw, $targets[$kw], $parsed['isString'], $parsed['comment']);
 			if ($newCard === null) {
 				if ($err === '') {
 					$err = "valore troppo lungo per la keyword $kw";
 				}
 				continue;
 			}
-			if ($newCard !== $card) {
-				$writes[$idx * self::FITS_CARD] = array($kw, $newCard);
-			}
+			$writes[$idx * self::FITS_CARD] = array($kw, $newCard);
 		}
 
 		if (empty($writes)) {
@@ -457,6 +483,33 @@ class FitsHeaderApiLogic {
 	}
 
 	/**
+	 * Confronto SEMANTICO tra valore attuale dell'header e valore desiderato, per decidere
+	 * se la card va riscritta. Indipendente dalla formattazione (padding/allineamento), che
+	 * tra freeture/cfitsio e questo writer puo' differire pur essendo entrambe valide.
+	 *  - stringhe: confronto senza spazi finali (non significativi in FITS).
+	 *  - numerici: confronto come float ("2." == "2.0", "0.0" == "0.").
+	 */
+	private static function valuesEqual($oldVal, $newRaw, $isString) {
+		if ($isString) {
+			return rtrim($oldVal) === rtrim($newRaw);
+		}
+		if (self::looksNumeric($oldVal) && self::looksNumeric($newRaw)) {
+			return (float)$oldVal === (float)$newRaw;
+		}
+		return trim($oldVal) === trim($newRaw);
+	}
+
+	/**
+	 * Riconosce un valore numerico in stile FITS, incluso il punto finale senza decimali
+	 * ("2.", "58.", "0.") e la notazione esponenziale ("2.21E-321") che is_numeric() di
+	 * PHP rifiuterebbe. Solo esponente 'E' (quello emesso da freeture/cfitsio): un eventuale
+	 * 'D' fortran non sarebbe interpretato correttamente da (float).
+	 */
+	private static function looksNumeric($s) {
+		return preg_match('/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/', trim($s)) === 1;
+	}
+
+	/**
 	 * Costruisce una card FITS da 80 char per $keyword con $newRaw, preservando tipo
 	 * (string vs numerico, dedotto dalla card esistente) ed eventuale commento.
 	 * Ritorna null se il risultato non sta in 80 char.
@@ -474,6 +527,11 @@ class FitsHeaderApiLogic {
 			$value = trim($newRaw);
 			if ($value === '') {
 				return null;
+			}
+			// Formato FITS "fixed": valore numerico/logico giustificato a destra nelle
+			// colonne 11-30 (come scrive cfitsio/freeture).
+			if (strlen($value) < 20) {
+				$value = str_pad($value, 20, ' ', STR_PAD_LEFT);
 			}
 		}
 

@@ -314,3 +314,236 @@ function runDefaultMigration() {
         // Lascio il bottone disabilitato finchè un nuovo scan non conferma che c'è ancora lavoro da fare.
     });
 }
+
+/* ============================================================
+ * Riallineamento header FITS a configuration.cfg
+ * ============================================================ */
+
+// Cache dell'ultimo scan FITS.
+var fitsHeaderLastScan = null;
+
+function _selectedFitsSrcCode() {
+    return ($('#fits-src-code').val() || '').trim();
+}
+
+// Popola il dropdown delle cartelle stazione per il pannello FITS (riusa l'endpoint sources).
+function loadFitsSources() {
+    var $sel = $('#fits-src-code');
+    $sel.html('<option value="">' + _('Caricamento...') + '</option>');
+
+    $.ajax({
+        url: '/lib/manutenzione/V2/manutenzione/migration/sources',
+        method: 'GET',
+        dataType: 'json'
+    }).done(function (resp) {
+        if (!resp || !resp.result) {
+            $sel.html('<option value="">' + _('Errore nel caricamento delle sorgenti') + '</option>');
+            return;
+        }
+        var payload = resp.data || {};
+        var sources = payload.sources || [];
+        var dstCode = payload.stationCode;
+        var defToken = payload.defaultToken || 'DEFAULT';
+
+        if (!sources.length) {
+            $sel.html('<option value="">' + _('Nessuna cartella in /freeture') + '</option>');
+            onFitsSourceChange();
+            return;
+        }
+
+        var opts = sources.map(function (s) {
+            var isDst = (s === dstCode);
+            var label = _escHtml(s) + (isDst ? ' (' + _('stazione attuale') + ')' : '');
+            return '<option value="' + _escHtml(s) + '">' + label + '</option>';
+        }).join('');
+        $sel.html(opts);
+
+        // Per il riallineamento header conviene partire dalla stazione ATTUALE (destinazione):
+        // i suoi file vanno allineati alla config corrente. Fallback: DEFAULT, poi prima voce.
+        if (dstCode && sources.indexOf(dstCode) !== -1) {
+            $sel.val(dstCode);
+        } else if (sources.indexOf(defToken) !== -1) {
+            $sel.val(defToken);
+        } else {
+            $sel.val(sources[0]);
+        }
+        onFitsSourceChange();
+        loadFitsHeaderPreview();
+    }).fail(function () {
+        $sel.html('<option value="">' + _('Errore HTTP nel caricamento delle sorgenti') + '</option>');
+    });
+}
+
+function onFitsSourceChange() {
+    fitsHeaderLastScan = null;
+    $('#btn-run-fits-header').prop('disabled', true);
+}
+
+function _renderFitsStatus(payload) {
+    var $s = $('#fits-header-status');
+    if (!payload) { $s.empty(); return; }
+    if (!payload.rootExists) {
+        $s.html('<div class="alert alert-info">' +
+            _('Nessuna cartella') + ' <code>' + _escHtml(payload.sourceRoot) + '</code> ' +
+            _('trovata.') + '</div>');
+        return;
+    }
+    var summary = payload.summary || [];
+    var kwToChange = summary.filter(function (r) { return r.filesToChange > 0; }).length;
+    var coverage = payload.scannedFiles + (payload.capped ? ' (' + _('campione') + ')' : '') +
+                   ' / ' + payload.totalFiles;
+    var cls = kwToChange > 0 ? 'alert-success' : 'alert-info';
+    var extra = '';
+    if (payload.errors && payload.errors.length) {
+        extra = ' <span class="text-danger">(' + payload.errors.length + ' ' + _('file non leggibili') + ')</span>';
+    }
+    $s.html('<div class="alert ' + cls + '">' +
+        _('Cartella') + ': <b>' + _escHtml(payload.srcCode) + '</b>. ' +
+        _('File .fit analizzati') + ': <b>' + _escHtml(String(coverage)) + '</b>. ' +
+        _('Keyword da aggiornare') + ': <b>' + kwToChange + '</b> ' + _('su') + ' ' + summary.length + '.' +
+        extra + '</div>');
+}
+
+function _renderFitsRows(summary) {
+    var $tbody = $('#FitsHeaderList tbody');
+    if (!summary || !summary.length) {
+        $tbody.html('<tr><td colspan="4" class="text-center text-muted">' +
+            _('Nessuna keyword') + '</td></tr>');
+        return;
+    }
+    var rows = summary.map(function (r) {
+        var old = (r.sampleOldValue === null || r.sampleOldValue === '') ? '∅' : r.sampleOldValue;
+        var changeCell, color;
+        if (r.filesWithKey === 0) {
+            changeCell = _('non presente negli header');
+            color = '#999';
+        } else if (r.filesToChange > 0) {
+            changeCell = '<b>' + r.filesToChange + '</b> / ' + r.filesWithKey;
+            color = '#1d7a44';
+        } else {
+            changeCell = _('già allineata') + ' (' + r.filesWithKey + ')';
+            color = '#666';
+        }
+        var distinct = (!r.perFile && r.distinctOldVals > 1)
+            ? ' <span class="text-muted">(' + r.distinctOldVals + ' ' + _('valori diversi') + ')</span>'
+            : '';
+        return '<tr>' +
+            '<td><code>' + _escHtml(r.keyword) + '</code></td>' +
+            '<td style="word-break:break-all"><code>' + _escHtml(old) + '</code>' + distinct + '</td>' +
+            '<td style="word-break:break-all"><code>' + _escHtml(r.newValue) + '</code></td>' +
+            '<td style="color:' + color + '">' + changeCell + '</td>' +
+            '</tr>';
+    }).join('');
+    $tbody.html(rows);
+}
+
+function loadFitsHeaderPreview() {
+    var $status = $('#fits-header-status');
+    var $btnRun = $('#btn-run-fits-header');
+    var srcCode = _selectedFitsSrcCode();
+
+    if (!srcCode) {
+        $status.html('<div class="alert alert-info">' + _('Seleziona una cartella stazione.') + '</div>');
+        $('#FitsHeaderList tbody').html('<tr><td colspan="4" class="text-center text-muted">—</td></tr>');
+        $btnRun.prop('disabled', true);
+        return;
+    }
+
+    $btnRun.prop('disabled', true);
+    $status.html('<div class="alert alert-info">' + _('Scansione header in corso...') + '</div>');
+    $('#FitsHeaderList tbody').html(
+        '<tr><td colspan="4" class="text-center text-muted">' + _('Caricamento...') + '</td></tr>'
+    );
+
+    $.ajax({
+        url: '/lib/manutenzione/V2/manutenzione/fits/scan',
+        method: 'GET',
+        data: { srcCode: srcCode },
+        dataType: 'json'
+    }).done(function (resp) {
+        if (!resp || !resp.result) {
+            $status.html('<div class="alert alert-danger">' +
+                _('Errore durante lo scan') + (resp && resp.data ? ': ' + _escHtml(resp.data) : '') +
+                '</div>');
+            $('#FitsHeaderList tbody').html('<tr><td colspan="4" class="text-center text-muted">—</td></tr>');
+            return;
+        }
+        var payload = resp.data || {};
+        fitsHeaderLastScan = payload;
+        _renderFitsStatus(payload);
+        _renderFitsRows(payload.summary || []);
+        var kwToChange = (payload.summary || []).filter(function (r) { return r.filesToChange > 0; }).length;
+        var canRun = payload.rootExists && kwToChange > 0;
+        $btnRun.prop('disabled', !canRun);
+    }).fail(function (xhr) {
+        var msg = xhr && xhr.responseText ? xhr.responseText : '';
+        $status.html('<div class="alert alert-danger">' +
+            _('Errore HTTP durante lo scan') + ' ' + _escHtml(msg) + '</div>');
+    });
+}
+
+function runFitsHeader() {
+    if (!fitsHeaderLastScan || !fitsHeaderLastScan.summary) {
+        alert(_('Esegui prima lo scan ("Aggiorna lista").'));
+        return;
+    }
+    var srcCode = fitsHeaderLastScan.srcCode;
+    var summary = fitsHeaderLastScan.summary || [];
+    var kwToChange = summary.filter(function (r) { return r.filesToChange > 0; }).length;
+    if (kwToChange === 0) {
+        alert(_('Nessuna keyword da aggiornare.'));
+        return;
+    }
+
+    var msg = _('Confermi l\'aggiornamento degli header FITS sotto') + ' ' + fitsHeaderLastScan.sourceRoot + '?\n\n' +
+              _('Verranno riscritti i valori delle keyword elencate, allineandoli a configuration.cfg.') + '\n' +
+              (fitsHeaderLastScan.capped ? _('NB: l\'anteprima è su un campione; l\'operazione processerà tutti i file.') + '\n' : '') +
+              _('L\'operazione modifica i file in modo permanente (nessun backup).');
+    if (!confirm(msg)) {
+        return;
+    }
+
+    var $btnRun = $('#btn-run-fits-header');
+    var $status = $('#fits-header-status');
+    $btnRun.prop('disabled', true);
+    $status.html('<div class="alert alert-info">' + _('Aggiornamento header in corso...') + '</div>');
+
+    _csrfTokenForMigration().then(function (token) {
+        return $.ajax({
+            url: '/lib/manutenzione/V2/manutenzione/fits/run',
+            method: 'POST',
+            data: JSON.stringify({ token: token, srcCode: srcCode }),
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json'
+        });
+    }).done(function (resp) {
+        if (!resp || !resp.result) {
+            $status.html('<div class="alert alert-danger">' +
+                _('Errore durante l\'aggiornamento') + (resp && resp.data ? ': ' + _escHtml(resp.data) : '') +
+                '</div>');
+            return;
+        }
+        var r = resp.data || {};
+        var cls = (r.filesError > 0) ? 'alert-warning' : 'alert-success';
+        var extra = '';
+        if (r.errors && r.errors.length) {
+            extra = '<br><small class="text-danger">' +
+                r.errors.slice(0, 5).map(_escHtml).join('<br>') +
+                (r.errors.length > 5 ? '<br>[...]' : '') + '</small>';
+        }
+        $status.html('<div class="alert ' + cls + '">' +
+            _('Aggiornamento completato.') + ' ' +
+            _('File modificati') + ': <b>' + (r.filesChanged || 0) + '</b>, ' +
+            _('invariati') + ': <b>' + (r.filesSkipped || 0) + '</b>, ' +
+            _('errori') + ': <b>' + (r.filesError || 0) + '</b>. ' +
+            _('Card riscritte') + ': <b>' + (r.cardsWritten || 0) + '</b>.' +
+            extra + '</div>');
+        // Rilancio lo scan per riallinearsi (ora le keyword risulteranno già allineate).
+        fitsHeaderLastScan = null;
+        loadFitsHeaderPreview();
+    }).fail(function (xhr) {
+        var msg = xhr && xhr.responseText ? xhr.responseText : '';
+        $status.html('<div class="alert alert-danger">' +
+            _('Errore HTTP durante l\'aggiornamento') + ' ' + _escHtml(msg) + '</div>');
+    });
+}
