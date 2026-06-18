@@ -218,12 +218,19 @@ class DetectionApiLogic {
         $reply = null;
         $iDisplayStart = 1;
         $directory = _FREETURE_DATA_ . self::getStationCode() . "/*";
-        $iTotal = count(self::getDetectionsDays(0,365,false));
+        $iTotal = count(self::getDetectionsDays(0, 365));
+
+        // Direzione di ordinamento richiesta dalla DataTable (colonna 0 = data).
+        // Default: decrescente (la detection piu' recente per prima).
+        $desc = true;
+        if (isset($_GET['sSortDir_0'])) {
+            $desc = ($_GET['sSortDir_0'] !== 'asc');
+        }
 
         if (isset($_GET['iDisplayStart']) && $_GET['iDisplayLength'] != '-1') {
             $iDisplayStart = intval($_GET['iDisplayStart']);
             $iDisplayLength = intval($_GET['iDisplayLength']);
-            $reply = self::getDetectionsDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1);
+            $reply = self::getDetectionsDays($iDisplayStart, $iDisplayStart + $iDisplayLength - 1, $desc);
 
 			if (!empty($reply)) {
 				$test = $reply[0];
@@ -243,18 +250,9 @@ class DetectionApiLogic {
 			}
         }
 
-        
-          if (isset($_GET['iSortCol_0'])) {
-          if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] == 'true') {
-          $i = $_GET['iSortCol_0'];
-          $sort = array_column($reply, $i);
-          if ($_GET['sSortDir_' . $i] === 'asc') {
-          array_multisort($sort, SORT_ASC, $reply);
-          } else {
-          array_multisort($sort, SORT_DESC, $reply);
-          }
-          }
-          } 
+        // L'ordinamento (asc/desc) e' applicato all'intero elenco dentro
+        // getDetectionsDays() PRIMA della paginazione, cosi' l'inversione agisce su
+        // tutte le pagine e non solo sulle righe visibili.
 
         $output = array(
             "sEcho" => intval($_GET['sEcho']),
@@ -563,7 +561,9 @@ class DetectionApiLogic {
     }
 
     // Get all days and compute number of detections in that day
-    public static function getDetectionsDays($start, $end) {
+    // $desc = true  -> data decrescente (la piu' recente per prima, default)
+    // $desc = false -> data crescente
+    public static function getDetectionsDays($start, $end, $desc = true) {
         $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/";
         $reply = array();
         // If there isn't data for this day returns an empty array
@@ -600,11 +600,15 @@ class DetectionApiLogic {
             $days[] = array($day, $n_day_files, $day_dir, $matches[0]);
         }
 
-        // Ordina per data decrescente (la piu' recente per prima), a parita' di data
-        // ordina per nome cartella decrescente per avere un ordine deterministico.
-        usort($days, function ($a, $b) {
-            $cmp = strcmp($b[3], $a[3]);
-            return $cmp !== 0 ? $cmp : strcmp($b[2], $a[2]);
+        // Ordina per data (la chiave $d[3] = YYYYMMDD e' confrontabile lessicograficamente),
+        // a parita' di data ordina per nome cartella per avere un ordine deterministico.
+        usort($days, function ($a, $b) use ($desc) {
+            if ($desc) {
+                $cmp = strcmp($b[3], $a[3]);
+                return $cmp !== 0 ? $cmp : strcmp($b[2], $a[2]);
+            }
+            $cmp = strcmp($a[3], $b[3]);
+            return $cmp !== 0 ? $cmp : strcmp($a[2], $b[2]);
         });
 
         // Paginazione: indici da $start a $end inclusi
