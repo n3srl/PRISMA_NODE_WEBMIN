@@ -668,7 +668,7 @@ class DetectionApiLogic {
                     $gemap_base64,
                     $date_dir . "_" . $detection,
                     $date_dir . "_" . $detection,
-                    self::GetDetectionDuration($detection)." [ms]"
+                    self::GetDetectionDuration($date_dir, $detection)." [ms]"
                 ); // STATION_NAME_DAY_STATION_NAME_DAY_HOUR
 
                 $i++;
@@ -790,9 +790,12 @@ class DetectionApiLogic {
 
 //restituisce la durata in ms di ogni detection
 //apre il file positions.txt e da li calcola la durata in millisecondi.
-public static function GetDetectionDuration($detection) {
-    $detection_folder = self::getDetectionBasePath($detection).$detection."/positions.txt";
-    $filePath = $detection_folder;
+//$date_dir = nome reale della cartella-giorno (prefisso STATION_CODE, es. DEBW21_20260618);
+//$detection = nome cartella evento (prefisso STATION_NAME, es. FTP01_20260618T012236_UT).
+//Si usa $date_dir e non getDetectionBasePath(): dopo una rinomina della stazione il prefisso
+//dell'evento (STATION_NAME) non coincide piu' con quello della cartella-giorno (STATION_CODE).
+public static function GetDetectionDuration($date_dir, $detection) {
+    $filePath = _FREETURE_DATA_ . self::getStationCode() . "/" . $date_dir . "/events/" . $detection . "/positions.txt";
     if (!file_exists($filePath)) {
         return 0;
     }
