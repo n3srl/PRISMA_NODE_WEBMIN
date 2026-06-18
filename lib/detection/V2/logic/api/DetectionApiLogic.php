@@ -564,48 +564,53 @@ class DetectionApiLogic {
 
     // Get all days and compute number of detections in that day
     public static function getDetectionsDays($start, $end) {
-        $i = 0;
         $data_dir = _FREETURE_DATA_ . self::getStationCode() . "/";
         $reply = array();
         // If there isn't data for this day returns an empty array
         if (!is_dir($data_dir)) {
             return $reply;
         }
-        $dirs = scandir($data_dir, SCANDIR_SORT_DESCENDING);
+
+        $datePattern = '/\d{4}\d{2}\d{2}/';
+        $days = array();
+
+        // Raccoglie TUTTI i giorni con almeno una detection.
+        // Non si pagina seguendo l'ordine di scandir (che ordina per NOME cartella):
+        // dopo una rinomina della stazione i prefissi differiscono (es. FTP01_ vs
+        // DEBW21_) e l'ordine per nome non coincide con quello cronologico, facendo
+        // "sparire" dalle prime pagine i giorni piu' recenti.
+        $dirs = scandir($data_dir);
         foreach ($dirs as $day_dir) {
-
-			if (!is_dir($data_dir . "/" . $day_dir))
-				continue;
-			
-			if ('.' === $day_dir) {
+            if ('.' === $day_dir || '..' === $day_dir) {
                 continue;
             }
-            if ('..' === $day_dir) {
+            if (!is_dir($data_dir . "/" . $day_dir)) {
                 continue;
             }
-			
+            // Il nome cartella deve contenere una data YYYYMMDD
+            if (!preg_match($datePattern, $day_dir, $matches)) {
+                continue;
+            }
             $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/events/*");
-
-			if ($n_day_files == 0) {
-				continue;
-			}
-			
-            if ($i < $start) {
-                $i++;
+            if ($n_day_files == 0) {
                 continue;
             }
-            if ($i > $end) {
-                return $reply;
-            }
-           
+            $day = date('Y-m-d', strtotime($matches[0]));
+            // $matches[0] = YYYYMMDD: confrontabile lessicograficamente == ordine cronologico
+            $days[] = array($day, $n_day_files, $day_dir, $matches[0]);
+        }
 
-            $datePattern = '/\d{4}\d{2}\d{2}/';
-            if(preg_match($datePattern, $day_dir, $matches)) {
-                $datetime = date_create($matches[0]);
-                $day = date('Y-m-d', strtotime($matches[0]));
-                $reply[] = array($day, $n_day_files, $day_dir);
-                $i++;
-            }
+        // Ordina per data decrescente (la piu' recente per prima), a parita' di data
+        // ordina per nome cartella decrescente per avere un ordine deterministico.
+        usort($days, function ($a, $b) {
+            $cmp = strcmp($b[3], $a[3]);
+            return $cmp !== 0 ? $cmp : strcmp($b[2], $a[2]);
+        });
+
+        // Paginazione: indici da $start a $end inclusi
+        $page = array_slice($days, $start, $end - $start + 1);
+        foreach ($page as $d) {
+            $reply[] = array($d[0], $d[1], $d[2]);
         }
 
         return $reply;
