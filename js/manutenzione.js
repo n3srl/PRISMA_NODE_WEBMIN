@@ -181,14 +181,24 @@ function _renderMigrationStatus(payload) {
             '</div>');
         return;
     }
-    var nItems = (payload.items || []).length;
+    var nShown = (payload.items || []).length;
+    var nTotal = (typeof payload.total === 'number') ? payload.total : nShown;
+    var truncated = !!payload.truncated;
+    var truncationHtml = truncated
+        ? (' <span style="color:#b07d00;">' +
+           _('(visualizzati solo i primi') + ' <b>' + nShown + '</b> ' +
+           _('di') + ' <b>' + nTotal + '</b> ' +
+           _('per non sovraccaricare il browser; la migrazione li processerà comunque tutti') +
+           ')</span>')
+        : '';
+
     if (!payload.configIsValid) {
         $s.html('<div class="alert alert-warning">' +
             _('La configurazione freeture di destinazione è ancora DEFAULT') +
             ' (STATION_CODE=<b>' + _escHtml(payload.stationCode) + '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>). ' +
             _('Configura prima la stazione per poter eseguire la migrazione.') + ' ' +
             _('Qui sotto trovi comunque l\'anteprima dei dataset della sorgente') +
-            ' <b>' + _escHtml(payload.srcCode) + '</b> (<b>' + nItems + '</b> ' + _('elementi') + '): ' +
+            ' <b>' + _escHtml(payload.srcCode) + '</b> (<b>' + nTotal + '</b> ' + _('elementi') + ')' + truncationHtml + ': ' +
             _('i path "dopo migrazione" usano segnaposto <STATION_CODE> / <STATION_NAME> che verranno sostituiti con i valori reali una volta configurata la stazione.') +
             '</div>');
         return;
@@ -198,7 +208,7 @@ function _renderMigrationStatus(payload) {
         '</b>, STATION_NAME=<b>' + _escHtml(payload.srcName) + '</b> &rarr; ' +
         _('Destinazione') + ': STATION_CODE=<b>' + _escHtml(payload.stationCode) +
         '</b>, STATION_NAME=<b>' + _escHtml(payload.stationName) + '</b>. ' +
-        _('Elementi da migrare') + ': <b>' + nItems + '</b>.' +
+        _('Elementi da migrare') + ': <b>' + nTotal + '</b>.' + truncationHtml +
         '</div>');
 }
 
@@ -256,7 +266,9 @@ function runDefaultMigration() {
         alert(_('Esegui prima lo scan ("Aggiorna lista").'));
         return;
     }
-    var nItems = defaultMigrationLastScan.items.length;
+    var nItems = (typeof defaultMigrationLastScan.total === 'number')
+        ? defaultMigrationLastScan.total
+        : defaultMigrationLastScan.items.length;
     var srcCode = defaultMigrationLastScan.srcCode;
     var srcName = defaultMigrationLastScan.srcName;
     var stationCode = defaultMigrationLastScan.stationCode;

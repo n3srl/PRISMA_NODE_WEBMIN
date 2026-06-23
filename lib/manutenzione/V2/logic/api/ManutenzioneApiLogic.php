@@ -58,6 +58,11 @@ class ManutenzioneApiLogic {
 	const STATUS_SKIPPED = 'skipped';
 	const STATUS_ERROR   = 'error';
 
+	// Limite righe ritornate dalla SCAN nella tabella di preview UI: serve a non far
+	// esplodere la JSON response (e il browser) su nodi con mesi di dati DEFAULT
+	// e milioni di file. La RUN ignora questo limite e processa tutto.
+	const PREVIEW_ITEM_LIMIT = 2000;
+
 	/**
 	 * GET /manutenzione/migration/sources
 	 * Ritorna l'elenco delle cartelle stazione presenti sotto _FREETURE_DATA_ (candidate
@@ -95,6 +100,11 @@ class ManutenzioneApiLogic {
 	 * passati, default DEFAULT / DEFAULT (compatibilita' col comportamento storico).
 	 */
 	public static function ScanDefaults($request = null) {
+		// Sorgenti con mesi di dati possono avere centinaia di migliaia di file:
+		// alziamo i limiti PHP solo su questo endpoint (default 128M / 30s troppo bassi).
+		@ini_set('memory_limit', '1024M');
+		@set_time_limit(300);
+
 		try {
 			$Person = CoreLogic::VerifyPerson();
 
@@ -114,6 +124,11 @@ class ManutenzioneApiLogic {
 	 * Esegue la migrazione e ritorna l'elenco dei risultati per ogni item.
 	 */
 	public static function RunMigration($request) {
+		// Stesso motivo di ScanDefaults + la RUN puo' richiedere parecchi minuti su
+		// nodi grossi (rename atomici sono veloci ma migliaia di syscall sommano).
+		@ini_set('memory_limit', '1024M');
+		@set_time_limit(900);
+
 		try {
 			$Person = CoreLogic::VerifyPerson();
 			CoreLogic::CheckCSRF($request->get("token"));
@@ -206,15 +221,24 @@ class ManutenzioneApiLogic {
 		$plan = self::buildPlan($srcCode, $srcName, $planCode, $planName);
 		self::applyParentRenames($plan); // aggiunge 'final_path' a ogni item
 
+		$total = count($plan);
 		$preview = array();
 		foreach ($plan as $idx => $item) {
+			if (count($preview) >= self::PREVIEW_ITEM_LIMIT) {
+				// Continuo solo a contare, senza accumulare items: niente JSON gonfia.
+				break;
+			}
 			$preview[] = array_merge($item, array(
 				'id'       => $idx,
 				// Il check conflitto ha senso solo con path reali.
 				'conflict' => $configIsValid ? file_exists($item['new_path']) : false,
 			));
 		}
-		$payload['items'] = $preview;
+		unset($plan); // libero il piano completo prima della serializzazione JSON.
+
+		$payload['items']     = $preview;
+		$payload['total']     = $total;
+		$payload['truncated'] = ($total > self::PREVIEW_ITEM_LIMIT);
 		return $payload;
 	}
 
