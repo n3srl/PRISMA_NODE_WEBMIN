@@ -1,35 +1,54 @@
 <?php
 
 /**
- * Manutenzione - Migrazione folder/file da configurazione DEFAULT a configurazione attuale.
+ * Manutenzione - Migrazione folder/file da una stazione SORGENTE a quella di DESTINAZIONE.
  *
- * Quando un nodo PRISMA esce dalla fabbrica senza configurazione, freeture scrive in
+ * Caso storico (default): quando un nodo PRISMA esce dalla fabbrica senza configurazione,
+ * freeture scrive in
  *   /freeture/DEFAULT/DEFAULT_YYYYMMDD/{captures,stacks,events}/DEFAULT_*.fit
  * Una volta arrivato sul campo e configurato (STATION_CODE / STATION_NAME impostati in
- * configuration.cfg), i nuovi dati finiscono in /freeture/<STATION_CODE>/<STATION_NAME>_YYYYMMDD/...
+ * configuration.cfg), i nuovi dati finiscono in /freeture/<STATION_CODE>/<STATION_CODE>_YYYYMMDD/...
  * ma i dati storici rimangono orfani sotto DEFAULT.
  *
+ * Caso generale: lo stesso problema si presenta quando un nodo e' stato configurato per
+ * errore con un codice/nome stazione e poi corretto. I dati storici restano sotto la
+ * vecchia cartella stazione (la SORGENTE) e vanno migrati verso quella attuale (la
+ * DESTINAZIONE, sempre letta da configuration.cfg).
+ *
+ * SORGENTE = parametrizzabile (srcCode / srcName). Default: DEFAULT / DEFAULT.
+ * DESTINAZIONE = sempre STATION_CODE / STATION_NAME letti da configuration.cfg.
+ *
+ * Convenzione prefissi freeture (context-dependent), risolta sul nome cartella/file:
+ *   - root folder       -> STATION_CODE
+ *   - day folder        -> STATION_CODE  (<CODE>_YYYYMMDD)
+ *   - captures/*.fit    -> STATION_CODE
+ *   - stacks/*.fit      -> STATION_NAME
+ *   - events/<evt>/     -> STATION_NAME
+ *   - events/<evt>/*    -> STATION_NAME
+ *
  * Questa logica:
- *  - Scansiona ricorsivamente /freeture/DEFAULT/ producendo un piano di rinomino
+ *  - Scansiona ricorsivamente /freeture/<srcCode>/ producendo un piano di rinomino
  *  - Applica il rinomino in ordine depth-first reverse (file -> event-folder -> day-folder)
- *    cosi i path parent restano validi finche il loro turno non arriva.
- *  - Step finale = merge ricorsivo (NON rename) del contenuto di /freeture/DEFAULT/ dentro
- *    /freeture/<STATION_CODE>/, perche' la destinazione esiste gia' nel 99% dei casi e
- *    rename() su destinazione esistente fallisce.
+ *    cosi i path parent restano validi finche' il loro turno non arriva.
+ *  - Step finale = merge ricorsivo (NON rename) del contenuto di /freeture/<srcCode>/ dentro
+ *    /freeture/<dstCode>/, perche' la destinazione esiste gia' nel 99% dei casi e
+ *    rename() su destinazione esistente fallisce. Lo step di merge viene aggiunto solo se
+ *    srcCode != dstCode (se coincidono i dati sono gia' nella root corretta).
  *
  * @author: N3 S.r.l.
  */
 class ManutenzioneApiLogic {
 
 	// Token usato sia come STATION_CODE che STATION_NAME quando il nodo non e' configurato.
+	// E' anche il valore di default della SORGENTE.
 	const DEFAULT_TOKEN = 'DEFAULT';
 
 	// Tipi item nel piano di migrazione.
 	const TYPE_FILE       = 'file';
 	const TYPE_EVENT_DIR  = 'event_dir';
 	const TYPE_DAY_DIR    = 'day_dir';
-	// L'ultimo step e' un merge ricorsivo del contenuto di /freeture/DEFAULT/ dentro
-	// /freeture/<STATION_CODE>/ (NON un rename atomico), perche' la dir di destinazione
+	// L'ultimo step e' un merge ricorsivo del contenuto di /freeture/<srcCode>/ dentro
+	// /freeture/<dstCode>/ (NON un rename atomico), perche' la dir di destinazione
 	// esiste quasi sempre gia' (freeture la crea appena configurato).
 	const TYPE_ROOT_MERGE = 'root_merge';
 
@@ -45,23 +64,29 @@ class ManutenzioneApiLogic {
 	const PREVIEW_ITEM_LIMIT = 2000;
 
 	/**
-	 * GET /manutenzione/migration/default/scan
-	 * Ritorna { stationCode, stationName, defaultRoot, items: [...] }
-	 * con il piano di rinomino senza applicarlo.
+	 * GET /manutenzione/migration/sources
+	 * Ritorna l'elenco delle cartelle stazione presenti sotto _FREETURE_DATA_ (candidate
+	 * sorgenti) + la configurazione di destinazione corrente.
+	 * Ritorna { sources: [...], stationCode, stationName, configIsValid, defaultToken }.
 	 */
-	public static function ScanDefaults() {
-		// Nodi con mesi di dati DEFAULT possono avere centinaia di migliaia di file:
-		// alziamo i limiti PHP solo su questo endpoint (default 128M / 30s troppo bassi).
-		@ini_set('memory_limit', '1024M');
-		@set_time_limit(300);
-
+	public static function ListSources() {
 		try {
 			$Person = CoreLogic::VerifyPerson();
 
-			$stationCode = CoreLogic::GetStationCode();
-			$stationName = self::getStationName();
+			$dstCode = CoreLogic::GetStationCode();
+			$dstName = self::getStationName();
 
-			$payload = self::buildScanPayload($stationCode, $stationName);
+			$base    = rtrim(_FREETURE_DATA_, "/");
+			$sources = self::listDirs($base);
+			sort($sources, SORT_STRING | SORT_FLAG_CASE);
+
+			$payload = array(
+				'sources'       => $sources,
+				'stationCode'   => $dstCode,
+				'stationName'   => $dstName,
+				'configIsValid' => self::isConfigValid($dstCode, $dstName),
+				'defaultToken'  => self::DEFAULT_TOKEN,
+			);
 		} catch (ApiException $a) {
 			return CoreLogic::GenerateErrorResponse($a->message);
 		}
@@ -69,7 +94,33 @@ class ManutenzioneApiLogic {
 	}
 
 	/**
-	 * POST /manutenzione/migration/default/run
+	 * GET /manutenzione/migration/scan?srcCode=...&srcName=...
+	 * Ritorna { srcCode, srcName, stationCode, stationName, sourceRoot, items: [...] }
+	 * con il piano di rinomino senza applicarlo. Se i parametri sorgente non vengono
+	 * passati, default DEFAULT / DEFAULT (compatibilita' col comportamento storico).
+	 */
+	public static function ScanDefaults($request = null) {
+		// Sorgenti con mesi di dati possono avere centinaia di migliaia di file:
+		// alziamo i limiti PHP solo su questo endpoint (default 128M / 30s troppo bassi).
+		@ini_set('memory_limit', '1024M');
+		@set_time_limit(300);
+
+		try {
+			$Person = CoreLogic::VerifyPerson();
+
+			list($srcCode, $srcName) = self::readSource($request);
+			$dstCode = CoreLogic::GetStationCode();
+			$dstName = self::getStationName();
+
+			$payload = self::buildScanPayload($srcCode, $srcName, $dstCode, $dstName);
+		} catch (ApiException $a) {
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse(true, $payload);
+	}
+
+	/**
+	 * POST /manutenzione/migration/run  { token, srcCode, srcName }
 	 * Esegue la migrazione e ritorna l'elenco dei risultati per ogni item.
 	 */
 	public static function RunMigration($request) {
@@ -82,22 +133,29 @@ class ManutenzioneApiLogic {
 			$Person = CoreLogic::VerifyPerson();
 			CoreLogic::CheckCSRF($request->get("token"));
 
-			$stationCode = CoreLogic::GetStationCode();
-			$stationName = self::getStationName();
+			list($srcCode, $srcName) = self::readSource($request);
+			$dstCode = CoreLogic::GetStationCode();
+			$dstName = self::getStationName();
 
-			if ($stationCode === self::DEFAULT_TOKEN || $stationName === self::DEFAULT_TOKEN
-				|| $stationCode === '' || $stationName === '') {
+			if (!self::isConfigValid($dstCode, $dstName)) {
 				throw new ApiException(
-					"La configurazione freeture corrente e' ancora DEFAULT (STATION_CODE=$stationCode, STATION_NAME=$stationName). " .
+					"La configurazione freeture di destinazione e' ancora DEFAULT (STATION_CODE=$dstCode, STATION_NAME=$dstName). " .
 					"Configurare prima la stazione e ricaricare la pagina."
 				);
 			}
 
-			if (!self::isValidIdentifier($stationCode) || !self::isValidIdentifier($stationName)) {
-				throw new ApiException("STATION_CODE/STATION_NAME contengono caratteri non ammessi (consentiti solo [A-Za-z0-9._-]).");
+			if (!self::isValidIdentifier($srcCode) || !self::isValidIdentifier($srcName)) {
+				throw new ApiException("Codice/nome stazione SORGENTE non validi (consentiti solo [A-Za-z0-9._-]).");
+			}
+			if (!self::isValidIdentifier($dstCode) || !self::isValidIdentifier($dstName)) {
+				throw new ApiException("STATION_CODE/STATION_NAME di destinazione contengono caratteri non ammessi (consentiti solo [A-Za-z0-9._-]).");
 			}
 
-			$plan = self::buildPlan($stationCode, $stationName);
+			if ($srcCode === $dstCode && $srcName === $dstName) {
+				throw new ApiException("Sorgente e destinazione coincidono (STATION_CODE=$srcCode, STATION_NAME=$srcName): niente da migrare.");
+			}
+
+			$plan = self::buildPlan($srcCode, $srcName, $dstCode, $dstName);
 			self::applyParentRenames($plan);
 			$results = self::executePlan($plan);
 		} catch (ApiException $a) {
@@ -110,16 +168,42 @@ class ManutenzioneApiLogic {
 	// Internals
 	//-------------------------------------------------------------------------
 
-	private static function buildScanPayload($stationCode, $stationName) {
-		$defaultRoot = rtrim(_FREETURE_DATA_, "/") . "/" . self::DEFAULT_TOKEN;
-		$configIsValid = ($stationCode !== self::DEFAULT_TOKEN && $stationName !== self::DEFAULT_TOKEN
-						&& $stationCode !== '' && $stationName !== '');
+	/**
+	 * Legge srcCode/srcName dalla request (query string per GET, body per POST).
+	 * Default DEFAULT / DEFAULT. $request e' un Symfony ParameterBag (->get()).
+	 */
+	private static function readSource($request) {
+		$srcCode = self::DEFAULT_TOKEN;
+		$srcName = self::DEFAULT_TOKEN;
+		if ($request !== null) {
+			$c = $request->get('srcCode');
+			$n = $request->get('srcName');
+			if (is_string($c) && trim($c) !== '') {
+				$srcCode = trim($c);
+			}
+			if (is_string($n) && trim($n) !== '') {
+				$srcName = trim($n);
+			}
+		}
+		return array($srcCode, $srcName);
+	}
+
+	private static function isConfigValid($code, $name) {
+		return $code !== self::DEFAULT_TOKEN && $name !== self::DEFAULT_TOKEN
+			&& $code !== '' && $name !== '';
+	}
+
+	private static function buildScanPayload($srcCode, $srcName, $dstCode, $dstName) {
+		$sourceRoot    = rtrim(_FREETURE_DATA_, "/") . "/" . $srcCode;
+		$configIsValid = self::isConfigValid($dstCode, $dstName);
 
 		$payload = array(
-			'stationCode'    => $stationCode,
-			'stationName'    => $stationName,
-			'defaultRoot'    => $defaultRoot,
-			'rootExists'     => is_dir($defaultRoot),
+			'srcCode'        => $srcCode,
+			'srcName'        => $srcName,
+			'stationCode'    => $dstCode,
+			'stationName'    => $dstName,
+			'sourceRoot'     => $sourceRoot,
+			'rootExists'     => is_dir($sourceRoot),
 			'configIsValid'  => $configIsValid,
 			'items'          => array(),
 		);
@@ -128,12 +212,13 @@ class ManutenzioneApiLogic {
 			return $payload;
 		}
 
-		// Se la config non e' ancora valida costruiamo comunque la preview usando placeholder
-		// testuali, cosi l'utente vede l'elenco di cosa verra' rinominato (in sola lettura).
-		$planCode = $configIsValid ? $stationCode : '<STATION_CODE>';
-		$planName = $configIsValid ? $stationName : '<STATION_NAME>';
+		// Se la config di destinazione non e' ancora valida costruiamo comunque la preview
+		// usando placeholder testuali, cosi l'utente vede l'elenco di cosa verra' rinominato
+		// (in sola lettura).
+		$planCode = $configIsValid ? $dstCode : '<STATION_CODE>';
+		$planName = $configIsValid ? $dstName : '<STATION_NAME>';
 
-		$plan = self::buildPlan($planCode, $planName);
+		$plan = self::buildPlan($srcCode, $srcName, $planCode, $planName);
 		self::applyParentRenames($plan); // aggiunge 'final_path' a ogni item
 
 		$total = count($plan);
@@ -164,7 +249,7 @@ class ManutenzioneApiLogic {
 	 *
 	 * Il piano viene eseguito depth-first reverse (file -> event-dir -> day-dir -> root):
 	 * al momento del rename di un singolo file il parent path e' ancora quello vecchio,
-	 * quindi 'new_path' contiene "DEFAULT/..." sui parent. 'final_path' applica anche
+	 * quindi 'new_path' contiene il path sorgente sui parent. 'final_path' applica anche
 	 * i rinomini dei parent presenti piu' avanti nel piano.
 	 */
 	private static function applyParentRenames(&$plan) {
@@ -203,22 +288,22 @@ class ManutenzioneApiLogic {
 	 * Il "new_path" di ciascun item utilizza il path PARENT VECCHIO + nome nuovo:
 	 * cosi quando viene eseguito il rinomino in ordine, ogni step trova path validi.
 	 *
-	 * Regole di prefisso (context-dependent):
-	 *   - root folder       -> STATION_CODE
-	 *   - day folder        -> STATION_CODE
-	 *   - captures/*.fit    -> STATION_CODE
-	 *   - stacks/*.fit      -> STATION_NAME
-	 *   - events/<evt>/     -> STATION_NAME (nome cartella evento)
-	 *   - events/<evt>/*    -> STATION_NAME (file dentro la cartella evento)
+	 * Regole di prefisso (context-dependent), sorgente -> destinazione:
+	 *   - root folder       -> srcCode -> dstCode
+	 *   - day folder        -> srcCode -> dstCode
+	 *   - captures/*.fit    -> srcCode -> dstCode
+	 *   - stacks/*.fit      -> srcName -> dstName
+	 *   - events/<evt>/     -> srcName -> dstName (nome cartella evento)
+	 *   - events/<evt>/*    -> srcName -> dstName (file dentro la cartella evento)
 	 */
-	private static function buildPlan($stationCode, $stationName) {
+	private static function buildPlan($srcCode, $srcName, $dstCode, $dstName) {
 		$plan = array();
-		$root = rtrim(_FREETURE_DATA_, "/") . "/" . self::DEFAULT_TOKEN;
+		$root = rtrim(_FREETURE_DATA_, "/") . "/" . $srcCode;
 		if (!is_dir($root)) {
 			return $plan;
 		}
 
-		// 1) Day folders sotto la root DEFAULT.
+		// 1) Day folders sotto la root sorgente.
 		$dayDirs = self::listDirs($root);
 		foreach ($dayDirs as $dayDir) {
 			$dayPath = $root . "/" . $dayDir;
@@ -231,8 +316,8 @@ class ManutenzioneApiLogic {
 					// Cartelle evento + file interni: prefisso STATION_NAME.
 					foreach (self::listDirs($subPath) as $eventDir) {
 						$eventPath = $subPath . "/" . $eventDir;
-						self::collectDefaultFiles($eventPath, $stationName, $plan);
-						$newEventName = self::replacePrefix($eventDir, $stationName);
+						self::collectFiles($eventPath, $srcName, $dstName, $plan);
+						$newEventName = self::replacePrefix($eventDir, $srcName, $dstName);
 						if ($newEventName !== null && $newEventName !== $eventDir) {
 							$plan[] = array(
 								'type'     => self::TYPE_EVENT_DIR,
@@ -243,22 +328,22 @@ class ManutenzioneApiLogic {
 					}
 				} elseif ($subDir === 'captures') {
 					// captures/*.fit -> prefisso STATION_CODE.
-					self::collectDefaultFiles($subPath, $stationCode, $plan);
+					self::collectFiles($subPath, $srcCode, $dstCode, $plan);
 				} elseif ($subDir === 'stacks') {
 					// stacks/*.fit -> prefisso STATION_NAME.
-					self::collectDefaultFiles($subPath, $stationName, $plan);
+					self::collectFiles($subPath, $srcName, $dstName, $plan);
 				} else {
 					// Sub-folder generiche (logs/, sessions/, ...): fallback su STATION_NAME.
-					self::collectDefaultFiles($subPath, $stationName, $plan);
+					self::collectFiles($subPath, $srcName, $dstName, $plan);
 				}
 			}
 
-			// File DEFAULT_* direttamente nella day folder (raro): fallback su STATION_CODE
+			// File sorgente direttamente nella day folder (raro): fallback su STATION_CODE
 			// per coerenza con il nome della day folder a cui appartengono.
-			self::collectDefaultFiles($dayPath, $stationCode, $plan);
+			self::collectFiles($dayPath, $srcCode, $dstCode, $plan);
 
-			// 3) Day folder DEFAULT_YYYYMMDD -> STATION_CODE_YYYYMMDD.
-			$newDayName = self::replacePrefix($dayDir, $stationCode);
+			// 3) Day folder <srcCode>_YYYYMMDD -> <dstCode>_YYYYMMDD.
+			$newDayName = self::replacePrefix($dayDir, $srcCode, $dstCode);
 			if ($newDayName !== null && $newDayName !== $dayDir) {
 				$plan[] = array(
 					'type'     => self::TYPE_DAY_DIR,
@@ -268,20 +353,24 @@ class ManutenzioneApiLogic {
 			}
 		}
 
-		// 4) File DEFAULT_* direttamente sotto /freeture/DEFAULT/ (raro): STATION_CODE.
-		self::collectDefaultFiles($root, $stationCode, $plan);
+		// 4) File sorgente direttamente sotto /freeture/<srcCode>/ (raro): STATION_CODE.
+		self::collectFiles($root, $srcCode, $dstCode, $plan);
 
-		// 5) Root: merge ricorsivo /freeture/DEFAULT/* -> /freeture/<STATION_CODE>/* e rmdir DEFAULT.
-		$plan[] = array(
-			'type'     => self::TYPE_ROOT_MERGE,
-			'old_path' => $root,
-			'new_path' => rtrim(_FREETURE_DATA_, "/") . "/" . $stationCode,
-		);
+		// 5) Root: merge ricorsivo /freeture/<srcCode>/* -> /freeture/<dstCode>/* e rmdir sorgente.
+		//    Solo se le root differiscono: se srcCode == dstCode i dati sono gia' nella root
+		//    corretta e vanno solo rinominati i prefissi interni (stacks/events).
+		if ($srcCode !== $dstCode) {
+			$plan[] = array(
+				'type'     => self::TYPE_ROOT_MERGE,
+				'old_path' => $root,
+				'new_path' => rtrim(_FREETURE_DATA_, "/") . "/" . $dstCode,
+			);
+		}
 
 		return $plan;
 	}
 
-	private static function collectDefaultFiles($dirPath, $stationName, &$plan) {
+	private static function collectFiles($dirPath, $oldPrefix, $newPrefix, &$plan) {
 		if (!is_dir($dirPath)) {
 			return;
 		}
@@ -297,7 +386,7 @@ class ManutenzioneApiLogic {
 			if (!is_file($full)) {
 				continue;
 			}
-			$newName = self::replacePrefix($entry, $stationName);
+			$newName = self::replacePrefix($entry, $oldPrefix, $newPrefix);
 			if ($newName === null || $newName === $entry) {
 				continue;
 			}
@@ -310,16 +399,19 @@ class ManutenzioneApiLogic {
 	}
 
 	/**
-	 * Restituisce il nome rinominato sostituendo il prefisso "DEFAULT" con $newPrefix.
-	 * Match esatto del prefisso: "DEFAULT_qualcosa", "DEFAULT.qualcosa", o esattamente "DEFAULT".
-	 * Ritorna null se il nome non ha prefisso DEFAULT (quindi non va toccato).
+	 * Restituisce il nome rinominato sostituendo il prefisso $oldPrefix con $newPrefix.
+	 * Match esatto del prefisso: "<old>_qualcosa", "<old>.qualcosa", "<old>-qualcosa",
+	 * o esattamente "<old>". Ritorna null se il nome non ha il prefisso (quindi non va toccato).
 	 */
-	private static function replacePrefix($name, $newPrefix) {
-		if ($name === self::DEFAULT_TOKEN) {
+	private static function replacePrefix($name, $oldPrefix, $newPrefix) {
+		if ($oldPrefix === '') {
+			return null;
+		}
+		if ($name === $oldPrefix) {
 			return $newPrefix;
 		}
-		$prefixLen = strlen(self::DEFAULT_TOKEN);
-		if (strncmp($name, self::DEFAULT_TOKEN, $prefixLen) === 0) {
+		$prefixLen = strlen($oldPrefix);
+		if (strncmp($name, $oldPrefix, $prefixLen) === 0) {
 			$next = isset($name[$prefixLen]) ? $name[$prefixLen] : '';
 			// Considera prefisso valido solo se seguito da separatore standard.
 			if ($next === '_' || $next === '.' || $next === '-') {
