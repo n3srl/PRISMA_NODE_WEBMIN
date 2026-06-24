@@ -269,32 +269,87 @@ class CameraLogic
         $r['portsUp']     = 0;
         foreach ($r['ports'] as $p) { if ($p['up']) $r['portsUp']++; }
 
-        // Match porta camera/nodo via MAC FDB.
-        if ($cameraMac || $nodeMac) {
-            // dot1dTpFdbPort: associa MAC <-> bridgePort
-            $fdb = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.4.3.1.2');
-            // dot1dBasePortIfIndex: bridgePort -> ifIndex
-            $bridgePortToIf = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.1.4.1.2');
+        // Match porta camera/nodo/uplink via MAC FDB.
+        // dot1dTpFdbPort: MAC <-> bridgePort
+        $fdb = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.4.3.1.2');
+        // dot1dBasePortIfIndex: bridgePort -> ifIndex
+        $bridgePortToIf = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.1.4.1.2');
 
-            $lookup = function ($mac) use ($fdb, $bridgePortToIf) {
-                if (!$mac) return null;
-                $suffix = self::macToOidSuffix($mac);
-                if ($suffix === null) return null;
-                foreach ($fdb as $key => $bridgePort) {
-                    // $key e' il MAC come "0.21.95.123.45.67"; matcho l'ultima parte
-                    if ($key === $suffix
-                        || (strlen($key) > strlen($suffix)
-                            && substr($key, -(strlen($suffix) + 1)) === '.' . $suffix)) {
-                        return isset($bridgePortToIf[$bridgePort])
-                            ? (int) $bridgePortToIf[$bridgePort]
-                            : (int) $bridgePort;
-                    }
-                }
-                return null;
-            };
-            $r['cameraPort'] = $lookup($cameraMac);
-            $r['nodePort']   = $lookup($nodeMac);
+        // Costruisco mappa inversa bridgePort -> array di MAC visti
+        $portToMacs = array();
+        foreach ($fdb as $macSuffix => $bridgePort) {
+            $parts = explode('.', $macSuffix);
+            if (count($parts) !== 6) continue;
+            $mac = implode(':', array_map(function ($x) {
+                return sprintf('%02x', (int) $x);
+            }, $parts));
+            if (!isset($portToMacs[$bridgePort])) $portToMacs[$bridgePort] = array();
+            $portToMacs[$bridgePort][] = $mac;
         }
+
+        $lookupPort = function ($mac) use ($fdb, $bridgePortToIf) {
+            if (!$mac) return null;
+            $suffix = self::macToOidSuffix($mac);
+            if ($suffix === null) return null;
+            foreach ($fdb as $key => $bridgePort) {
+                if ($key === $suffix
+                    || (strlen($key) > strlen($suffix)
+                        && substr($key, -(strlen($suffix) + 1)) === '.' . $suffix)) {
+                    return isset($bridgePortToIf[$bridgePort])
+                        ? (int) $bridgePortToIf[$bridgePort]
+                        : (int) $bridgePort;
+                }
+            }
+            return null;
+        };
+
+        $r['cameraPort'] = $lookupPort($cameraMac);
+        $r['nodePort']   = $lookupPort($nodeMac);
+
+        // Uplink: MAC del default gateway visto dal nodo.
+        $gatewayIp = trim(self::shellViaSsh(
+            "ip route show default 2>/dev/null | awk '{for (i=1; i<=NF; i++) if (\$i==\"via\") print \$(i+1)}' | head -1"
+        ));
+        $gatewayMac = null;
+        if ($gatewayIp !== '') {
+            // Provo a scaldare la cache ARP
+            self::shellViaSsh("ping -c 1 -W 1 " . escapeshellarg($gatewayIp) . " >/dev/null 2>&1");
+            $arpOut = self::shellViaSsh("ip neigh show " . escapeshellarg($gatewayIp) . " 2>/dev/null");
+            if (preg_match('/lladdr\s+([0-9a-f:]+)/i', $arpOut, $m)) {
+                $gatewayMac = strtolower($m[1]);
+            }
+        }
+        $r['gatewayIp']  = $gatewayIp ?: null;
+        $r['gatewayMac'] = $gatewayMac;
+        $r['uplinkPort'] = $gatewayMac ? $lookupPort($gatewayMac) : null;
+
+        // Mappa ifIndex -> bridgePort (inverso di $bridgePortToIf), serve per gli intrusi
+        $ifIndexToBridge = array();
+        foreach ($bridgePortToIf as $bp => $idx) {
+            $ifIndexToBridge[(int) $idx] = $bp;
+        }
+
+        // Intrusi: porte UP che non sono ne' camera, ne' nodo, ne' uplink
+        $known = array();
+        if ($r['cameraPort']) $known[(int) $r['cameraPort']] = true;
+        if ($r['nodePort'])   $known[(int) $r['nodePort']]   = true;
+        if ($r['uplinkPort']) $known[(int) $r['uplinkPort']] = true;
+
+        $r['intruders'] = array();
+        foreach ($r['ports'] as $port) {
+            if (!$port['up']) continue;
+            if (isset($known[$port['ifIndex']])) continue;
+            $bp = isset($ifIndexToBridge[$port['ifIndex']]) ? $ifIndexToBridge[$port['ifIndex']] : null;
+            $macs = ($bp !== null && isset($portToMacs[$bp])) ? array_values(array_unique($portToMacs[$bp])) : array();
+            $r['intruders'][] = array(
+                'ifIndex'   => $port['ifIndex'],
+                'name'      => $port['name'],
+                'speedMbps' => $port['speedMbps'],
+                'macs'      => $macs,
+            );
+        }
+        $r['intruderCount']   = count($r['intruders']);
+        $r['expectedUpPorts'] = 3; // camera + nodo + uplink
 
         return $r;
     }
