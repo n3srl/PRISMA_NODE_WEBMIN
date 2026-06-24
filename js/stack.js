@@ -143,6 +143,7 @@ $(document).ready(function () {
                 } else {
                     initStacksDatatable();
                 }
+                loadStackCompleteness(folder);
             }
         },
 
@@ -417,28 +418,53 @@ function renderCompletenessHtml(d, label) {
     } else {
         freq = period + ' s';
     }
+    var inProgress = !!d.inProgress;
+    var cutoffNote = inProgress
+        ? ' <small>(' + _('giorno in corso, fino a') + ' ' + (d.cutoffTime || '') + ' UT)</small>'
+        : '';
+
     if (d.complete) {
+        var msgOk = inProgress
+            ? _('Giorno in corso, regolare finora')
+            : _('Giorno completo');
         return '<div class="alert alert-success" style="margin:0;">' +
             '<i class="fa fa-check"></i> ' +
-            _('Giorno completo') + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label + ' ' +
+            msgOk + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label + ' ' +
             '(' + _('uno ogni') + ' ' + freq + ').' +
+            cutoffNote +
             '</div>';
     }
     var ranges = d.missingRanges || [];
     var rangesHtml = ranges.slice(0, 50).map(function (r) {
-        if (r.count > 1) {
-            return '<li><code>' + r.start + ' &mdash; ' + r.end + '</code> ' +
-                '<small class="text-muted">(' + r.count + ' ' + _('slot') + ')</small></li>';
+        var head = (r.count > 1)
+            ? '<code>' + r.start + ' &mdash; ' + r.end + '</code> ' +
+              '<small class="text-muted">(' + r.count + ' ' + _('slot') + ')</small>'
+            : '<code>' + r.start + '</code>';
+        var causeHtml = '';
+        if (r.cause) {
+            var msg = (r.cause.message || '').toString();
+            if (msg.length > 240) { msg = msg.substring(0, 240) + '...'; }
+            causeHtml = '<div style="margin-left:14px;font-size:11px;color:#a04a00;">' +
+                '<i class="fa fa-exclamation-circle"></i> ' +
+                '<b>' + $('<div>').text(r.cause.timestamp || '').html() + '</b> ' +
+                '[' + $('<div>').text(r.cause.level || '').html() + ']' +
+                (r.cause.thread ? ' <span class="text-muted">' + $('<div>').text(r.cause.thread).html() + '</span>' : '') +
+                ': ' + $('<div>').text(msg).html() +
+                '</div>';
         }
-        return '<li><code>' + r.start + '</code></li>';
+        return '<li>' + head + causeHtml + '</li>';
     }).join('');
     var extra = (ranges.length > 50)
         ? '<li><em>' + _('e altri') + ' ' + (ranges.length - 50) + ' ' + _('range') + '...</em></li>'
         : '';
+    var msgKo = inProgress
+        ? _('Giorno in corso, slot mancanti finora')
+        : _('Giorno incompleto');
     return '<div class="alert alert-warning" style="margin:0;">' +
         '<i class="fa fa-exclamation-triangle"></i> ' +
-        _('Giorno incompleto') + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label +
+        msgKo + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label +
         ' (' + _('mancano') + ' <b>' + d.missingCount + '</b>, ' + _('uno ogni') + ' ' + freq + ').' +
+        cutoffNote +
         '<div style="margin-top:6px;"><b>' + _('Intervalli mancanti') + ':</b>' +
         '<ul style="margin:4px 0 0 0; padding-left: 20px;">' + rangesHtml + extra + '</ul></div>' +
         '</div>';
