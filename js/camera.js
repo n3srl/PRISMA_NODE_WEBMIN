@@ -820,11 +820,37 @@ function renderSwitchSection(sw) {
         '</div>';
     }
 
-    if (violations.length === 0 && intruders.length === 0 && missing.length === 0) {
+    // Velocita' sub-gigabit su una porta di ruolo = degradazione di link.
+    var speedWarnings = sw.speedWarnings || [];
+    if (speedWarnings.length > 0) {
+        html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
+            '<i class="fa fa-tachometer"></i> ' +
+            '<b>' + _('Velocita link inferiore al gigabit') + '</b>: ';
+        var bullets = speedWarnings.map(function (w) {
+            return '<li><b>Port ' + w.port + '</b> (' + w.roles.join(' + ') + ')' +
+                ' &mdash; <span style="color:#b07d00;font-weight:600;">' + w.speedMbps + ' Mb/s</span>' +
+                ' ' + _('invece dei') + ' <b>1000 Mb/s</b> ' + _('attesi') + '.</li>';
+        }).join('');
+        html += '<ul style="margin:6px 0 0 0; padding-left:20px;">' + bullets + '</ul>' +
+            '<div style="margin-top:8px;"><b>' + _('Come diagnosticare') + ':</b>' +
+            '<ol style="margin:4px 0 0 0; padding-left:20px;">' +
+            '<li>' + _('Sostituisci il cavo con un Cat5e/Cat6 nuovo (di norma e\' il problema piu\' comune)') + '.</li>' +
+            '<li>' + _('Verifica connettori RJ45 (pin storti, sporcizia, terminazione cattiva)') + '.</li>' +
+            '<li>' + _('Usa Cable Diagnostics dalla GUI dello switch:') +
+                ' <code>http://localhost:8081 → L2 Functions → Diagnostics → Cable Diagnostics</code>' +
+                ' (' + _('o nel menu "Monitoring → Cable Diagnostics" a seconda del firmware') + '). ' +
+                _('Seleziona la porta interessata e lancia il test: indica lunghezza e stato per ciascuna delle 4 coppie del cavo (OK / Open / Short / Impedance Mismatch).') +
+                '</li>' +
+            '<li>' + _('Se il test segnala una coppia "Open Circuit" o "Short", il cavo va sostituito') + '.</li>' +
+            '</ol></div>' +
+        '</div>';
+    }
+
+    if (violations.length === 0 && intruders.length === 0 && missing.length === 0 && speedWarnings.length === 0) {
         html += '<div class="alert alert-success" style="margin-bottom:10px;">' +
             '<i class="fa fa-shield"></i> ' +
             '<b>' + _('Configurazione OK') + '</b>: ' +
-            _('camera + nodo + uplink su tre porte fisiche dedicate, nessun host non giustificato.') +
+            _('camera + nodo + uplink su tre porte fisiche dedicate, tutte a gigabit, nessun host non giustificato.') +
             fdbHint +
         '</div>';
     }

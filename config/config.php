@@ -61,6 +61,6 @@ define('_DEFAULT_STATION_NAME_','DEFAULT');
 // Default standard PRISMA: switch DGS-1210-10P riconfigurato a 192.168.0.2
 // con community read-only "prisma-ro" (vedi guida setup webmin).
 // Per disattivare la fase 2 su un singolo nodo, imposta _SWITCH_IP_ a stringa vuota.
-define('_SWITCH_IP_', '192.168.0.2');
-define('_SWITCH_SNMP_COMMUNITY_', 'prisma-ro');
+define('_SWITCH_IP_', '10.90.90.90');
+define('_SWITCH_SNMP_COMMUNITY_', 'public');
 define('_SWITCH_SNMP_VERSION_', '2c');
