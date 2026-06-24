@@ -104,7 +104,6 @@
                             </table>
                         </div>
                         <div class='col-md-9 col-sm-9 col-xs-12'>
-                            <div id="capture-completeness-status" style="margin-bottom: 10px;"></div>
                             <table id='CaptureList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>
                                     <tr>
@@ -118,6 +117,7 @@
                                 <tbody>
                                 </tbody>
                             </table>
+                            <div id="capture-completeness-status" style="margin-top: 10px;"></div>
                         </div>
                     </div>
                 </div>

@@ -526,9 +526,23 @@ class CaptureApiLogic {
             error_log("[GetCompleteness/capture] captureDir='$captureDir' exists=" . (is_dir($captureDir) ? 'yes' : 'no'));
             $foundSeconds = self::collectCaptureSecondsOfDay($dayDir);
             error_log("[GetCompleteness/capture] foundFiles=" . count($foundSeconds));
-            $report       = self::buildCompletenessReport($foundSeconds, $periodSec);
-            $report['dayDir'] = $dayDir;
-            error_log("[GetCompleteness/capture] report expected={$report['expectedCount']} found={$report['foundCount']} missing={$report['missingCount']} ranges=" . count($report['missingRanges']));
+
+            // Giorno corrente UT: gli slot dopo "now" non sono ancora attesi.
+            $todayInfo = self::resolveTodayCutoff($dayDir);
+            $maxSec    = $todayInfo['maxSec'];
+
+            $report       = self::buildCompletenessReport($foundSeconds, $periodSec, $maxSec);
+            $report['dayDir']     = $dayDir;
+            $report['inProgress'] = $todayInfo['inProgress'];
+            $report['cutoffTime'] = $todayInfo['cutoffTime'];
+
+            // Incrocio con i log freeture: per ogni range mancante annoto la prima
+            // riga ERROR/FATAL caduta in quell'intervallo (se presente).
+            if (!empty($report['missingRanges']) && preg_match('/(\d{8})/', $dayDir, $dk)) {
+                self::lookupErrorCausesForRanges($report['missingRanges'], $dk[1]);
+            }
+
+            error_log("[GetCompleteness/capture] report expected={$report['expectedCount']} found={$report['foundCount']} missing={$report['missingCount']} ranges=" . count($report['missingRanges']) . " inProgress=" . ($report['inProgress'] ? '1' : '0') . " cutoff=" . $report['cutoffTime']);
         } catch (ApiException $a) {
             error_log("[GetCompleteness/capture] ApiException: " . $a->message);
             return CoreLogic::GenerateErrorResponse($a->message);
@@ -589,9 +603,10 @@ class CaptureApiLogic {
     }
 
     // Algoritmo di completeness (duplicato da StackApiLogic per disaccoppiare i moduli).
-    private static function buildCompletenessReport(array $foundSeconds, $periodSec) {
+    private static function buildCompletenessReport(array $foundSeconds, $periodSec, $maxSec = 86400) {
         $periodSec = max(1, (int) $periodSec);
-        $expected  = (int) floor(86400 / $periodSec);
+        $maxSec    = max(0, min(86400, (int) $maxSec));
+        $expected  = (int) floor($maxSec / $periodSec);
 
         $hasFile = array_fill(0, $expected, false);
         foreach ($foundSeconds as $sec) {
@@ -648,6 +663,84 @@ class CaptureApiLogic {
         $m = (int) floor(($sec % 3600) / 60);
         $s = $sec % 60;
         return sprintf('%02d:%02d:%02d', $h, $m, $s);
+    }
+
+    // Per ogni range in $ranges (modificato in-place) cerca tra i log freeture
+    // del giorno $dayKey (YYYYMMDD) la prima riga ERROR/FATAL caduta nell'intervallo
+    // [startSec, endSec] e la attacca al range come campo 'cause'.
+    private static function lookupErrorCausesForRanges(&$ranges, $dayKey) {
+        $stationCode = CoreLogic::GetStationCode();
+        $logsDir = _FREETURE_DATA_ . $stationCode . "/logs/";
+        if (!is_dir($logsDir)) {
+            error_log("[lookupErrorCauses/capture] logs dir absent: $logsDir");
+            return;
+        }
+        $errors = self::loadDayErrors($logsDir, $dayKey);
+        error_log("[lookupErrorCauses/capture] loaded " . count($errors) . " ERROR/FATAL lines for dayKey=$dayKey");
+        if (empty($errors)) {
+            return;
+        }
+        $datePrefix = substr($dayKey, 0, 4) . '-' . substr($dayKey, 4, 2) . '-' . substr($dayKey, 6, 2);
+        foreach ($ranges as &$r) {
+            $startTs = $datePrefix . ' ' . self::fmtHMS($r['startSec']);
+            $endTs   = $datePrefix . ' ' . self::fmtHMS($r['endSec']);
+            foreach ($errors as $err) {
+                if (strcmp($err['timestamp'], $startTs) >= 0 && strcmp($err['timestamp'], $endTs) <= 0) {
+                    $r['cause'] = $err;
+                    break;
+                }
+            }
+        }
+        unset($r);
+    }
+
+    // Legge tutti i .log sotto $logsDir, estrae le righe ERROR/FATAL del giorno
+    // $dayKey (YYYYMMDD), ritorna array ordinato per timestamp.
+    private static function loadDayErrors($logsDir, $dayKey) {
+        $datePrefix = substr($dayKey, 0, 4) . '-' . substr($dayKey, 4, 2) . '-' . substr($dayKey, 6, 2);
+        $linePattern = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}); ([A-Z]+); (.*)$/';
+        $errors = array();
+        foreach (glob($logsDir . "*.log") as $logFile) {
+            $thread = pathinfo($logFile, PATHINFO_FILENAME);
+            $fh = @fopen($logFile, 'r');
+            if (!$fh) continue;
+            while (($line = fgets($fh)) !== false) {
+                $line = rtrim($line, "\r\n");
+                if ($line === '' || !preg_match($linePattern, $line, $m)) continue;
+                if (strpos($m[1], $datePrefix) !== 0) continue;
+                if ($m[2] !== 'ERROR' && $m[2] !== 'FATAL') continue;
+                $errors[] = array(
+                    'timestamp' => $m[1],
+                    'level'     => $m[2],
+                    'thread'    => $thread,
+                    'message'   => $m[3],
+                );
+            }
+            fclose($fh);
+        }
+        usort($errors, function ($a, $b) { return strcmp($a['timestamp'], $b['timestamp']); });
+        return $errors;
+    }
+
+    // Se la dateKey YYYYMMDD del dayDir coincide con la data UT corrente, il giorno
+    // e' "in corso": gli slot dopo l'ora attuale non sono ancora attesi.
+    private static function resolveTodayCutoff($dayDir) {
+        $info = array('inProgress' => false, 'maxSec' => 86400, 'cutoffTime' => '24:00:00');
+        if (!preg_match('/(\d{8})/', $dayDir, $m)) {
+            return $info;
+        }
+        $dayKey = $m[1];
+        $todayKey = gmdate('Ymd');
+        if ($dayKey !== $todayKey) {
+            return $info;
+        }
+        $h  = (int) gmdate('H');
+        $mn = (int) gmdate('i');
+        $s  = (int) gmdate('s');
+        $info['inProgress'] = true;
+        $info['maxSec']     = $h * 3600 + $mn * 60 + $s;
+        $info['cutoffTime'] = sprintf('%02d:%02d:%02d', $h, $mn, $s);
+        return $info;
     }
 
     // Get all days and compute number of capture in that day
