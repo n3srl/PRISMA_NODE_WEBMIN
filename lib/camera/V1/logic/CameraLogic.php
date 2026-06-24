@@ -354,54 +354,15 @@ class CameraLogic
         return $r;
     }
 
-    // snmpget -v 2c -c <comm> -O qv -t 3 <ip> <oid>  -> string scalar (no quotes)
+    // Wrapper sul client SNMP pure-PHP. Ritorna null se l'OID non e' presente o
+    // se la richiesta va in timeout.
     private static function snmpGetViaSsh($ip, $community, $oid, $timeoutSec = 3) {
-        $cmd = sprintf(
-            'snmpget -v 2c -c %s -O qv -t %d -r 1 %s %s 2>/dev/null',
-            escapeshellarg($community),
-            $timeoutSec,
-            escapeshellarg($ip),
-            escapeshellarg($oid)
-        );
-        $out = trim(self::shellViaSsh($cmd));
-        if ($out === '' || stripos($out, 'no such') !== false || stripos($out, 'timeout') !== false) {
-            return null;
-        }
-        // Strip apici esterni
-        if (strlen($out) >= 2 && $out[0] === '"' && substr($out, -1) === '"') {
-            $out = substr($out, 1, -1);
-        }
-        return $out;
+        return SnmpClientLogic::get($ip, $community, $oid, $timeoutSec);
     }
 
-    // snmpwalk -v 2c -c <comm> -O qn -t 5 <ip> <oid>
-    // Ritorna map: key = suffix dell'OID rispetto a $oid base, value = scalar
+    // Wrapper sul walk SNMP pure-PHP. Ritorna map: suffix-oid (rispetto a $oid) -> value.
     private static function snmpWalkViaSsh($ip, $community, $oid, $timeoutSec = 5) {
-        $cmd = sprintf(
-            'snmpwalk -v 2c -c %s -O qn -t %d -r 1 %s %s 2>/dev/null',
-            escapeshellarg($community),
-            $timeoutSec,
-            escapeshellarg($ip),
-            escapeshellarg($oid)
-        );
-        $out = self::shellViaSsh($cmd);
-        $base = '.' . trim($oid, '.') . '.';
-        $baseLen = strlen($base);
-        $result = array();
-        foreach (preg_split('/\r?\n/', trim($out)) as $line) {
-            if ($line === '') continue;
-            $sp = strpos($line, ' ');
-            if ($sp === false) continue;
-            $fullOid = substr($line, 0, $sp);
-            $value   = trim(substr($line, $sp + 1));
-            if (strpos($fullOid, $base) !== 0) continue;
-            $key = substr($fullOid, $baseLen);
-            if (strlen($value) >= 2 && $value[0] === '"' && substr($value, -1) === '"') {
-                $value = substr($value, 1, -1);
-            }
-            $result[$key] = $value;
-        }
-        return $result;
+        return SnmpClientLogic::walk($ip, $community, $oid, $timeoutSec);
     }
 
     // Converte "1c:0f:af:47:2f:ca" in suffisso OID "28.15.175.71.47.202"
