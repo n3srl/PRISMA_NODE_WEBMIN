@@ -547,11 +547,15 @@ function renderCameraHwInfoDeep(data) {
 
     var html = '';
     if (pausedSec !== undefined && pausedSec !== null) {
+        var parserChip = data.parserUsed
+            ? ' <span class="label label-default" style="margin-left:6px;" title="' + _escDeep(_('Parser usato per leggere i valori arv-tool (vendor-aware)')) + '">parser: ' + _escDeep(data.parserUsed) + '</span>'
+            : '';
         html += '<div class="alert alert-success" style="margin:0 0 10px 0;">' +
             '<i class="fa fa-check"></i> ' +
             _('Lettura completata.') + ' ' +
             _('Pausa freeture') + ': <b>' + pausedSec + 's</b>. ' +
             _('Freeture riavviato automaticamente.') +
+            parserChip +
         '</div>';
     }
     if (warnings.length) {
