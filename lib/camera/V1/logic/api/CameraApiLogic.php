@@ -111,6 +111,17 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function HwInfo($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $res = CameraLogic::HwInfo();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function Calibration()
     {
         try {

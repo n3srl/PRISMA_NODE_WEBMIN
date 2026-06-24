@@ -23,6 +23,49 @@
             </div>
         </div>
         <div class='clearfix'></div>
+
+        <!-- Info box dispositivo: dati statici letti senza interrogare la camera. -->
+        <div class='row'>
+            <div class='col-md-12 col-sm-12 col-xs-12'>
+                <div class='x_panel'>
+                    <div class='x_title'>
+                        <h2><?= _('Informazioni dispositivo') ?></h2>
+                        <div class='clearfix'></div>
+                    </div>
+                    <div class='x_content'>
+                        <div id='camera-hwinfo-loading' style='color:#888;'><?= _('Caricamento informazioni...') ?></div>
+                        <div id='camera-hwinfo' style='display:none;'>
+                            <div class='col-md-6 col-sm-12 col-xs-12' style='padding-left:0;'>
+                                <h4 style='margin-top:0;'><?= _('Hardware (dai log freeture)') ?></h4>
+                                <table class='table table-condensed' style='margin-bottom:0;'>
+                                    <tr><th style='width:40%;'><?= _('Vendor') ?></th><td id='hw-vendor'>&mdash;</td></tr>
+                                    <tr><th><?= _('Modello') ?></th><td id='hw-model'>&mdash;</td></tr>
+                                    <tr><th><?= _('Firmware') ?></th><td id='hw-firmware'>&mdash;</td></tr>
+                                    <tr><th><?= _('Serial number') ?></th><td id='hw-serial'>&mdash;</td></tr>
+                                    <tr><th><?= _('IP camera') ?></th><td id='hw-ip'>&mdash;</td></tr>
+                                    <tr><th><?= _('Aravis') ?></th><td id='hw-aravis'>&mdash;</td></tr>
+                                    <tr><th><?= _('Ultimo log') ?></th><td id='hw-lastseen'>&mdash;</td></tr>
+                                </table>
+                            </div>
+                            <div class='col-md-6 col-sm-12 col-xs-12'>
+                                <h4 style='margin-top:0;'><?= _('Configurazione (da configuration.cfg)') ?></h4>
+                                <table class='table table-condensed' style='margin-bottom:0;'>
+                                    <tr><th style='width:40%;'><?= _('Camera') ?></th><td id='cfg-camera'>&mdash;</td></tr>
+                                    <tr><th><?= _('Camera ID') ?></th><td id='cfg-cameraId'>&mdash;</td></tr>
+                                    <tr><th><?= _('Instrument') ?></th><td id='cfg-instrument'>&mdash;</td></tr>
+                                    <tr><th><?= _('Telescope') ?></th><td id='cfg-telescope'>&mdash;</td></tr>
+                                    <tr><th><?= _('Formato') ?></th><td id='cfg-format'>&mdash;</td></tr>
+                                    <tr><th><?= _('Risoluzione') ?></th><td id='cfg-resolution'>&mdash;</td></tr>
+                                    <tr><th><?= _('FPS') ?></th><td id='cfg-fps'>&mdash;</td></tr>
+                                </table>
+                            </div>
+                            <div class='clearfix'></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class='row'>
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <div class='x_panel'>
