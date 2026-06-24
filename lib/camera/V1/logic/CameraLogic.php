@@ -183,8 +183,183 @@ class CameraLogic
             }
         }
 
+        // 7) Switch via SNMP (fase 2): si attiva solo se _SWITCH_IP_ e' configurato.
+        $cameraMac = isset($result['link']['cameraMac']) ? $result['link']['cameraMac'] : null;
+        $nodeMac   = isset($result['link']['address'])   ? $result['link']['address']   : null;
+        $result['switch'] = self::probeSwitchViaSnmp($cameraMac, $nodeMac);
+
         $result['verdict'] = self::computeNetDiagVerdict($result);
         return array("res" => true, "data" => $result);
+    }
+
+    // Interroga lo switch via SNMP (v2c) usando snmpget/snmpwalk sull'host docker.
+    // Ritorna un payload con sysInfo + porte (ifTable) + match porta camera/nodo via FDB.
+    // Se _SWITCH_IP_ e' vuoto, ritorna {configured: false} e basta.
+    private static function probeSwitchViaSnmp($cameraMac, $nodeMac) {
+        $r = array(
+            'configured' => false,
+            'ip'         => null,
+            'reachable'  => false,
+            'sysName'    => null,
+            'sysDescr'   => null,
+            'sysUpTime'  => null,
+            'ports'      => array(),
+            'cameraPort' => null,
+            'nodePort'   => null,
+            'warnings'   => array(),
+        );
+        if (!defined('_SWITCH_IP_') || trim(_SWITCH_IP_) === '') {
+            return $r;
+        }
+        $ip        = _SWITCH_IP_;
+        $community = defined('_SWITCH_SNMP_COMMUNITY_') && _SWITCH_SNMP_COMMUNITY_ !== ''
+                   ? _SWITCH_SNMP_COMMUNITY_ : 'public';
+
+        $r['configured'] = true;
+        $r['ip']         = $ip;
+
+        // Probe sysName: minima sanity check
+        $sysName = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.5.0');
+        if ($sysName === null || $sysName === '') {
+            $r['warnings'][] = "Switch SNMP ($ip) non risponde: community sbagliata, SNMP non abilitato, o IP irraggiungibile dal docker host.";
+            return $r;
+        }
+        $r['reachable'] = true;
+        $r['sysName']   = $sysName;
+        $r['sysDescr']  = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.1.0');
+        $r['sysUpTime'] = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.3.0');
+
+        // ifTable walks
+        $ifDescr      = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.2');
+        $ifType       = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.3');
+        $ifSpeed      = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.5');
+        $ifOperStatus = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.8');
+        $ifInOctets   = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.10');
+        $ifInErrors   = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.14');
+        $ifInDiscards = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.13');
+        $ifOutOctets  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.16');
+        $ifOutErrors  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.2.2.1.20');
+        // EtherLike-MIB: CRC, alignment
+        $dot3Fcs   = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.10.7.2.1.3');
+        $dot3Align = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.10.7.2.1.2');
+
+        foreach ($ifDescr as $idx => $name) {
+            // Solo porte ethernet fisiche (ifType=6 ethernetCsmacd).
+            if (isset($ifType[$idx]) && (int) $ifType[$idx] !== 6) continue;
+            $speedBps = isset($ifSpeed[$idx]) ? (int) $ifSpeed[$idx] : 0;
+            $r['ports'][] = array(
+                'ifIndex'     => (int) $idx,
+                'name'        => $name,
+                'speedMbps'   => $speedBps > 0 ? (int) round($speedBps / 1e6) : 0,
+                'up'          => isset($ifOperStatus[$idx]) && (int) $ifOperStatus[$idx] === 1,
+                'inOctets'    => isset($ifInOctets[$idx])   ? (int) $ifInOctets[$idx]   : 0,
+                'outOctets'   => isset($ifOutOctets[$idx])  ? (int) $ifOutOctets[$idx]  : 0,
+                'inErrors'    => isset($ifInErrors[$idx])   ? (int) $ifInErrors[$idx]   : 0,
+                'outErrors'   => isset($ifOutErrors[$idx])  ? (int) $ifOutErrors[$idx]  : 0,
+                'inDiscards'  => isset($ifInDiscards[$idx]) ? (int) $ifInDiscards[$idx] : 0,
+                'fcsErrors'   => isset($dot3Fcs[$idx])   ? (int) $dot3Fcs[$idx]   : null,
+                'alignErrors' => isset($dot3Align[$idx]) ? (int) $dot3Align[$idx] : null,
+            );
+        }
+        // Ordina per ifIndex
+        usort($r['ports'], function ($a, $b) { return $a['ifIndex'] - $b['ifIndex']; });
+
+        // Riassunto rapido
+        $r['portsTotal']  = count($r['ports']);
+        $r['portsUp']     = 0;
+        foreach ($r['ports'] as $p) { if ($p['up']) $r['portsUp']++; }
+
+        // Match porta camera/nodo via MAC FDB.
+        if ($cameraMac || $nodeMac) {
+            // dot1dTpFdbPort: associa MAC <-> bridgePort
+            $fdb = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.4.3.1.2');
+            // dot1dBasePortIfIndex: bridgePort -> ifIndex
+            $bridgePortToIf = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.1.4.1.2');
+
+            $lookup = function ($mac) use ($fdb, $bridgePortToIf) {
+                if (!$mac) return null;
+                $suffix = self::macToOidSuffix($mac);
+                if ($suffix === null) return null;
+                foreach ($fdb as $key => $bridgePort) {
+                    // $key e' il MAC come "0.21.95.123.45.67"; matcho l'ultima parte
+                    if ($key === $suffix
+                        || (strlen($key) > strlen($suffix)
+                            && substr($key, -(strlen($suffix) + 1)) === '.' . $suffix)) {
+                        return isset($bridgePortToIf[$bridgePort])
+                            ? (int) $bridgePortToIf[$bridgePort]
+                            : (int) $bridgePort;
+                    }
+                }
+                return null;
+            };
+            $r['cameraPort'] = $lookup($cameraMac);
+            $r['nodePort']   = $lookup($nodeMac);
+        }
+
+        return $r;
+    }
+
+    // snmpget -v 2c -c <comm> -O qv -t 3 <ip> <oid>  -> string scalar (no quotes)
+    private static function snmpGetViaSsh($ip, $community, $oid, $timeoutSec = 3) {
+        $cmd = sprintf(
+            'snmpget -v 2c -c %s -O qv -t %d -r 1 %s %s 2>/dev/null',
+            escapeshellarg($community),
+            $timeoutSec,
+            escapeshellarg($ip),
+            escapeshellarg($oid)
+        );
+        $out = trim(self::shellViaSsh($cmd));
+        if ($out === '' || stripos($out, 'no such') !== false || stripos($out, 'timeout') !== false) {
+            return null;
+        }
+        // Strip apici esterni
+        if (strlen($out) >= 2 && $out[0] === '"' && substr($out, -1) === '"') {
+            $out = substr($out, 1, -1);
+        }
+        return $out;
+    }
+
+    // snmpwalk -v 2c -c <comm> -O qn -t 5 <ip> <oid>
+    // Ritorna map: key = suffix dell'OID rispetto a $oid base, value = scalar
+    private static function snmpWalkViaSsh($ip, $community, $oid, $timeoutSec = 5) {
+        $cmd = sprintf(
+            'snmpwalk -v 2c -c %s -O qn -t %d -r 1 %s %s 2>/dev/null',
+            escapeshellarg($community),
+            $timeoutSec,
+            escapeshellarg($ip),
+            escapeshellarg($oid)
+        );
+        $out = self::shellViaSsh($cmd);
+        $base = '.' . trim($oid, '.') . '.';
+        $baseLen = strlen($base);
+        $result = array();
+        foreach (preg_split('/\r?\n/', trim($out)) as $line) {
+            if ($line === '') continue;
+            $sp = strpos($line, ' ');
+            if ($sp === false) continue;
+            $fullOid = substr($line, 0, $sp);
+            $value   = trim(substr($line, $sp + 1));
+            if (strpos($fullOid, $base) !== 0) continue;
+            $key = substr($fullOid, $baseLen);
+            if (strlen($value) >= 2 && $value[0] === '"' && substr($value, -1) === '"') {
+                $value = substr($value, 1, -1);
+            }
+            $result[$key] = $value;
+        }
+        return $result;
+    }
+
+    // Converte "1c:0f:af:47:2f:ca" in suffisso OID "28.15.175.71.47.202"
+    private static function macToOidSuffix($mac) {
+        $mac = strtolower(trim($mac));
+        $parts = preg_split('/[:\-]/', $mac);
+        if (count($parts) !== 6) return null;
+        $out = array();
+        foreach ($parts as $p) {
+            if (!preg_match('/^[0-9a-f]{1,2}$/', $p)) return null;
+            $out[] = hexdec($p);
+        }
+        return implode('.', $out);
     }
 
     private static function parsePingOutput($out) {
