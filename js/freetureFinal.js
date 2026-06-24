@@ -191,65 +191,61 @@ $("#ftCfgFileForm").on("submit", function (e) {
 
 });
 
-// Upload new freeture mask
+// Upload new freeture mask.
+// Il server ora abilita ACQ_MASK_ENABLED=true atomicamente con l'upload, quindi non
+// serve piu' la catena GET id -> GET cfg -> UPDATE lato client.
 $("#maskFileForm").on("submit", function (e) {
     e.preventDefault();
     var file = $("#form-mask")[0].files[0];
-    var formData = new FormData();
-    formData.append("mask", file);
 
-    // Make a POST request to update mask file
     $.ajax({
-        url: "/lib/ft/V2/freeturefinal/editmask",
-        type: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (res) {
-            try {
-                var parsed = JSON.parse(res);
-                if(parsed.result) {
-                    if (parsed.warning) {
-                        alert(parsed.warning); 
-                    }
-                    reloadAllDatatable();
-                    defaultSuccess(_("Maschera caricata correttamente"));
-                    $("#uploadmaskbtn").attr('disabled', true);
-                    $('#form-mask').val('');
-
-                    // Make a POST request to enable mask
-                    $.get("/lib/ft/V2/freeturefinal/id/ACQ_MASK_ENABLED", function (json1) {
-                        var id = JSON.parse(json1).data;
-                        $.get("/lib/ft/V2/freeturefinal/" + id, function (json2) {
-                            var obj = JSON.parse(json2).data;
-                            //var ft = new FreetureFinalModel('V2');
-                            inaffreeturefinal.id = obj.id.toString();
-                            inaffreeturefinal.key = obj.key;
-                            inaffreeturefinal.value = "true";
-                            inaffreeturefinal.description = obj.description;
-                            inaffreeturefinal.insert(function () {
-                                reloadAllDatatable();
-                                // Brief delay so the success toast remains visible
-                                // before the page reloads to reflect the new mask.
-                                setTimeout(function () {
-                                    window.location.reload();
-                                }, 1500);
-                            });
-                        });
-
-                    });
-
-                } else {
-                    defaultError(_("Errore durante il caricamento della maschera"));
-                }
-            } catch (e) {
-                defaultError(_("Errore durante il caricamento della maschera"));
-            }
+        url: '/lib/core/v1/csfr',
+        method: 'GET',
+        dataType: 'json'
+    }).then(function (csrf) {
+        if (!csrf || !csrf.result || !csrf.data || !csrf.data.token) {
+            defaultError(_("Impossibile ottenere il token CSRF"));
+            return;
         }
+        var formData = new FormData();
+        formData.append("mask", file);
+        formData.append("token", csrf.data.token);
+
+        $.ajax({
+            url: "/lib/ft/V2/freeturefinal/editmask",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false
+        }).done(function (res) {
+            var parsed;
+            try { parsed = (typeof res === 'string') ? JSON.parse(res) : res; }
+            catch (err) {
+                defaultError(_("Errore durante il caricamento della maschera"));
+                return;
+            }
+            if (!parsed || !parsed.result) {
+                var msg = (parsed && parsed.data) ? parsed.data : _("Errore durante il caricamento della maschera");
+                defaultError(msg);
+                return;
+            }
+            if (parsed.warning) {
+                alert(parsed.warning);
+            }
+            reloadAllDatatable();
+            defaultSuccess(_("Maschera caricata correttamente"));
+            $("#uploadmaskbtn").attr('disabled', true);
+            $('#form-mask').val('');
+            setTimeout(function () { window.location.reload(); }, 1500);
+        }).fail(function (xhr) {
+            var msg = _("Errore durante il caricamento della maschera");
+            try {
+                var parsed = JSON.parse(xhr.responseText);
+                if (parsed && parsed.data) msg = parsed.data;
+            } catch (err) {}
+            defaultError(msg);
+        });
     });
-
-    
-
 });
 
 $(function () {

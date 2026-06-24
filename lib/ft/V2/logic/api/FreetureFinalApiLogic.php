@@ -42,48 +42,110 @@ class FreetureFinalApiLogic {
     }
 
     public static function EditMask($request) {
-        
+
         try {
 
             $Person = CoreLogic::VerifyPerson();
-            //CoreLogic::CheckCSRF($request->get("token"));
-            //$tmp = $request->get("data");
-            $res = self::updateMaskFile($request->files->get('mask'));
-            if ($res) {
-                $ob = new FreetureFinal();
-                $ob->id = self::getId("ACQ_MASK_ENABLED");
-                $ob->key = "ACQ_MASK_ENABLED";
-                $ob->value = "true";
-                //self::updateValue($ob);
-                $warning = self::checkRes(); 
+            CoreLogic::CheckCSRF($request->get("token"));
 
-                $res = CoreLogic::GenerateResponse($res);
-                if (isset($warning)) {
-                    $res->warning = $warning;
-                }
-                return $res;
-            } else {
-                return CoreLogic::GenerateErrorResponse("Impossibile caricare la maschera", 500);
+            $uploaded = $request->files->get('mask');
+            if ($uploaded === null) {
+                return CoreLogic::GenerateErrorResponse("Nessun file ricevuto (campo 'mask' mancante).", 400);
             }
+
+            // Destinazione presa da ACQ_MASK_PATH in configuration.cfg: senza quella
+            // non sappiamo dove scrivere e fallire silenziosamente non aiuta nessuno.
+            $destPath = self::getMaskPath();
+            if ($destPath === '') {
+                return CoreLogic::GenerateErrorResponse(
+                    "ACQ_MASK_PATH non configurato in configuration.cfg: impossibile salvare la maschera.", 500
+                );
+            }
+
+            // Validazione tipo file PRIMA di toccare il disco.
+            $validationError = self::validateMaskUpload($uploaded);
+            if ($validationError !== null) {
+                return CoreLogic::GenerateErrorResponse($validationError, 400);
+            }
+
+            // Salvataggio + (se ok) restart freeture per ricaricare la maschera.
+            if (!self::updateMaskFile($uploaded, $destPath)) {
+                return CoreLogic::GenerateErrorResponse(
+                    "Impossibile salvare la maschera in $destPath (permessi insufficienti?).", 500
+                );
+            }
+
+            // Attivazione ACQ_MASK_ENABLED=true lato server (atomico col salvataggio):
+            // se non lo facciamo qui il file e' su disco ma la config non lo abilita.
+            $id = self::getId("ACQ_MASK_ENABLED");
+            if ($id) {
+                $ob = new FreetureFinal();
+                $ob->id    = $id;
+                $ob->key   = "ACQ_MASK_ENABLED";
+                $ob->value = "true";
+                self::updateValue($ob);
+            }
+
+            $warning = self::checkRes();
+            $res = CoreLogic::GenerateResponse(true);
+            if ($warning !== null) {
+                $res->warning = $warning;
+            }
+            return $res;
         } catch (ApiException $a) {
             CoreLogic::rollbackTransaction();
             return CoreLogic::GenerateErrorResponse($a->message);
         }
     }
-    
+
+    /**
+     * Verifica che $uploaded sia un .bmp valido (estensione + magic header 'BM').
+     * Ritorna null se ok, altrimenti una stringa di errore.
+     */
+    private static function validateMaskUpload($uploaded) {
+        $name = method_exists($uploaded, 'getClientOriginalName') ? $uploaded->getClientOriginalName() : '';
+        $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if ($ext !== 'bmp') {
+            return "La maschera deve avere estensione .bmp (ricevuto: " . ($ext !== '' ? ".$ext" : "nessuna estensione") . ").";
+        }
+
+        $tmpPath = method_exists($uploaded, 'getRealPath') ? $uploaded->getRealPath() : (string) $uploaded;
+        if (!$tmpPath || !is_file($tmpPath)) {
+            return "File temporaneo non disponibile.";
+        }
+        $fh = @fopen($tmpPath, 'rb');
+        if ($fh === false) {
+            return "Impossibile leggere il file caricato.";
+        }
+        $magic = fread($fh, 2);
+        fclose($fh);
+        if ($magic !== 'BM') {
+            return "Il file caricato non e' un bitmap (header magic 'BM' mancante).";
+        }
+        return null;
+    }
+
     public function checkRes() {
         $maskPath = self::getMaskPath();
-        list($mw, $mh) = getimagesize($maskPath);
-        $id= self::getId("ACQ_RES_SIZE");
-        $ob=self::getCfg("$id");
-        $expRes=$ob-> value;
-        list($expW, $expH) = explode('x', $expRes);
-        if ($mw != $expW || $mh != $expH) {
-            return "Warning: La risoluzione della maschera: $mw x $mh non coincide con quella attesa: $expW x $expH";
-        }else{
+        $size = @getimagesize($maskPath);
+        if ($size === false) {
+            return "Impossibile leggere la risoluzione del file caricato (bitmap non valido?).";
+        }
+        list($mw, $mh) = $size;
+
+        $id = self::getId("ACQ_RES_SIZE");
+        if (!$id) {
             return null;
         }
-           
+        $ob = self::getCfg("$id");
+        if (!$ob || !isset($ob->value) || strpos($ob->value, 'x') === false) {
+            return null;
+        }
+        list($expW, $expH) = explode('x', $ob->value, 2);
+        if ((int) $mw !== (int) $expW || (int) $mh !== (int) $expH) {
+            return "Warning: La risoluzione della maschera: {$mw}x{$mh} non coincide con quella attesa: {$expW}x{$expH}";
+        }
+        return null;
     }
     
 
@@ -658,15 +720,27 @@ class FreetureFinalApiLogic {
         return $base64;
     }
 
-    // Update mask file 
-    public static function updateMaskFile($ob) {
-        $freetureConf = self::getMaskPath();
-        if (!empty($ob)) {
-            $result = move_uploaded_file($ob, $freetureConf);
-            self::restartFreeture();
-            return $result;
+    // Update mask file. $destPath opzionale per evitare di rileggere la config; se omesso
+    // viene ricavato da ACQ_MASK_PATH. Ritorna true se il file e' stato salvato.
+    public static function updateMaskFile($ob, $destPath = null) {
+        if (empty($ob)) {
+            return false;
         }
-        return false;
+        if ($destPath === null) {
+            $destPath = self::getMaskPath();
+        }
+        if ($destPath === '') {
+            return false;
+        }
+        $tmpPath = (is_object($ob) && method_exists($ob, 'getRealPath')) ? $ob->getRealPath() : (string) $ob;
+        if (!$tmpPath || !is_file($tmpPath)) {
+            return false;
+        }
+        if (!@move_uploaded_file($tmpPath, $destPath)) {
+            return false;
+        }
+        self::restartFreeture();
+        return true;
     }
 
     // Get path to mask file parsing freeture configuration
@@ -837,19 +911,30 @@ class FreetureFinalApiLogic {
     }
 
     // Restart freeture container in ssh
+    // Riavvia il container freeture via SSH usando stop + start (piu' affidabile di
+    // `docker restart` su one-shot ssh2_exec) e leggendo gli stream a EOF per garantire
+    // che i comandi terminino davvero prima della chiusura della sessione SSH.
     public static function restartFreeture() {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
-        $print = ssh2_fingerprint($session);
-
-        if ($session) {
-            //Authenticate with keypair generated using "ssh-keygen -m PEM -t rsa -f /path/to/key"
-            if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-                $stream = ssh2_exec($session, "docker inspect -f '{{.State.Running}}' freeture | grep -q 'true' && docker restart freeture");
-                return true;
-            }
-            unset($session);
+        if (!$session) {
+            return false;
         }
-        return false;
+        $ok = false;
+        if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            $stopStream = ssh2_exec($session, "docker stop freeture");
+            if ($stopStream) {
+                stream_set_blocking($stopStream, true);
+                stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+            }
+            $startStream = ssh2_exec($session, "docker start freeture");
+            if ($startStream) {
+                stream_set_blocking($startStream, true);
+                stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+            }
+            $ok = true;
+        }
+        unset($session);
+        return $ok;
     }
 
     public static function cleanConfiguration() {
