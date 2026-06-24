@@ -536,10 +536,11 @@ class CaptureApiLogic {
             $report['inProgress'] = $todayInfo['inProgress'];
             $report['cutoffTime'] = $todayInfo['cutoffTime'];
 
-            // Incrocio con i log freeture: per ogni range mancante annoto la prima
-            // riga ERROR/FATAL caduta in quell'intervallo (se presente).
+            // Incrocio con i log freeture: per ogni range mancante annoto la causa
+            // piu' verosimile (ERROR/FATAL > WARN) caduta nella finestra estesa
+            // attorno al range.
             if (!empty($report['missingRanges']) && preg_match('/(\d{8})/', $dayDir, $dk)) {
-                self::lookupErrorCausesForRanges($report['missingRanges'], $dk[1]);
+                self::lookupErrorCausesForRanges($report['missingRanges'], $dk[1], $periodSec);
             }
 
             error_log("[GetCompleteness/capture] report expected={$report['expectedCount']} found={$report['foundCount']} missing={$report['missingCount']} ranges=" . count($report['missingRanges']) . " inProgress=" . ($report['inProgress'] ? '1' : '0') . " cutoff=" . $report['cutoffTime']);
@@ -665,61 +666,84 @@ class CaptureApiLogic {
         return sprintf('%02d:%02d:%02d', $h, $m, $s);
     }
 
-    // Per ogni range in $ranges (modificato in-place) cerca tra i log freeture
-    // del giorno $dayKey (YYYYMMDD) la prima riga ERROR/FATAL caduta nell'intervallo
-    // [startSec, endSec] e la attacca al range come campo 'cause'.
-    private static function lookupErrorCausesForRanges(&$ranges, $dayKey) {
+    // Per ogni range in $ranges (modificato in-place) cerca tra i log freeture la
+    // causa piu' verosimile del buco. La finestra di ricerca e' [startSec - lookback,
+    // endSec] perche' tipicamente il file mancante alle HH:MM non e' stato scritto
+    // a causa di un errore avvenuto NEL CICLO PRECEDENTE (quindi prima di HH:MM).
+    // Priorita': ERROR/FATAL > WARN.
+    private static function lookupErrorCausesForRanges(&$ranges, $dayKey, $periodSec) {
         $stationCode = CoreLogic::GetStationCode();
         $logsDir = _FREETURE_DATA_ . $stationCode . "/logs/";
         if (!is_dir($logsDir)) {
             error_log("[lookupErrorCauses/capture] logs dir absent: $logsDir");
             return;
         }
-        $errors = self::loadDayErrors($logsDir, $dayKey);
-        error_log("[lookupErrorCauses/capture] loaded " . count($errors) . " ERROR/FATAL lines for dayKey=$dayKey");
-        if (empty($errors)) {
+        $logLines = self::loadDayErrors($logsDir, $dayKey);
+        error_log("[lookupErrorCauses/capture] loaded " . count($logLines) . " ERROR/FATAL/WARN lines for dayKey=$dayKey");
+        if (empty($logLines)) {
             return;
         }
-        $datePrefix = substr($dayKey, 0, 4) . '-' . substr($dayKey, 4, 2) . '-' . substr($dayKey, 6, 2);
+        $datePrefix  = substr($dayKey, 0, 4) . '-' . substr($dayKey, 4, 2) . '-' . substr($dayKey, 6, 2);
+        $lookbackSec = max(120, ((int) $periodSec) * 2);
         foreach ($ranges as &$r) {
-            $startTs = $datePrefix . ' ' . self::fmtHMS($r['startSec']);
-            $endTs   = $datePrefix . ' ' . self::fmtHMS($r['endSec']);
-            foreach ($errors as $err) {
-                if (strcmp($err['timestamp'], $startTs) >= 0 && strcmp($err['timestamp'], $endTs) <= 0) {
-                    $r['cause'] = $err;
-                    break;
+            $winStartSec = max(0, $r['startSec'] - $lookbackSec);
+            $startTs     = $datePrefix . ' ' . self::fmtHMS($winStartSec);
+            $endTs       = $datePrefix . ' ' . self::fmtHMS($r['endSec']);
+            $bestErr     = null;
+            foreach ($logLines as $line) {
+                if (strcmp($line['timestamp'], $startTs) < 0) continue;
+                if (strcmp($line['timestamp'], $endTs) > 0)   break; // log ordinati per ts
+                $isFatal = ($line['level'] === 'ERROR' || $line['level'] === 'FATAL');
+                if ($bestErr === null) {
+                    $bestErr = $line;
+                } elseif ($isFatal && $bestErr['level'] === 'WARN') {
+                    $bestErr = $line;
                 }
+            }
+            if ($bestErr !== null) {
+                $r['cause'] = $bestErr;
             }
         }
         unset($r);
     }
 
-    // Legge tutti i .log sotto $logsDir, estrae le righe ERROR/FATAL del giorno
-    // $dayKey (YYYYMMDD), ritorna array ordinato per timestamp.
+    // Legge tutti i .log sotto $logsDir ed estrae le righe ERROR/FATAL/WARN del
+    // giorno $dayKey (YYYYMMDD), ordinate per timestamp.
     private static function loadDayErrors($logsDir, $dayKey) {
         $datePrefix = substr($dayKey, 0, 4) . '-' . substr($dayKey, 4, 2) . '-' . substr($dayKey, 6, 2);
-        $linePattern = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}); ([A-Z]+); (.*)$/';
-        $errors = array();
+        // Accetto sia il formato "YYYY-MM-DD HH:MM:SS; LEVEL; msg" che la variante
+        // "YYYY-MM-DD HH:MM:SS [LEVEL] [thread] msg" (log4cpp con altre conversion patterns).
+        $patternSemi   = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}); ([A-Z]+); (.*)$/';
+        $patternSquare = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[([A-Z]+)\] (.*)$/';
+        $lines = array();
         foreach (glob($logsDir . "*.log") as $logFile) {
             $thread = pathinfo($logFile, PATHINFO_FILENAME);
             $fh = @fopen($logFile, 'r');
             if (!$fh) continue;
-            while (($line = fgets($fh)) !== false) {
-                $line = rtrim($line, "\r\n");
-                if ($line === '' || !preg_match($linePattern, $line, $m)) continue;
+            while (($raw = fgets($fh)) !== false) {
+                $raw = rtrim($raw, "\r\n");
+                if ($raw === '') continue;
+                if (preg_match($patternSemi, $raw, $m)) {
+                    // ok
+                } elseif (preg_match($patternSquare, $raw, $m)) {
+                    // ok
+                } else {
+                    continue;
+                }
                 if (strpos($m[1], $datePrefix) !== 0) continue;
-                if ($m[2] !== 'ERROR' && $m[2] !== 'FATAL') continue;
-                $errors[] = array(
+                $lvl = $m[2];
+                if ($lvl !== 'ERROR' && $lvl !== 'FATAL' && $lvl !== 'WARN') continue;
+                $lines[] = array(
                     'timestamp' => $m[1],
-                    'level'     => $m[2],
+                    'level'     => $lvl,
                     'thread'    => $thread,
                     'message'   => $m[3],
                 );
             }
             fclose($fh);
         }
-        usort($errors, function ($a, $b) { return strcmp($a['timestamp'], $b['timestamp']); });
-        return $errors;
+        usort($lines, function ($a, $b) { return strcmp($a['timestamp'], $b['timestamp']); });
+        return $lines;
     }
 
     // Se la dateKey YYYYMMDD del dayDir coincide con la data UT corrente, il giorno
