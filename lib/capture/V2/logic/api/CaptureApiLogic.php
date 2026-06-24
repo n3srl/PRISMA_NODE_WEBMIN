@@ -515,15 +515,26 @@ class CaptureApiLogic {
         try {
             $Person = CoreLogic::VerifyPerson();
             $dayDir = isset($_GET['dayDir']) ? $_GET['dayDir'] : '';
+            error_log("[GetCompleteness/capture] start dayDir='$dayDir'");
             if ($dayDir === '') {
+                error_log("[GetCompleteness/capture] ABORT: dayDir empty");
                 throw new ApiException("Parametro dayDir mancante.");
             }
             $periodSec    = self::getCapturePeriodSeconds();
+            error_log("[GetCompleteness/capture] periodSec=$periodSec");
+            $captureDir   = self::getDataPath() . $dayDir . "/captures";
+            error_log("[GetCompleteness/capture] captureDir='$captureDir' exists=" . (is_dir($captureDir) ? 'yes' : 'no'));
             $foundSeconds = self::collectCaptureSecondsOfDay($dayDir);
+            error_log("[GetCompleteness/capture] foundFiles=" . count($foundSeconds));
             $report       = self::buildCompletenessReport($foundSeconds, $periodSec);
             $report['dayDir'] = $dayDir;
+            error_log("[GetCompleteness/capture] report expected={$report['expectedCount']} found={$report['foundCount']} missing={$report['missingCount']} ranges=" . count($report['missingRanges']));
         } catch (ApiException $a) {
+            error_log("[GetCompleteness/capture] ApiException: " . $a->message);
             return CoreLogic::GenerateErrorResponse($a->message);
+        } catch (\Throwable $t) {
+            error_log("[GetCompleteness/capture] EXCEPTION " . get_class($t) . ": " . $t->getMessage() . " @ " . $t->getFile() . ":" . $t->getLine());
+            return CoreLogic::GenerateErrorResponse("Errore interno: " . $t->getMessage());
         }
         return CoreLogic::GenerateResponse(true, $report);
     }

@@ -213,15 +213,24 @@ class StackApiLogic {
         try {
             $Person = CoreLogic::VerifyPerson();
             $dayDir = isset($_GET['dayDir']) ? $_GET['dayDir'] : '';
+            error_log("[GetCompleteness/stack] start dayDir='$dayDir'");
             if ($dayDir === '') {
+                error_log("[GetCompleteness/stack] ABORT: dayDir empty");
                 throw new ApiException("Parametro dayDir mancante.");
             }
             $periodSec = self::getStackPeriodSeconds();
+            error_log("[GetCompleteness/stack] periodSec=$periodSec");
             $files     = self::collectStacksFiles($dayDir);
+            error_log("[GetCompleteness/stack] collected files=" . count($files));
             $report    = self::buildStackCompletenessReport($files, $periodSec);
             $report['dayDir'] = $dayDir;
+            error_log("[GetCompleteness/stack] report expected={$report['expectedCount']} found={$report['foundCount']} missing={$report['missingCount']} ranges=" . count($report['missingRanges']));
         } catch (ApiException $a) {
+            error_log("[GetCompleteness/stack] ApiException: " . $a->message);
             return CoreLogic::GenerateErrorResponse($a->message);
+        } catch (\Throwable $t) {
+            error_log("[GetCompleteness/stack] EXCEPTION " . get_class($t) . ": " . $t->getMessage() . " @ " . $t->getFile() . ":" . $t->getLine());
+            return CoreLogic::GenerateErrorResponse("Errore interno: " . $t->getMessage());
         }
         return CoreLogic::GenerateResponse(true, $report);
     }
