@@ -64,3 +64,9 @@ define('_DEFAULT_STATION_NAME_','DEFAULT');
 define('_SWITCH_IP_', '10.90.90.90');
 define('_SWITCH_SNMP_COMMUNITY_', 'public');
 define('_SWITCH_SNMP_VERSION_', '2c');
+
+// Credenziali HTTP per Cable Diagnostics (DGS-1210 non espone TDR via SNMP nei
+// firmware 6.30.x, quindi serve scrapare la GUI web). Sul DGS-1210 il form di
+// login chiede solo password (user fisso "admin" interno).
+define('_SWITCH_HTTP_USER_',     '');
+define('_SWITCH_HTTP_PASSWORD_', 'admin');
