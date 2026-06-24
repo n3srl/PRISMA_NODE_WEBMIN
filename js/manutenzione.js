@@ -569,6 +569,9 @@ function runFitsHeader() {
     $btnRun.prop('disabled', true);
     $status.html('<div class="alert alert-info">' + _('Aggiornamento header in corso...') + '</div>');
 
+    _showFitsHeaderProgress(0, 0, 'starting');
+    var pollHandle = setInterval(_pollFitsHeaderProgress, 500);
+
     _csrfTokenForMigration().then(function (token) {
         return $.ajax({
             url: '/lib/manutenzione/V2/manutenzione/fits/run',
@@ -606,5 +609,48 @@ function runFitsHeader() {
         var msg = xhr && xhr.responseText ? xhr.responseText : '';
         $status.html('<div class="alert alert-danger">' +
             _('Errore HTTP durante l\'aggiornamento') + ' ' + _escHtml(msg) + '</div>');
+    }).always(function () {
+        clearInterval(pollHandle);
+        _pollFitsHeaderProgress(); // ultimo refresh per portare la barra a 100%/error
+        setTimeout(_hideFitsHeaderProgress, 2500);
+    });
+}
+
+// Progress bar per il pannello FITS header (stesso pattern della migrazione dati).
+function _showFitsHeaderProgress(processed, total, phase) {
+    var pct = (total > 0) ? Math.round((processed / total) * 100) : 0;
+    var $bar = $('#fits-header-progress-bar');
+    var $txt = $('#fits-header-progress-text');
+    $('#fits-header-progress-wrap').show();
+    $bar.css('width', pct + '%').attr('aria-valuenow', pct).text(pct + '%');
+    if (phase === 'starting') {
+        $txt.text(_('Avvio scansione...'));
+    } else if (phase === 'done') {
+        $txt.text(_('Completato') + ' (' + processed + '/' + total + ').');
+    } else if (phase === 'error') {
+        $bar.removeClass('progress-bar-striped active').addClass('progress-bar-danger');
+        $txt.text(_('Errore durante l\'aggiornamento.'));
+    } else {
+        $txt.text(_('File processati') + ': ' + processed + ' / ' + total);
+    }
+}
+function _hideFitsHeaderProgress() {
+    var $bar = $('#fits-header-progress-bar');
+    $bar.removeClass('progress-bar-danger').addClass('progress-bar-striped active')
+        .css('width', '0%').attr('aria-valuenow', 0).text('0%');
+    $('#fits-header-progress-text').text('');
+    $('#fits-header-progress-wrap').hide();
+}
+function _pollFitsHeaderProgress() {
+    $.ajax({
+        url: '/lib/manutenzione/V2/manutenzione/fits/progress',
+        method: 'GET',
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) { return; }
+        var d = resp.data;
+        if (d.idle) { return; }
+        _showFitsHeaderProgress(d.processed || 0, d.total || 0, d.phase || 'running');
     });
 }

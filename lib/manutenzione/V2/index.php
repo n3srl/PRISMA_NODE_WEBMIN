@@ -139,4 +139,17 @@ $app->POST('/manutenzione/fits/run', function(Application $app, Request $request
 	return $resp;
 });
 
+/**
+*
+* PROGRESS: stato di avanzamento del Run FITS (polling client durante l'esecuzione)
+*
+**/
+$app->GET('/manutenzione/fits/progress', function(Application $app, Request $request) {
+
+	$result = FitsHeaderApiLogic::GetProgress();
+	$resp = new Response(json_encode($result));
+	$resp->setStatusCode($result->result ? 200 : 403);
+	return $resp;
+});
+
 $app->run();

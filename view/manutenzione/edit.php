@@ -121,6 +121,17 @@
 
                         <div id="fits-header-status" style="margin-bottom: 12px;"></div>
 
+                        <div id="fits-header-progress-wrap" style="display:none; margin-bottom: 12px;">
+                            <div class="progress" style="height: 22px; margin-bottom: 4px;">
+                                <div id="fits-header-progress-bar"
+                                     class="progress-bar progress-bar-striped active"
+                                     role="progressbar"
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                                     style="width: 0%; line-height: 22px; font-weight: 600;">0%</div>
+                            </div>
+                            <div id="fits-header-progress-text" style="font-size: 12px; color:#555;"></div>
+                        </div>
+
                         <table id="FitsHeaderList" class="table table-striped table-bordered" style="width:100%">
                             <thead>
                                 <tr>
