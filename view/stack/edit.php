@@ -104,6 +104,7 @@
                             </table>
                         </div>
                         <div class='col-md-9 col-sm-9 col-xs-12'>
+                            <div id="stack-completeness-status" style="margin-bottom: 10px;"></div>
                             <table id='StackList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>
                                     <tr>

@@ -298,6 +298,7 @@ function initStacksDatatable() {
         $('#StackList').dataTable().fnDraw();
         table1.$('tr.selected').removeClass('selected');
         $(this).addClass('selected');
+        loadStackCompleteness(folder);
     });
 
     // Hide preview column and enable preview toggle if media not enabled
@@ -348,6 +349,70 @@ function initFilters() {
             minimumInputLength: 0
         });
     });
+}
+
+// Carica il completeness report per il giorno selezionato e lo renderizza
+// sopra la tabella dei file (alert verde se completo, warning con range di ore
+// mancanti se ci sono buchi).
+function loadStackCompleteness(dayDir) {
+    var $box = $('#stack-completeness-status');
+    if (!dayDir) { $box.empty(); return; }
+    $box.html('<div class="alert alert-info" style="margin:0;">' + _('Controllo completezza...') + '</div>');
+    $.ajax({
+        url: '/lib/stack/V2/stack/completeness',
+        method: 'GET',
+        data: { dayDir: dayDir },
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $box.html('<div class="alert alert-warning" style="margin:0;">' +
+                _('Impossibile calcolare la completezza per questo giorno') + '.</div>');
+            return;
+        }
+        $box.html(renderCompletenessHtml(resp.data, _('stack')));
+    }).fail(function () {
+        $box.html('<div class="alert alert-warning" style="margin:0;">' +
+            _('Errore nel controllo di completezza') + '.</div>');
+    });
+}
+
+// Costruisce l'HTML del banner completeness (riusabile da stack & capture).
+function renderCompletenessHtml(d, label) {
+    var period = d.periodSeconds;
+    var freq;
+    if (period >= 3600) {
+        freq = (period / 3600).toFixed(1) + ' h';
+    } else if (period >= 60) {
+        freq = (period / 60).toFixed(1) + ' min';
+    } else {
+        freq = period + ' s';
+    }
+    if (d.complete) {
+        return '<div class="alert alert-success" style="margin:0;">' +
+            '<i class="fa fa-check"></i> ' +
+            _('Giorno completo') + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label + ' ' +
+            '(' + _('uno ogni') + ' ' + freq + ').' +
+            '</div>';
+    }
+    var ranges = d.missingRanges || [];
+    var rangesHtml = ranges.slice(0, 50).map(function (r) {
+        if (r.count > 1) {
+            return '<li><code>' + r.start + ' &mdash; ' + r.end + '</code> ' +
+                '<small class="text-muted">(' + r.count + ' ' + _('slot') + ')</small></li>';
+        }
+        return '<li><code>' + r.start + '</code></li>';
+    }).join('');
+    var extra = (ranges.length > 50)
+        ? '<li><em>' + _('e altri') + ' ' + (ranges.length - 50) + ' ' + _('range') + '...</em></li>'
+        : '';
+    return '<div class="alert alert-warning" style="margin:0;">' +
+        '<i class="fa fa-exclamation-triangle"></i> ' +
+        _('Giorno incompleto') + ': <b>' + d.foundCount + ' / ' + d.expectedCount + '</b> ' + label +
+        ' (' + _('mancano') + ' <b>' + d.missingCount + '</b>, ' + _('uno ogni') + ' ' + freq + ').' +
+        '<div style="margin-top:6px;"><b>' + _('Intervalli mancanti') + ':</b>' +
+        '<ul style="margin:4px 0 0 0; padding-left: 20px;">' + rangesHtml + extra + '</ul></div>' +
+        '</div>';
 }
 
 

@@ -179,6 +179,19 @@ $app->GET('/stack/datatable/daylist', function (Application $app, Request $reque
 
 /**
  *
+ * GET COMPLETENESS REPORT (slot mancanti per il giorno selezionato)
+ *
+ * */
+$app->GET('/stack/completeness', function (Application $app, Request $request) {
+
+    $result = StackApiLogic::GetCompleteness($request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
  * GET AUTOCOMPLETE
  *
  * */

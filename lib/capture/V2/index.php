@@ -179,6 +179,19 @@ $app->GET('/capture/datatable/daylist', function (Application $app, Request $req
 
 /**
  *
+ * GET COMPLETENESS REPORT (slot mancanti per il giorno selezionato)
+ *
+ * */
+$app->GET('/capture/completeness', function (Application $app, Request $request) {
+
+    $result = CaptureApiLogic::GetCompleteness($request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
  * GET AUTOCOMPLETE
  *
  * */
