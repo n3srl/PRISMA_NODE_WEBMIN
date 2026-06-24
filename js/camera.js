@@ -470,6 +470,9 @@ function renderCameraHwInfoDeep(data) {
     var live = data.live || {};
     var warnings = data.warnings || [];
     var pausedSec = data.pausedSec;
+    var rawOutput = data.raw || '';
+    console.log('[camera/hwinfo/deep] response', data);
+    console.log('[camera/hwinfo/deep] live keys:', Object.keys(live));
 
     // Raggruppamenti logici delle feature in ordine di interesse.
     var groups = [
@@ -545,13 +548,21 @@ function renderCameraHwInfoDeep(data) {
         '</ul></div>';
     }
 
+    // Tieni traccia di quali key sono gia' state mostrate nei gruppi, cosi'
+    // possiamo poi mostrare tutto cio' che il parser ha estratto MA che non e'
+    // mappato in alcun gruppo (utile per scoprire nuove feature interessanti).
+    var shownKeys = {};
+    var renderedGroups = 0;
+
     groups.forEach(function (g) {
         var rows = g.keys.filter(function (kv) { return live[kv[0]] !== undefined; });
         if (!rows.length) return;
+        renderedGroups++;
         html += '<div class="col-md-6 col-sm-12" style="padding-left:0;">' +
             '<h4 style="margin-top:0;">' + _escDeep(g.title) + '</h4>' +
             '<table class="table table-condensed" style="margin-bottom:14px;">';
         rows.forEach(function (kv) {
+            shownKeys[kv[0]] = true;
             html += '<tr>' +
                 '<th style="width:45%;">' + _escDeep(kv[1]) + '</th>' +
                 '<td>' + _escDeep(live[kv[0]]) + '</td>' +
@@ -560,6 +571,41 @@ function renderCameraHwInfoDeep(data) {
         html += '</table></div>';
     });
     html += '<div class="clearfix"></div>';
+
+    // Sezione "Altri parametri letti": chiavi di live che NON sono in alcun gruppo.
+    var otherKeys = Object.keys(live).filter(function (k) { return !shownKeys[k]; });
+    if (otherKeys.length) {
+        html += '<h4 style="margin-top:6px;">' + _('Altri parametri letti') + '</h4>' +
+                '<table class="table table-condensed table-striped" style="margin-bottom:14px;">';
+        otherKeys.sort().forEach(function (k) {
+            html += '<tr>' +
+                '<th style="width:35%;"><code>' + _escDeep(k) + '</code></th>' +
+                '<td>' + _escDeep(live[k]) + '</td>' +
+            '</tr>';
+        });
+        html += '</table>';
+    }
+
+    // Fallback: se non e' uscito NESSUN campo strutturato, il parser PHP non ha
+    // matchato il formato di arv-tool. Mostra l'output grezzo cosi' possiamo capire.
+    if (renderedGroups === 0 && !otherKeys.length) {
+        html += '<div class="alert alert-warning">' +
+            '<b>' + _('Nessun parametro estratto') + '.</b> ' +
+            _('Il parser non ha riconosciuto il formato di output di arv-tool. Sotto trovi l\'output grezzo: serve per affinare il parser.') +
+        '</div>';
+    }
+
+    // Output grezzo sempre disponibile come <details> espandibile.
+    if (rawOutput) {
+        var snippet = rawOutput.length > 100000 ? rawOutput.substring(0, 100000) + '\n[...troncato...]' : rawOutput;
+        html += '<details style="margin-top:8px;">' +
+            '<summary style="cursor:pointer;"><b>' + _('Output grezzo arv-tool') + '</b> ' +
+            '<small class="text-muted">(' + rawOutput.length + ' ' + _('caratteri') + ')</small></summary>' +
+            '<pre style="max-height:400px; overflow:auto; background:#f7f7f9; padding:8px; font-size:11px; margin-top:6px;">' +
+            _escDeep(snippet) +
+            '</pre>' +
+        '</details>';
+    }
 
     $('#camera-hwinfo-deep').html(html).show();
 }
