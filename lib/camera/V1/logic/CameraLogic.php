@@ -271,31 +271,49 @@ class CameraLogic
         foreach ($r['ports'] as $p) { if ($p['up']) $r['portsUp']++; }
 
         // Match porta camera/nodo/uplink via MAC FDB.
-        // dot1dTpFdbPort: MAC <-> bridgePort
+        // BRIDGE-MIB::dot1dTpFdbPort viene spesso ritornato VUOTO su switch con VLAN
+        // management abilitata (es. DGS-1210 di default). In quel caso usiamo
+        // Q-BRIDGE-MIB::dot1qTpFdbPort (suffix = vlanId + MAC).
         $fdb = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.4.3.1.2');
+        $fdbKind = 'bridge';
+        if (empty($fdb)) {
+            $fdb = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.7.1.2.2.1.2');
+            $fdbKind = 'q-bridge';
+        }
         // dot1dBasePortIfIndex: bridgePort -> ifIndex
         $bridgePortToIf = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.17.1.4.1.2');
+        $r['fdbSize']   = count($fdb);
+        $r['fdbSource'] = $fdbKind;
 
-        // Costruisco mappa inversa bridgePort -> array di MAC visti
-        $portToMacs = array();
-        foreach ($fdb as $macSuffix => $bridgePort) {
-            $parts = explode('.', $macSuffix);
-            if (count($parts) !== 6) continue;
-            $mac = implode(':', array_map(function ($x) {
+        // Estrae il MAC (6 byte finali) dal suffix dell'OID FDB.
+        // - BRIDGE-MIB: suffix = 6 byte MAC
+        // - Q-BRIDGE-MIB: suffix = vlanId + 6 byte MAC (= 7 numeri)
+        $extractMac = function ($suffix) {
+            $parts = explode('.', $suffix);
+            $n = count($parts);
+            if ($n < 6) return null;
+            $macParts = array_slice($parts, $n - 6); // ultimi 6
+            return implode(':', array_map(function ($x) {
                 return sprintf('%02x', (int) $x);
-            }, $parts));
+            }, $macParts));
+        };
+
+        // Mappa inversa: bridgePort -> array di MAC visti
+        $portToMacs = array();
+        foreach ($fdb as $suffix => $bridgePort) {
+            $mac = $extractMac($suffix);
+            if ($mac === null) continue;
             if (!isset($portToMacs[$bridgePort])) $portToMacs[$bridgePort] = array();
             $portToMacs[$bridgePort][] = $mac;
         }
 
-        $lookupPort = function ($mac) use ($fdb, $bridgePortToIf) {
+        $lookupPort = function ($mac) use ($fdb, $bridgePortToIf, $extractMac) {
             if (!$mac) return null;
-            $suffix = self::macToOidSuffix($mac);
-            if ($suffix === null) return null;
-            foreach ($fdb as $key => $bridgePort) {
-                if ($key === $suffix
-                    || (strlen($key) > strlen($suffix)
-                        && substr($key, -(strlen($suffix) + 1)) === '.' . $suffix)) {
+            $target = strtolower($mac);
+            foreach ($fdb as $suffix => $bridgePort) {
+                $found = $extractMac($suffix);
+                if ($found === null) continue;
+                if (strtolower($found) === $target) {
                     return isset($bridgePortToIf[$bridgePort])
                         ? (int) $bridgePortToIf[$bridgePort]
                         : (int) $bridgePort;
@@ -350,7 +368,13 @@ class CameraLogic
             );
         }
         $r['intruderCount']   = count($r['intruders']);
-        $r['expectedUpPorts'] = 3; // camera + nodo + uplink
+
+        // Porte attese: dipende dalla topologia.
+        // Se il MAC del nodo NON compare nel FDB, il nodo non e' direttamente
+        // collegato a questo switch (e' "dietro" l'uplink), quindi attese = 2
+        // (camera + uplink). Altrimenti 3 (camera + nodo + uplink).
+        $r['expectedUpPorts'] = $r['nodePort'] ? 3 : 2;
+        $r['nodeDirectlyAttached'] = (bool) $r['nodePort'];
 
         return $r;
     }

@@ -769,16 +769,21 @@ function renderSwitchSection(sw) {
         (sw.uplinkPort ? ' &middot; <b>' + _('Uplink') + '</b>: <span class="label label-primary">Port ' + sw.uplinkPort + '</span>' : '') +
     '</div>';
 
-    // Banner sicurezza: 3 porte attese (camera + nodo + uplink). Piu' = host intrusi.
+    // Banner sicurezza: porte attese variano in base alla topologia (camera + uplink
+    // se il nodo non e' direttamente collegato, altrimenti +1).
     var expected = sw.expectedUpPorts || 3;
     var intruders = sw.intruders || [];
+    var topo = sw.nodeDirectlyAttached ? _('camera + nodo + uplink') : _('camera + uplink (nodo indiretto)');
+    var fdbHint = sw.fdbSource
+        ? ' <small class="text-muted">(FDB: ' + _escDeep(sw.fdbSource) + ', ' + (sw.fdbSize || 0) + ' MAC visti)</small>'
+        : '';
     if (intruders.length === 0 && (sw.portsUp || 0) <= expected) {
         html += '<div class="alert alert-success" style="margin-bottom:10px;">' +
             '<i class="fa fa-shield"></i> ' +
             '<b>' + _('Configurazione OK') + '</b>: ' +
             (sw.portsUp || 0) + ' / ' + expected + ' ' + _('porte attese attive') + ' ' +
-            '(' + _('camera + nodo + uplink') + '). ' +
-            _('Nessun host non riconosciuto.') +
+            '(' + topo + '). ' +
+            _('Nessun host non riconosciuto.') + fdbHint +
         '</div>';
     } else if (intruders.length > 0) {
         html += '<div class="alert alert-danger" style="margin-bottom:10px;">' +
