@@ -754,10 +754,12 @@ function renderSwitchSection(sw) {
         return html;
     }
 
-    // sysName, descr, uptime
+    // sysName / sysDescr (fallback su sysDescr se sysName e' stringa vuota)
+    var displayName = sw.sysName && sw.sysName !== '' ? sw.sysName : (sw.sysDescr || '-');
+    var descLine = (sw.sysName && sw.sysName !== '' && sw.sysDescr) ? sw.sysDescr : '';
     html += '<div class="alert alert-info" style="margin-bottom:10px;">' +
-        '<b>' + _('Nome') + '</b>: ' + _escDeep(sw.sysName || '-') +
-        (sw.sysDescr ? ' &middot; <small>' + _escDeep(sw.sysDescr) + '</small>' : '') +
+        '<b>' + _('Nome') + '</b>: ' + _escDeep(displayName) +
+        (descLine ? ' &middot; <small>' + _escDeep(descLine) + '</small>' : '') +
         '<br>' +
         '<b>' + _('Porte totali') + '</b>: ' + (sw.portsTotal || 0) +
         ' &middot; <b>' + _('Up') + '</b>: ' + (sw.portsUp || 0) +

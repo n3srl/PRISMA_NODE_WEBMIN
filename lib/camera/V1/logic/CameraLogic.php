@@ -218,15 +218,16 @@ class CameraLogic
         $r['configured'] = true;
         $r['ip']         = $ip;
 
-        // Probe sysName: minima sanity check
-        $sysName = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.5.0');
-        if ($sysName === null || $sysName === '') {
+        // Canary: uso sysDescr (sempre popolato dal firmware) invece di sysName,
+        // perche' sysName puo' essere stringa vuota se l'admin non l'ha configurato.
+        $sysDescr = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.1.0');
+        if ($sysDescr === null) {
             $r['warnings'][] = "Switch SNMP ($ip) non risponde: community sbagliata, SNMP non abilitato, o IP irraggiungibile dal docker host.";
             return $r;
         }
         $r['reachable'] = true;
-        $r['sysName']   = $sysName;
-        $r['sysDescr']  = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.1.0');
+        $r['sysDescr']  = $sysDescr;
+        $r['sysName']   = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.5.0');
         $r['sysUpTime'] = self::snmpGetViaSsh($ip, $community, '1.3.6.1.2.1.1.3.0');
 
         // ifTable walks
