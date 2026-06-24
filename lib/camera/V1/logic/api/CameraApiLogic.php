@@ -122,6 +122,17 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function ExploreSwitchCableDiag($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $res = CameraLogic::ExploreSwitchCableDiag();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function NetDiag($request)
     {
         try {
