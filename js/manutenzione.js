@@ -255,10 +255,33 @@ function loadDefaultMigrationPreview() {
         var canRun = payload.rootExists && payload.configIsValid && (payload.items || []).length > 0;
         $btnRun.prop('disabled', !canRun);
     }).fail(function (xhr) {
-        var msg = xhr && xhr.responseText ? xhr.responseText : '';
-        $status.html('<div class="alert alert-danger">' +
-            _('Errore HTTP durante lo scan') + ' ' + _escHtml(msg) + '</div>');
+        $status.html(_formatBackendError(xhr, _('Errore HTTP durante lo scan')));
     });
+}
+
+// Riconosce le risposte HTML 404/500 (tipiche di OPcache obsoleta o backend non
+// aggiornato) e mostra un messaggio diagnostico invece del dump grezzo dell'HTML.
+function _formatBackendError(xhr, prefix) {
+    var status = xhr && xhr.status;
+    var body = xhr && xhr.responseText ? xhr.responseText : '';
+    var looksHtml = body && body.charAt(0) === '<';
+    var summary = '';
+    if (looksHtml) {
+        if (status === 404 || /not be found|not found/i.test(body)) {
+            summary = '<br><b>' + _('Probabile causa') + ':</b> ' +
+                _('il backend sul nodo non e\' aggiornato (OPcache PHP obsoleta o codice non copiato in orma-src). Esegui sul nodo: <code>docker restart prisma-orma</code>') +
+                '.';
+        } else {
+            summary = '<br><b>' + _('Il server ha risposto con una pagina HTML invece di JSON') + ' (HTTP ' + status + ').</b>';
+        }
+    } else if (body) {
+        summary = ': <code style="white-space:pre-wrap;">' + _escHtml(body.substring(0, 400)) + '</code>';
+    }
+    return '<div class="alert alert-danger">' +
+        '<b>' + prefix + '</b>' +
+        ' (HTTP ' + (status || '?') + ')' +
+        summary +
+    '</div>';
 }
 
 function runDefaultMigration() {
@@ -324,9 +347,7 @@ function runDefaultMigration() {
         // Forza un nuovo scan per riallinearsi al filesystem.
         defaultMigrationLastScan = null;
     }).fail(function (xhr) {
-        var msg = xhr && xhr.responseText ? xhr.responseText : '';
-        $status.html('<div class="alert alert-danger">' +
-            _('Errore HTTP durante la migrazione') + ' ' + _escHtml(msg) + '</div>');
+        $status.html(_formatBackendError(xhr, _('Errore HTTP durante la migrazione')));
     }).always(function () {
         clearInterval(pollHandle);
         // Lascio la progress bar visibile al 100% per qualche secondo, poi la nascondo.
@@ -537,9 +558,7 @@ function loadFitsHeaderPreview() {
         var canRun = payload.rootExists && kwToChange > 0;
         $btnRun.prop('disabled', !canRun);
     }).fail(function (xhr) {
-        var msg = xhr && xhr.responseText ? xhr.responseText : '';
-        $status.html('<div class="alert alert-danger">' +
-            _('Errore HTTP durante lo scan') + ' ' + _escHtml(msg) + '</div>');
+        $status.html(_formatBackendError(xhr, _('Errore HTTP durante lo scan')));
     });
 }
 
@@ -606,9 +625,7 @@ function runFitsHeader() {
         fitsHeaderLastScan = null;
         loadFitsHeaderPreview();
     }).fail(function (xhr) {
-        var msg = xhr && xhr.responseText ? xhr.responseText : '';
-        $status.html('<div class="alert alert-danger">' +
-            _('Errore HTTP durante l\'aggiornamento') + ' ' + _escHtml(msg) + '</div>');
+        $status.html(_formatBackendError(xhr, _('Errore HTTP durante l\'aggiornamento')));
     }).always(function () {
         clearInterval(pollHandle);
         _pollFitsHeaderProgress(); // ultimo refresh per portare la barra a 100%/error
