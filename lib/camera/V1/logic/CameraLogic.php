@@ -109,7 +109,9 @@ class CameraLogic
             if ($raw === '' || stripos($raw, 'error') === 0 || stripos($raw, 'no device') !== false) {
                 $result['warnings'][] = "arv-tool non ha prodotto output utile (camera non raggiungibile?)";
             }
-            $result['live'] = self::parseArvValues($raw);
+            $parsed = self::parseArvValues($raw);
+            $result['live']        = $parsed['values'];
+            $result['parserUsed']  = $parsed['parser'];
         } catch (\Throwable $t) {
             error_log("[HwInfoDeep] EXCEPTION " . get_class($t) . ": " . $t->getMessage());
             $result['warnings'][] = "Eccezione: " . $t->getMessage();
@@ -142,8 +144,18 @@ class CameraLogic
         return (string) $out;
     }
 
-    // Estrae da $raw solo le feature GenICam che ci interessano, prettificando IP/MAC.
-    // arv-tool produce righe del tipo "  FeatureName = value" oppure "FeatureName: value (type)".
+    // Estrae da $raw solo le feature GenICam in whitelist e applica post-processing
+    // (decode IP/MAC packed, pretty-print Mbps/Gbps).
+    //
+    // Ritorna ['values' => array<string,string>, 'parser' => 'name-strategy-usata'].
+    //
+    // Strategie multiple in cascata (la prima che matcha almeno una chiave vince).
+    // arv-tool-0.8 (Aravis 0.8, usato con Lucid) produce:
+    //   "  StringReg : 'DeviceVendorName' = 'Lucid Vision Labs'"
+    //   "  Integer   : 'DeviceLinkSpeed' = 125000000 Bps"
+    // Altri tool (pylon-tools per Basler, eventuale arv-tool vecchio) possono usare
+    // formati piu' semplici "Feature = value" o "Feature: value": li proviamo come
+    // fallback. La whitelist filtra in ogni caso, quindi falsi positivi sono difficili.
     private static function parseArvValues($raw) {
         $whitelist = array(
             // Identita'
@@ -172,37 +184,83 @@ class CameraLogic
         );
         $wantSet = array_flip($whitelist);
 
-        $out = array();
-        $lines = preg_split('/\r?\n/', $raw);
-        // Pattern 1: "FeatureName = value"   (con eventuali spazi/tab iniziali)
-        // Pattern 2: "FeatureName: value"    (variante)
-        $pat = '/^\s*([A-Za-z][A-Za-z0-9_]*)\s*[:=]\s*(.+?)\s*(?:\((.+?)\))?\s*$/';
-        foreach ($lines as $line) {
-            if ($line === '') continue;
-            if (!preg_match($pat, $line, $m)) continue;
-            $key = $m[1];
-            if (!isset($wantSet[$key])) continue;
-            $val = trim($m[2]);
+        $strategies = array(
+            // 1) arv-tool-0.8 / Aravis (Lucid e qualunque vendor GigE Vision via Aravis):
+            //    "    StringReg   : 'DeviceVendorName' = 'Lucid Vision Labs'"
+            //    Ordine: <Tipo> : '<Feature>' = <valore>
+            array(
+                'name'  => 'aravis-typed',
+                'regex' => '/^\s*(?:StringReg|Integer|Float|Boolean|Enumeration|Register|String|Command)\s*:\s*\'([^\']+)\'\s*=\s*(.+?)\s*$/',
+            ),
+            // 2) Formato semplice "Feature = value" (pylon-viewer Basler e arv-tool legacy):
+            //    "DeviceVendorName = Basler"
+            array(
+                'name'  => 'plain-equals',
+                'regex' => '/^\s*([A-Z][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$/',
+            ),
+            // 3) Formato "Feature: value" (varianti pylon-tool):
+            //    "DeviceVendorName: Basler"
+            array(
+                'name'  => 'plain-colon',
+                'regex' => '/^\s*([A-Z][A-Za-z0-9_]*)\s*:\s*(.+?)\s*$/',
+            ),
+        );
 
-            // Decodifica IP/MAC packed (int o 0x-hex).
+        $lines = preg_split('/\r?\n/', $raw);
+        $parserUsed = null;
+        $out = array();
+
+        foreach ($strategies as $strat) {
+            $tmp = array();
+            foreach ($lines as $line) {
+                if ($line === '') continue;
+                if (!preg_match($strat['regex'], $line, $m)) continue;
+                $key = $m[1];
+                if (!isset($wantSet[$key])) continue;
+                $val = trim($m[2]);
+                // Strip apici singoli intorno a stringhe: "'Lucid Vision Labs'" -> "Lucid Vision Labs"
+                if (strlen($val) >= 2 && $val[0] === "'" && substr($val, -1) === "'") {
+                    $val = substr($val, 1, -1);
+                }
+                $tmp[$key] = $val;
+            }
+            if (!empty($tmp)) {
+                $parserUsed = $strat['name'];
+                $out = $tmp;
+                break;
+            }
+        }
+
+        if (empty($out)) {
+            error_log("[parseArvValues] no strategy matched any whitelisted key");
+            return array('values' => array(), 'parser' => null);
+        }
+        error_log("[parseArvValues] strategy='$parserUsed' matched " . count($out) . " keys");
+
+        // Post-processing: decodifica packed int -> IP/MAC, pretty-print bit-rate.
+        $out = self::postprocessGenicamValues($out);
+
+        return array('values' => $out, 'parser' => $parserUsed);
+    }
+
+    private static function postprocessGenicamValues(array $out) {
+        foreach ($out as $key => $val) {
             if ($key === 'GevCurrentIPAddress' || $key === 'GevCurrentSubnetMask' || $key === 'GevCurrentDefaultGateway') {
-                $val = self::decodePackedIp($val);
+                $out[$key] = self::decodePackedIp($val);
             } elseif ($key === 'GevMACAddress') {
-                $val = self::decodePackedMac($val);
+                $out[$key] = self::decodePackedMac($val);
             } elseif ($key === 'DeviceLinkSpeed') {
-                // bit/s -> Mbps/Gbps human friendly accanto al raw.
                 $n = self::parseNumber($val);
                 if ($n !== null) {
-                    if ($n >= 1e9) $val = sprintf('%.1f Gbps (%s)', $n / 1e9, $val);
-                    elseif ($n >= 1e6) $val = sprintf('%.1f Mbps (%s)', $n / 1e6, $val);
+                    if ($n >= 1e9)       $out[$key] = sprintf('%.1f Gbps (%s)',  $n / 1e9, $val);
+                    elseif ($n >= 1e6)   $out[$key] = sprintf('%.1f Mbps (%s)',  $n / 1e6, $val);
                 }
             } elseif ($key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
                 $n = self::parseNumber($val);
                 if ($n !== null && $n > 0) {
-                    $val = sprintf('%.1f MB/s (%s)', $n / 1e6, $val);
+                    $out[$key] = sprintf('%.1f MB/s (%s)', $n / 1e6, $val);
                 }
             }
-            $out[$key] = $val;
         }
         return $out;
     }

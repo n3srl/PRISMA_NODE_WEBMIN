@@ -500,9 +500,7 @@ function renderCameraHwInfoDeep(data) {
             ['AcquisitionFrameRate',    _('Frame rate (corrente)')],
             ['AcquisitionFrameRateEnable', _('Frame rate enabled')],
             ['ExposureTime',            _('Tempo esposizione')],
-            ['ExposureAuto',            _('Esposizione automatica')],
             ['Gain',                    _('Gain')],
-            ['GainAuto',                _('Gain automatico')],
             ['BlackLevel',              _('Black level')],
             ['PixelFormat',             _('Formato pixel')],
             ['Width',                   _('Larghezza')],
@@ -530,15 +528,34 @@ function renderCameraHwInfoDeep(data) {
             ['GevCurrentDefaultGateway', _('Gateway')],
             ['GevMACAddress',            _('MAC address')],
         ]},
+        { title: _('Stabilità acquisizione'), keys: [
+            ['DeviceLinkHeartbeatMode',      _('Heartbeat GigE')],
+            ['DeviceLinkHeartbeatTimeout',   _('Heartbeat timeout (s)')],
+            ['DeviceLinkCommandTimeout',     _('Command timeout (s)')],
+            ['ActionUnconditionalMode',      _('Action unconditional')],
+            ['ExposureAuto',                 _('Esposizione automatica')],
+            ['ExposureAutoLimitAuto',        _('AE limit auto')],
+            ['GainAuto',                     _('Gain automatico')],
+            ['PtpEnable',                    _('PTP abilitato')],
+            ['PtpStatus',                    _('PTP stato')],
+            ['PtpServoStatus',               _('PTP servo')],
+            ['AcquisitionStartMode',         _('Modo avvio acquisizione')],
+            ['TransferControlMode',          _('Transfer control mode')],
+            ['PacketResendWindowFrameCount', _('Packet resend window')],
+        ]},
     ];
 
     var html = '';
     if (pausedSec !== undefined && pausedSec !== null) {
+        var parserChip = data.parserUsed
+            ? ' <span class="label label-default" style="margin-left:6px;" title="' + _escDeep(_('Parser usato per leggere i valori arv-tool (vendor-aware)')) + '">parser: ' + _escDeep(data.parserUsed) + '</span>'
+            : '';
         html += '<div class="alert alert-success" style="margin:0 0 10px 0;">' +
             '<i class="fa fa-check"></i> ' +
             _('Lettura completata.') + ' ' +
             _('Pausa freeture') + ': <b>' + pausedSec + 's</b>. ' +
             _('Freeture riavviato automaticamente.') +
+            parserChip +
         '</div>';
     }
     if (warnings.length) {
