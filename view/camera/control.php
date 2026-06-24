@@ -61,6 +61,24 @@
                             </div>
                             <div class='clearfix'></div>
                         </div>
+
+                        <hr style='margin: 14px 0;'>
+
+                        <!-- Lettura "deep" via arv-tool: pausa freeture per pochi secondi. -->
+                        <div>
+                            <button type='button' id='btn-camera-hwinfo-deep' class='btn btn-warning'>
+                                <i class='fa fa-bolt'></i>
+                                <?= _('Leggi parametri completi dalla camera') ?>
+                            </button>
+                            <small class='text-muted' style='margin-left:8px;'>
+                                <?= _('Richiede pausa temporanea di freeture (~5s)') ?>
+                            </small>
+                            <span id='camera-hwinfo-deep-progress' style='display:none; margin-left:12px;'>
+                                <i class='fa fa-spinner fa-spin'></i>
+                                <?= _('Lettura in corso, freeture in pausa...') ?>
+                            </span>
+                        </div>
+                        <div id='camera-hwinfo-deep' style='display:none; margin-top:14px;'></div>
                     </div>
                 </div>
             </div>

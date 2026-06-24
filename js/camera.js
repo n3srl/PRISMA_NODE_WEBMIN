@@ -3,6 +3,9 @@ $(document).ready(function () {
     // Carica info dispositivo (senza interrogare la camera: solo log + config).
     loadCameraHwInfo();
 
+    // Bottone "lettura deep": stop freeture -> arv-tool values -> start freeture.
+    $('#btn-camera-hwinfo-deep').on('click', runCameraHwInfoDeep);
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -408,4 +411,155 @@ function loadCameraHwInfo() {
         console.error('[camera/hwinfo] FAIL', xhr && xhr.status, xhr && xhr.responseText);
         $('#camera-hwinfo-loading').text(_('Errore nel caricamento delle informazioni dispositivo'));
     });
+}
+
+// Lettura "deep": chiede conferma, ferma freeture e legge tutti i parametri GenICam.
+function runCameraHwInfoDeep() {
+    var msg = _('Questa operazione fermerà freeture per circa 5 secondi per leggere tutti i parametri della camera. Confermi?');
+    if (!confirm(msg)) return;
+
+    var $btn = $('#btn-camera-hwinfo-deep');
+    var $prog = $('#camera-hwinfo-deep-progress');
+    var $out = $('#camera-hwinfo-deep');
+    $btn.prop('disabled', true);
+    $prog.show();
+    $out.hide().empty();
+
+    // Recupero CSRF token (stesso pattern usato altrove).
+    $.ajax({
+        url: '/lib/core/v1/csfr',
+        method: 'GET',
+        dataType: 'json'
+    }).then(function (csrf) {
+        if (!csrf || !csrf.result || !csrf.data || !csrf.data.token) {
+            return $.Deferred().reject('missing csrf token');
+        }
+        return $.ajax({
+            url: '/lib/camera/V1/camera/hwinfo/deep',
+            method: 'POST',
+            data: { token: csrf.data.token },
+            dataType: 'json'
+        });
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $out.html('<div class="alert alert-danger">' +
+                _('Errore durante la lettura') +
+                (resp && resp.data ? ': ' + _escDeep(String(resp.data)) : '') +
+            '</div>').show();
+            return;
+        }
+        renderCameraHwInfoDeep(resp.data);
+    }).fail(function (xhr) {
+        console.error('[camera/hwinfo/deep] FAIL', xhr && xhr.status, xhr && xhr.responseText);
+        var detail = (xhr && xhr.responseText) ? xhr.responseText.substring(0, 300) : '';
+        $out.html('<div class="alert alert-danger">' +
+            _('Errore HTTP nella lettura completa') + ' (' + (xhr && xhr.status) + ')' +
+            (detail ? ': <code>' + _escDeep(detail) + '</code>' : '') +
+        '</div>').show();
+    }).always(function () {
+        $btn.prop('disabled', false);
+        $prog.hide();
+    });
+}
+
+function _escDeep(s) {
+    return $('<div>').text(s == null ? '' : String(s)).html();
+}
+
+function renderCameraHwInfoDeep(data) {
+    var live = data.live || {};
+    var warnings = data.warnings || [];
+    var pausedSec = data.pausedSec;
+
+    // Raggruppamenti logici delle feature in ordine di interesse.
+    var groups = [
+        { title: _('Identità'), keys: [
+            ['DeviceVendorName',       _('Vendor')],
+            ['DeviceModelName',        _('Modello')],
+            ['DeviceVersion',          _('Versione firmware')],
+            ['DeviceManufacturerInfo', _('Info produttore')],
+            ['DeviceSerialNumber',     _('Serial number')],
+            ['DeviceTLType',           _('Transport layer')],
+        ]},
+        { title: _('Link e throughput'), keys: [
+            ['DeviceLinkSpeed',                    _('Velocità link')],
+            ['DeviceMaxThroughput',                _('Throughput massimo')],
+            ['DeviceLinkThroughputLimitMode',      _('Limite throughput')],
+            ['DeviceLinkThroughputLimit',          _('Limite (configurato)')],
+            ['DeviceLinkThroughputReserve',        _('Riserva throughput')],
+            ['AcquisitionFrameRateLinkLimitEnable',_('FPS limitato dal link')],
+            ['DeviceStreamChannelPacketSize',      _('Packet size stream')],
+            ['GevSCPSPacketSize',                  _('GigE packet size')],
+            ['GevSCPD',                            _('GigE packet delay')],
+        ]},
+        { title: _('Acquisizione'), keys: [
+            ['AcquisitionMode',         _('Modo acquisizione')],
+            ['AcquisitionFrameRate',    _('Frame rate (corrente)')],
+            ['AcquisitionFrameRateEnable', _('Frame rate enabled')],
+            ['ExposureTime',            _('Tempo esposizione')],
+            ['ExposureAuto',            _('Esposizione automatica')],
+            ['Gain',                    _('Gain')],
+            ['GainAuto',                _('Gain automatico')],
+            ['BlackLevel',              _('Black level')],
+            ['PixelFormat',             _('Formato pixel')],
+            ['Width',                   _('Larghezza')],
+            ['Height',                  _('Altezza')],
+            ['OffsetX',                 _('Offset X')],
+            ['OffsetY',                 _('Offset Y')],
+            ['TriggerMode',             _('Trigger')],
+            ['ADCBitDepth',             _('Profondità ADC')],
+            ['SensorShutterMode',       _('Shutter')],
+        ]},
+        { title: _('Sensore'), keys: [
+            ['SensorWidth',       _('Sensor width')],
+            ['SensorHeight',      _('Sensor height')],
+            ['PhysicalPixelSize', _('Pixel size (µm)')],
+        ]},
+        { title: _('Runtime'), keys: [
+            ['DeviceTemperature', _('Temperatura')],
+            ['DevicePower',       _('Potenza')],
+            ['DeviceUpTime',      _('Uptime device')],
+            ['LinkUpTime',        _('Uptime link')],
+        ]},
+        { title: _('GigE Vision'), keys: [
+            ['GevCurrentIPAddress',      _('IP corrente')],
+            ['GevCurrentSubnetMask',     _('Subnet mask')],
+            ['GevCurrentDefaultGateway', _('Gateway')],
+            ['GevMACAddress',            _('MAC address')],
+        ]},
+    ];
+
+    var html = '';
+    if (pausedSec !== undefined && pausedSec !== null) {
+        html += '<div class="alert alert-success" style="margin:0 0 10px 0;">' +
+            '<i class="fa fa-check"></i> ' +
+            _('Lettura completata.') + ' ' +
+            _('Pausa freeture') + ': <b>' + pausedSec + 's</b>. ' +
+            _('Freeture riavviato automaticamente.') +
+        '</div>';
+    }
+    if (warnings.length) {
+        html += '<div class="alert alert-warning">' +
+            '<b>' + _('Avvisi') + ':</b><ul style="margin:4px 0 0 0; padding-left:20px;">' +
+            warnings.map(function (w) { return '<li>' + _escDeep(w) + '</li>'; }).join('') +
+        '</ul></div>';
+    }
+
+    groups.forEach(function (g) {
+        var rows = g.keys.filter(function (kv) { return live[kv[0]] !== undefined; });
+        if (!rows.length) return;
+        html += '<div class="col-md-6 col-sm-12" style="padding-left:0;">' +
+            '<h4 style="margin-top:0;">' + _escDeep(g.title) + '</h4>' +
+            '<table class="table table-condensed" style="margin-bottom:14px;">';
+        rows.forEach(function (kv) {
+            html += '<tr>' +
+                '<th style="width:45%;">' + _escDeep(kv[1]) + '</th>' +
+                '<td>' + _escDeep(live[kv[0]]) + '</td>' +
+            '</tr>';
+        });
+        html += '</table></div>';
+    });
+    html += '<div class="clearfix"></div>';
+
+    $('#camera-hwinfo-deep').html(html).show();
 }
