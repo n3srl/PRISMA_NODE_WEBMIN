@@ -98,6 +98,16 @@ $app->GET('/camera/hwinfo', function (Application $app, Request $request) {
     return $resp;
 });
 
+// Probe esplorativo della MIB cable-diagnostics dello switch. Mostra cosa
+// risponde alla walk su candidate OID D-Link, per identificare la branch giusta.
+$app->GET('/camera/diag/switch/explore', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::ExploreSwitchCableDiag($request->query);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 // Diagnostica rete nodo<->camera: ethtool/sys, ping, ARP. Non tocca la camera.
 $app->GET('/camera/diag', function (Application $app, Request $request) {
 

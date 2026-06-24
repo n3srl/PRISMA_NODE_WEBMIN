@@ -58,14 +58,27 @@ class SnmpClientLogic
         return $result;
     }
 
+    /**
+     * SET di un Integer su un OID. Ritorna true se accettato, false in caso di
+     * timeout o errore. Utilizzato per triggerare azioni (es. cable diagnostic).
+     */
+    public static function setInt($host, $community, $oid, $intValue, $timeoutSec = 3, $port = 161)
+    {
+        $resp = self::sendPdu($host, $port, $community, 0xA3, $oid, $timeoutSec, $intValue);
+        if ($resp === null) return false;
+        return ((int) $resp['errorStatus']) === 0;
+    }
+
     //----------------------------------------------------------------------
     // Internals: PDU send/recv via UDP socket
     //----------------------------------------------------------------------
 
-    private static function sendPdu($host, $port, $community, $pduType, $oid, $timeoutSec)
+    private static function sendPdu($host, $port, $community, $pduType, $oid, $timeoutSec, $setIntValue = null)
     {
         $reqId = mt_rand(1, 0x7FFFFFFF);
-        $varbind = self::seq(self::encOid($oid) . self::encNull());
+        // Per SET (0xA3) il varbind value e' un INTEGER reale; per GET/GETNEXT e' NULL.
+        $value = ($pduType === 0xA3 && $setIntValue !== null) ? self::encInt($setIntValue) : self::encNull();
+        $varbind = self::seq(self::encOid($oid) . $value);
         $varbinds = self::seq($varbind);
         $pduBody = self::encInt($reqId) . self::encInt(0) . self::encInt(0) . $varbinds;
         $pdu = self::encTLV($pduType, $pduBody);

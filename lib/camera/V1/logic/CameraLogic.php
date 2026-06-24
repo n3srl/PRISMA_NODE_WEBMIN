@@ -570,6 +570,63 @@ class CameraLogic
     }
 
     /**
+     * Probe esplorativo della MIB cable-diagnostics dello switch. Gli OID precisi
+     * cambiano col firmware DGS-1210 (es. .10.76.X.7 vs .10.153.X.X). Facciamo walk
+     * su una lista di candidate D-Link e ritorniamo cio' che risponde, lasciando
+     * al chiamante (o a noi nella prossima iterazione) il compito di interpretare
+     * la struttura. Utile per non dover indovinare a freddo gli OID.
+     */
+    public static function ExploreSwitchCableDiag() {
+        $r = array(
+            'configured' => false,
+            'ip'         => null,
+            'branches'   => array(),
+        );
+        if (!defined('_SWITCH_IP_') || trim(_SWITCH_IP_) === '') {
+            return array('res' => true, 'data' => $r);
+        }
+        $ip = _SWITCH_IP_;
+        $c  = defined('_SWITCH_SNMP_COMMUNITY_') && _SWITCH_SNMP_COMMUNITY_ !== ''
+            ? _SWITCH_SNMP_COMMUNITY_ : 'public';
+        $r['configured'] = true;
+        $r['ip']         = $ip;
+
+        // Branch da esplorare. Filtriamo per nome o pattern in modo da non ritornare
+        // tutta la MIB enterprise (sarebbero migliaia di entry).
+        $branches = array(
+            // sysObjectID DGS-1210-10P/F1 = 1.3.6.1.4.1.171.10.153.1.1
+            array('oid' => '1.3.6.1.4.1.171.10.153.1.1', 'desc' => 'DGS-1210-10P/F1 specific subtree'),
+            // Branch DGS series "10.76" (DES-1210 / DGS-1210 vecchio MIB)
+            array('oid' => '1.3.6.1.4.1.171.10.76',     'desc' => 'D-Link DGS series legacy MIB'),
+            // Branch DGS-1210 common (12.58)
+            array('oid' => '1.3.6.1.4.1.171.12.58',     'desc' => 'D-Link DGS common MIB'),
+            // Cable Diagnostics generico (10.76 series)
+            array('oid' => '1.3.6.1.4.1.171.11.62',     'desc' => 'D-Link smart switch MIB candidate'),
+        );
+
+        foreach ($branches as $b) {
+            $walked = SnmpClientLogic::walk($ip, $c, $b['oid'], 4, 1000);
+            // Trasformiamo in array enumerabile (k = suffix dell'OID, v = valore)
+            $entries = array();
+            $i = 0;
+            foreach ($walked as $suffix => $val) {
+                $entries[] = array(
+                    'oid'   => '.' . trim($b['oid'], '.') . '.' . $suffix,
+                    'value' => is_string($val) ? $val : (string) $val,
+                );
+                if (++$i >= 200) break; // safety
+            }
+            $r['branches'][] = array(
+                'base'    => '.' . trim($b['oid'], '.'),
+                'desc'    => $b['desc'],
+                'count'   => count($walked),
+                'sample'  => $entries,
+            );
+        }
+        return array('res' => true, 'data' => $r);
+    }
+
+    /**
      * Lettura "deep" dei parametri camera via arv-tool values.
      * GenICam permette un solo controller alla volta, quindi ferma freeture per
      * la durata della lettura e lo riavvia subito dopo (finally garantisce il restart

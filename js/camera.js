@@ -9,6 +9,9 @@ $(document).ready(function () {
     // Bottone "diagnostica rete nodo": ethtool/sys/ping. Non interrompe freeture.
     $('#btn-camera-netdiag').on('click', runCameraNetDiag);
 
+    // Bottone "esplora MIB cable diag" (creato dinamicamente dal render): event delegation.
+    $(document).on('click', '#btn-explore-cablediag', exploreSwitchCableDiag);
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -843,6 +846,13 @@ function renderSwitchSection(sw) {
                 '</li>' +
             '<li>' + _('Se il test segnala una coppia "Open Circuit" o "Short", il cavo va sostituito') + '.</li>' +
             '</ol></div>' +
+            '<div style="margin-top:10px;">' +
+                '<button type="button" id="btn-explore-cablediag" class="btn btn-warning btn-sm">' +
+                '<i class="fa fa-search"></i> ' + _('Prova a leggere Cable Diag dallo switch via SNMP') +
+                '</button>' +
+                ' <small class="text-muted">' + _('Esplora la MIB D-Link per trovare i dati del test cavo') + '</small>' +
+                '<div id="cablediag-explore-out" style="margin-top:10px;"></div>' +
+            '</div>' +
         '</div>';
     }
 
@@ -931,4 +941,71 @@ function renderSwitchSection(sw) {
 
     html += '</tbody></table>';
     return html;
+}
+
+// Esplora la MIB dello switch alla ricerca degli OID Cable Diagnostics.
+function exploreSwitchCableDiag() {
+    var $btn = $('#btn-explore-cablediag');
+    var $out = $('#cablediag-explore-out');
+    $btn.prop('disabled', true);
+    $out.html('<div class="alert alert-info" style="margin:0;"><i class="fa fa-spinner fa-spin"></i> ' +
+        _('Walk SNMP in corso (puo\' richiedere 10-30 secondi)...') + '</div>');
+
+    $.ajax({
+        url: '/lib/camera/V1/camera/diag/switch/explore',
+        method: 'GET',
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $out.html('<div class="alert alert-danger">' + _('Errore nell\'esplorazione') + '</div>');
+            return;
+        }
+        var d = resp.data;
+        if (!d.configured) {
+            $out.html('<div class="alert alert-warning">' + _('Switch non configurato in config.php') + '</div>');
+            return;
+        }
+        var html = '';
+        var totalEntries = 0;
+        d.branches.forEach(function (b) { totalEntries += b.count; });
+
+        if (totalEntries === 0) {
+            html += '<div class="alert alert-warning">' +
+                _('Nessun OID risponde sulle branch D-Link tentate') + '. ' +
+                _('Probabilmente il firmware') + ' <b>6.30.016</b> ' +
+                _('non espone Cable Diagnostics via SNMP. Resta accessibile dalla GUI dello switch (Monitoring/L2 → Cable Diagnostics).') +
+            '</div>';
+        } else {
+            html += '<div class="alert alert-success" style="margin-bottom:8px;">' +
+                _('Trovate') + ' <b>' + totalEntries + '</b> ' + _('entry totali. Manda il dump completo per scrivere il parser definitivo.') +
+            '</div>';
+        }
+
+        d.branches.forEach(function (b) {
+            html += '<details style="margin-bottom:8px;" ' + (b.count > 0 ? 'open' : '') + '>' +
+                '<summary style="cursor:pointer;">' +
+                '<b>' + _escDeep(b.base) + '</b> &mdash; ' + _escDeep(b.desc) +
+                ' <span class="label label-' + (b.count > 0 ? 'success' : 'default') + '">' +
+                b.count + ' ' + _('entry') + '</span>' +
+                '</summary>';
+            if (b.sample.length > 0) {
+                html += '<table class="table table-condensed" style="margin-top:6px; font-size:11px;">';
+                b.sample.forEach(function (e) {
+                    html += '<tr><td style="font-family:monospace; width:50%; word-break:break-all;">' +
+                        _escDeep(e.oid) + '</td><td>' + _escDeep(e.value) + '</td></tr>';
+                });
+                html += '</table>';
+            }
+            html += '</details>';
+        });
+
+        $out.html(html);
+    }).fail(function (xhr) {
+        $out.html('<div class="alert alert-danger">' +
+            _('Errore HTTP') + ' (' + (xhr && xhr.status) + ')' +
+        '</div>');
+    }).always(function () {
+        $btn.prop('disabled', false);
+    });
 }
