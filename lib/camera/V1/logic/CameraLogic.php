@@ -249,20 +249,35 @@ class CameraLogic
                 $out[$key] = self::decodePackedIp($val);
             } elseif ($key === 'GevMACAddress') {
                 $out[$key] = self::decodePackedMac($val);
-            } elseif ($key === 'DeviceLinkSpeed') {
-                $n = self::parseNumber($val);
-                if ($n !== null) {
-                    if ($n >= 1e9)       $out[$key] = sprintf('%.1f Gbps (%s)',  $n / 1e9, $val);
-                    elseif ($n >= 1e6)   $out[$key] = sprintf('%.1f Mbps (%s)',  $n / 1e6, $val);
-                }
-            } elseif ($key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
-                $n = self::parseNumber($val);
-                if ($n !== null && $n > 0) {
-                    $out[$key] = sprintf('%.1f MB/s (%s)', $n / 1e6, $val);
-                }
+            } elseif ($key === 'DeviceLinkSpeed' || $key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
+                // SFNC: DeviceLinkSpeed e simili sono in Byte/secondo (Bps), NON bit/s.
+                // Mostro in Gbps (per il link) + MB/s (per il throughput) per chiarezza.
+                $out[$key] = self::formatBytesPerSecond($val);
             }
         }
         return $out;
+    }
+
+    // Converte un valore Bps (byte/secondo, come da SFNC GenICam) in "X Gbps (Y MB/s)".
+    private static function formatBytesPerSecond($val) {
+        $bytesPerSec = self::parseNumber($val);
+        if ($bytesPerSec === null || $bytesPerSec <= 0) {
+            return $val;
+        }
+        $mbps = $bytesPerSec / 1e6;        // MB/s
+        $gbps = ($bytesPerSec * 8) / 1e9;  // Gbit/s
+
+        if ($gbps >= 1) {
+            return sprintf('%.2f Gbps (%.1f MB/s, %s Bps)',
+                $gbps, $mbps, self::formatInt($bytesPerSec));
+        }
+        $mbits = ($bytesPerSec * 8) / 1e6;
+        return sprintf('%.0f Mbps (%.1f MB/s, %s Bps)',
+            $mbits, $mbps, self::formatInt($bytesPerSec));
+    }
+
+    private static function formatInt($n) {
+        return number_format((float) $n, 0, '.', "'"); // 1'000'000'000 stile europeo
     }
 
     private static function parseNumber($val) {
