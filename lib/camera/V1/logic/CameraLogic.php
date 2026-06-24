@@ -348,16 +348,27 @@ class CameraLogic
             $ifIndexToBridge[(int) $idx] = $bp;
         }
 
-        // Intrusi: porte UP che non sono ne' camera, ne' nodo, ne' uplink
-        $known = array();
-        if ($r['cameraPort']) $known[(int) $r['cameraPort']] = true;
-        if ($r['nodePort'])   $known[(int) $r['nodePort']]   = true;
-        if ($r['uplinkPort']) $known[(int) $r['uplinkPort']] = true;
+        // Tre ruoli attesi sempre: camera, nodo, uplink.
+        // Possono cadere sulla stessa porta (es. nodo "dietro" l'uplink): in tal
+        // caso una porta porta piu' label. Una porta UP che non e' nessuno dei
+        // tre = INTRUSO.
+        $expectedSet = array();
+        if ($r['cameraPort']) $expectedSet[(int) $r['cameraPort']] = true;
+        if ($r['nodePort'])   $expectedSet[(int) $r['nodePort']]   = true;
+        if ($r['uplinkPort']) $expectedSet[(int) $r['uplinkPort']] = true;
+        $r['expectedPortSet']  = array_keys($expectedSet); // porte ifIndex attese (deduplicate)
+        $r['expectedUpPorts']  = count($expectedSet);      // 1..3 a seconda di sovrapposizioni
+
+        // Ruoli che NON siamo riusciti ad identificare via FDB
+        $r['missingRoles'] = array();
+        if (!$r['cameraPort']) $r['missingRoles'][] = 'camera';
+        if (!$r['nodePort'])   $r['missingRoles'][] = 'nodo';
+        if (!$r['uplinkPort']) $r['missingRoles'][] = 'uplink';
 
         $r['intruders'] = array();
         foreach ($r['ports'] as $port) {
             if (!$port['up']) continue;
-            if (isset($known[$port['ifIndex']])) continue;
+            if (isset($expectedSet[$port['ifIndex']])) continue;
             $bp = isset($ifIndexToBridge[$port['ifIndex']]) ? $ifIndexToBridge[$port['ifIndex']] : null;
             $macs = ($bp !== null && isset($portToMacs[$bp])) ? array_values(array_unique($portToMacs[$bp])) : array();
             $r['intruders'][] = array(
@@ -367,14 +378,7 @@ class CameraLogic
                 'macs'      => $macs,
             );
         }
-        $r['intruderCount']   = count($r['intruders']);
-
-        // Porte attese: dipende dalla topologia.
-        // Se il MAC del nodo NON compare nel FDB, il nodo non e' direttamente
-        // collegato a questo switch (e' "dietro" l'uplink), quindi attese = 2
-        // (camera + uplink). Altrimenti 3 (camera + nodo + uplink).
-        $r['expectedUpPorts'] = $r['nodePort'] ? 3 : 2;
-        $r['nodeDirectlyAttached'] = (bool) $r['nodePort'];
+        $r['intruderCount'] = count($r['intruders']);
 
         return $r;
     }

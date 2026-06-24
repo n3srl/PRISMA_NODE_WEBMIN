@@ -769,28 +769,29 @@ function renderSwitchSection(sw) {
         (sw.uplinkPort ? ' &middot; <b>' + _('Uplink') + '</b>: <span class="label label-primary">Port ' + sw.uplinkPort + '</span>' : '') +
     '</div>';
 
-    // Banner sicurezza: porte attese variano in base alla topologia (camera + uplink
-    // se il nodo non e' direttamente collegato, altrimenti +1).
-    var expected = sw.expectedUpPorts || 3;
+    // Riepilogo ruoli attesi: SEMPRE 3 (camera + nodo + uplink). Possono cadere
+    // sulla stessa porta dello switch, ma devono essere tutti identificati.
     var intruders = sw.intruders || [];
-    var topo = sw.nodeDirectlyAttached ? _('camera + nodo + uplink') : _('camera + uplink (nodo indiretto)');
+    var missing = sw.missingRoles || [];
     var fdbHint = sw.fdbSource
         ? ' <small class="text-muted">(FDB: ' + _escDeep(sw.fdbSource) + ', ' + (sw.fdbSize || 0) + ' MAC visti)</small>'
         : '';
-    if (intruders.length === 0 && (sw.portsUp || 0) <= expected) {
-        html += '<div class="alert alert-success" style="margin-bottom:10px;">' +
-            '<i class="fa fa-shield"></i> ' +
-            '<b>' + _('Configurazione OK') + '</b>: ' +
-            (sw.portsUp || 0) + ' / ' + expected + ' ' + _('porte attese attive') + ' ' +
-            '(' + topo + '). ' +
-            _('Nessun host non riconosciuto.') + fdbHint +
+
+    if (missing.length > 0) {
+        html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
+            '<i class="fa fa-question-circle"></i> ' +
+            '<b>' + _('Ruoli non identificati') + '</b>: ' +
+            missing.map(function (m) { return '<code>' + _escDeep(m) + '</code>'; }).join(', ') +
+            '. ' + _('Il MAC corrispondente non e\' presente nel FDB dello switch.') + fdbHint +
         '</div>';
-    } else if (intruders.length > 0) {
+    }
+
+    if (intruders.length > 0) {
         html += '<div class="alert alert-danger" style="margin-bottom:10px;">' +
             '<i class="fa fa-exclamation-triangle"></i> ' +
             '<b>' + _('Allerta sicurezza') + '</b>: ' +
             _('rilevati') + ' <b>' + intruders.length + '</b> ' +
-            _('host non riconosciuti collegati allo switch') + '.' +
+            _('host non giustificati collegati allo switch (non camera, non nodo, non uplink)') + '.' +
             '<ul style="margin:6px 0 0 0; padding-left:20px;">';
         intruders.forEach(function (it) {
             var macList = (it.macs && it.macs.length)
@@ -800,6 +801,13 @@ function renderSwitchSection(sw) {
                 ' (' + (it.speedMbps || 0) + ' Mb/s): ' + macList + '</li>';
         });
         html += '</ul></div>';
+    } else if (missing.length === 0) {
+        html += '<div class="alert alert-success" style="margin-bottom:10px;">' +
+            '<i class="fa fa-shield"></i> ' +
+            '<b>' + _('Configurazione OK') + '</b>: ' +
+            _('camera + nodo + uplink tutti identificati, nessun host non giustificato.') +
+            fdbHint +
+        '</div>';
     }
 
     if (!sw.ports || !sw.ports.length) {
@@ -826,21 +834,24 @@ function renderSwitchSection(sw) {
     (sw.intruders || []).forEach(function (it) { intruderIfx[it.ifIndex] = true; });
 
     sw.ports.forEach(function (p) {
-        var note = '';
+        var noteParts = [];
         var rowClass = '';
         if (sw.cameraPort && p.ifIndex === sw.cameraPort) {
-            note = '<span class="label label-success">camera</span>';
-            rowClass = 'class="info"';
-        } else if (sw.nodePort && p.ifIndex === sw.nodePort) {
-            note = '<span class="label label-info">nodo</span>';
-            rowClass = 'class="info"';
-        } else if (sw.uplinkPort && p.ifIndex === sw.uplinkPort) {
-            note = '<span class="label label-primary">uplink</span>';
+            noteParts.push('<span class="label label-success">camera</span>');
+        }
+        if (sw.nodePort && p.ifIndex === sw.nodePort) {
+            noteParts.push('<span class="label label-info">nodo</span>');
+        }
+        if (sw.uplinkPort && p.ifIndex === sw.uplinkPort) {
+            noteParts.push('<span class="label label-primary">uplink</span>');
+        }
+        if (noteParts.length > 0) {
             rowClass = 'class="info"';
         } else if (p.up && intruderIfx[p.ifIndex]) {
-            note = '<span class="label label-danger">INTRUSO</span>';
+            noteParts.push('<span class="label label-danger">INTRUSO</span>');
             rowClass = 'class="danger"';
         }
+        var note = noteParts.join(' ');
 
         var speedHtml;
         if (!p.up) {
