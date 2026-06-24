@@ -56,3 +56,10 @@ define('_CALIBRATION_PATH_',BASE_PATH.'calibration/');
 
 define('_DEFAULT_STATION_CODE_','DEFAULT');
 define('_DEFAULT_STATION_NAME_','DEFAULT');
+
+// Switch SNMP per diagnostica avanzata camera (fase 2).
+// Per attivarla, imposta _SWITCH_IP_ sul nodo specifico (es. "192.168.0.2").
+// Lasciando vuoto, la sezione "Switch" della diagnostica resta inattiva.
+define('_SWITCH_IP_', '');
+define('_SWITCH_SNMP_COMMUNITY_', 'public');
+define('_SWITCH_SNMP_VERSION_', '2c');

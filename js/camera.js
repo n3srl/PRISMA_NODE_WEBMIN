@@ -736,5 +736,98 @@ function renderCameraNetDiag(data) {
             '</pre></details>';
     }
 
+    // Sezione switch (fase 2). Visibile solo se configurato in config.php.
+    if (data.switch && data.switch.configured) {
+        html += renderSwitchSection(data.switch);
+    }
+
     $('#camera-netdiag').html(html).show();
+}
+
+function renderSwitchSection(sw) {
+    var html = '<hr style="margin:14px 0;">';
+    html += '<h4 style="margin-top:0;">' + _('Switch') + ' <code>' + _escDeep(sw.ip) + '</code></h4>';
+
+    if (!sw.reachable) {
+        var w = (sw.warnings && sw.warnings.length) ? sw.warnings.join(' ') : _('Non raggiungibile via SNMP');
+        html += '<div class="alert alert-warning">' + _escDeep(w) + '</div>';
+        return html;
+    }
+
+    // sysName, descr, uptime
+    html += '<div class="alert alert-info" style="margin-bottom:10px;">' +
+        '<b>' + _('Nome') + '</b>: ' + _escDeep(sw.sysName || '-') +
+        (sw.sysDescr ? ' &middot; <small>' + _escDeep(sw.sysDescr) + '</small>' : '') +
+        '<br>' +
+        '<b>' + _('Porte totali') + '</b>: ' + (sw.portsTotal || 0) +
+        ' &middot; <b>' + _('Up') + '</b>: ' + (sw.portsUp || 0) +
+        ' &middot; <b>' + _('Down') + '</b>: ' + ((sw.portsTotal || 0) - (sw.portsUp || 0)) +
+        (sw.cameraPort ? ' &middot; <b>' + _('Porta camera (auto)') + '</b>: <span class="label label-success">Port ' + sw.cameraPort + '</span>' : '') +
+        (sw.nodePort   ? ' &middot; <b>' + _('Porta nodo (auto)')   + '</b>: <span class="label label-info">Port ' + sw.nodePort + '</span>' : '') +
+    '</div>';
+
+    if (!sw.ports || !sw.ports.length) {
+        html += '<div class="alert alert-warning">' + _('Nessuna porta ethernet trovata via SNMP.') + '</div>';
+        return html;
+    }
+
+    // Tabella porte
+    html += '<table class="table table-condensed table-striped" style="margin-bottom:8px;">' +
+            '<thead><tr>' +
+                '<th>#</th>' +
+                '<th>' + _('Nome') + '</th>' +
+                '<th>' + _('Status') + '</th>' +
+                '<th>' + _('Speed') + '</th>' +
+                '<th>' + _('RX (octets)') + '</th>' +
+                '<th>' + _('TX (octets)') + '</th>' +
+                '<th>' + _('RX errors') + '</th>' +
+                '<th>' + _('CRC') + '</th>' +
+                '<th>' + _('Discards') + '</th>' +
+                '<th>' + _('Note') + '</th>' +
+            '</tr></thead><tbody>';
+
+    sw.ports.forEach(function (p) {
+        var note = '';
+        var rowClass = '';
+        if (sw.cameraPort && p.ifIndex === sw.cameraPort) {
+            note = '<span class="label label-success">camera</span>';
+            rowClass = 'class="info"';
+        } else if (sw.nodePort && p.ifIndex === sw.nodePort) {
+            note = '<span class="label label-info">nodo</span>';
+            rowClass = 'class="info"';
+        }
+
+        var speedHtml;
+        if (!p.up) {
+            speedHtml = '<span class="text-muted">&mdash;</span>';
+        } else if (p.speedMbps >= 1000) {
+            speedHtml = '<span style="color:#1d7a44;font-weight:600;">' + p.speedMbps + ' Mb/s</span>';
+        } else if (p.speedMbps >= 100) {
+            speedHtml = '<span style="color:#b07d00;font-weight:600;">' + p.speedMbps + ' Mb/s</span>';
+        } else if (p.speedMbps > 0) {
+            speedHtml = '<span style="color:#b52c1d;font-weight:600;">' + p.speedMbps + ' Mb/s</span>';
+        } else {
+            speedHtml = '<span class="text-muted">0</span>';
+        }
+
+        var statusHtml = p.up
+            ? '<span style="color:#1d7a44;"><i class="fa fa-check"></i> up</span>'
+            : '<span class="text-muted"><i class="fa fa-circle-o"></i> down</span>';
+
+        html += '<tr ' + rowClass + '>' +
+            '<td>' + p.ifIndex + '</td>' +
+            '<td><code>' + _escDeep(p.name) + '</code></td>' +
+            '<td>' + statusHtml + '</td>' +
+            '<td>' + speedHtml + '</td>' +
+            '<td>' + (p.inOctets ? p.inOctets.toLocaleString('it-IT') : '0') + '</td>' +
+            '<td>' + (p.outOctets ? p.outOctets.toLocaleString('it-IT') : '0') + '</td>' +
+            '<td' + ((p.inErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.inErrors || 0) + '</td>' +
+            '<td' + ((p.fcsErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.fcsErrors === null ? '&mdash;' : p.fcsErrors) + '</td>' +
+            '<td' + ((p.inDiscards > 0) ? ' style="color:#b07d00;font-weight:600;"' : '') + '>' + (p.inDiscards || 0) + '</td>' +
+            '<td>' + note + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    return html;
 }
