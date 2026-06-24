@@ -117,7 +117,7 @@
                                 <tbody>
                                 </tbody>
                             </table>
-                            <div id="capture-completeness-status" style="margin-top: 10px;"></div>
+                            <div id="capture-completeness-status" style="clear: both; margin-top: 10px;"></div>
                         </div>
                     </div>
                 </div>
