@@ -365,6 +365,20 @@ class CameraLogic
         if (!$r['nodePort'])   $r['missingRoles'][] = 'nodo';
         if (!$r['uplinkPort']) $r['missingRoles'][] = 'uplink';
 
+        // Topologia attesa: 3 ruoli su 3 porte fisiche DISTINTE. Qualunque
+        // sovrapposizione e' violazione di topologia (es. nodo + uplink stessa
+        // porta = nodo collegato fuori, non direttamente al DGS-1210).
+        $r['topologyViolations'] = array();
+        if ($r['cameraPort'] && $r['nodePort'] && (int) $r['cameraPort'] === (int) $r['nodePort']) {
+            $r['topologyViolations'][] = "Camera e nodo sono visti sulla stessa porta (Port {$r['cameraPort']}): la camera non e' su una porta dedicata o c'e' uno switch intermedio.";
+        }
+        if ($r['cameraPort'] && $r['uplinkPort'] && (int) $r['cameraPort'] === (int) $r['uplinkPort']) {
+            $r['topologyViolations'][] = "Camera e uplink sono visti sulla stessa porta (Port {$r['cameraPort']}): topologia sospetta (camera dietro l'uplink).";
+        }
+        if ($r['nodePort'] && $r['uplinkPort'] && (int) $r['nodePort'] === (int) $r['uplinkPort']) {
+            $r['topologyViolations'][] = "Nodo e uplink sono visti sulla stessa porta (Port {$r['nodePort']}): il nodo NON e' direttamente collegato a questo switch ma e' fuori (collegato a un altro switch/router). La topologia attesa e' camera + nodo + uplink ognuno su una porta dedicata del DGS-1210.";
+        }
+
         $r['intruders'] = array();
         foreach ($r['ports'] as $port) {
             if (!$port['up']) continue;
