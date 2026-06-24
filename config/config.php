@@ -58,8 +58,9 @@ define('_DEFAULT_STATION_CODE_','DEFAULT');
 define('_DEFAULT_STATION_NAME_','DEFAULT');
 
 // Switch SNMP per diagnostica avanzata camera (fase 2).
-// Per attivarla, imposta _SWITCH_IP_ sul nodo specifico (es. "192.168.0.2").
-// Lasciando vuoto, la sezione "Switch" della diagnostica resta inattiva.
-define('_SWITCH_IP_', '');
-define('_SWITCH_SNMP_COMMUNITY_', 'public');
+// Default standard PRISMA: switch DGS-1210-10P riconfigurato a 192.168.0.2
+// con community read-only "prisma-ro" (vedi guida setup webmin).
+// Per disattivare la fase 2 su un singolo nodo, imposta _SWITCH_IP_ a stringa vuota.
+define('_SWITCH_IP_', '192.168.0.2');
+define('_SWITCH_SNMP_COMMUNITY_', 'prisma-ro');
 define('_SWITCH_SNMP_VERSION_', '2c');
