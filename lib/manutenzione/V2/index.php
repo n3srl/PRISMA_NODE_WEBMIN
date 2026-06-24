@@ -82,6 +82,19 @@ $app->POST('/manutenzione/migration/run', function(Application $app, Request $re
 	return $resp;
 });
 
+/**
+*
+* PROGRESS: stato di avanzamento della RUN (polling client durante l'esecuzione)
+*
+**/
+$app->GET('/manutenzione/migration/progress', function(Application $app, Request $request) {
+
+	$result = ManutenzioneApiLogic::GetProgress();
+	$resp = new Response(json_encode($result));
+	$resp->setStatusCode($result->result ? 200 : 403);
+	return $resp;
+});
+
 /************************************************************
 
 MANUTENZIONE - RIALLINEAMENTO HEADER FITS A configuration.cfg
@@ -123,6 +136,19 @@ $app->POST('/manutenzione/fits/run', function(Application $app, Request $request
 		$resp = new Response(json_encode($result));
 		$resp->setStatusCode(403);
 	}
+	return $resp;
+});
+
+/**
+*
+* PROGRESS: stato di avanzamento del Run FITS (polling client durante l'esecuzione)
+*
+**/
+$app->GET('/manutenzione/fits/progress', function(Application $app, Request $request) {
+
+	$result = FitsHeaderApiLogic::GetProgress();
+	$resp = new Response(json_encode($result));
+	$resp->setStatusCode($result->result ? 200 : 403);
 	return $resp;
 });
 

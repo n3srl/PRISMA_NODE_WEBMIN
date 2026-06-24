@@ -63,6 +63,12 @@ class ManutenzioneApiLogic {
 	// e milioni di file. La RUN ignora questo limite e processa tutto.
 	const PREVIEW_ITEM_LIMIT = 2000;
 
+	// Stato di avanzamento della RUN scritto su file dal worker che processa il piano,
+	// letto dal client via /migration/progress per aggiornare la progress bar.
+	// File globale al container: una sola migrazione alla volta e' un'assunzione accettabile
+	// (la pagina di manutenzione disabilita il bottone durante la run).
+	private static $progressLastWriteTs = 0.0;
+
 	/**
 	 * GET /manutenzione/migration/sources
 	 * Ritorna l'elenco delle cartelle stazione presenti sotto _FREETURE_DATA_ (candidate
@@ -133,6 +139,12 @@ class ManutenzioneApiLogic {
 			$Person = CoreLogic::VerifyPerson();
 			CoreLogic::CheckCSRF($request->get("token"));
 
+			// Rilascio il lock della sessione PHP: senza questo, il polling parallelo del
+			// client su /migration/progress resta bloccato finche' questa request non finisce.
+			if (session_status() === PHP_SESSION_ACTIVE) {
+				@session_write_close();
+			}
+
 			list($srcCode, $srcName) = self::readSource($request);
 			$dstCode = CoreLogic::GetStationCode();
 			$dstName = self::getStationName();
@@ -157,11 +169,43 @@ class ManutenzioneApiLogic {
 
 			$plan = self::buildPlan($srcCode, $srcName, $dstCode, $dstName);
 			self::applyParentRenames($plan);
+
+			// Stato iniziale: il client comincia a pollare appena lancia la POST.
+			self::writeProgress(0, count($plan), array(
+				'phase'   => 'running',
+				'srcCode' => $srcCode,
+				'srcName' => $srcName,
+				'dstCode' => $dstCode,
+				'dstName' => $dstName,
+			), true);
+
 			$results = self::executePlan($plan);
+
+			// Stato finale: done=true, percentage=100. Il client a questo punto
+			// ferma il polling appena riceve la response sincrona di RunMigration.
+			self::writeProgress(count($plan), count($plan), array(
+				'phase' => 'done',
+			), true);
 		} catch (ApiException $a) {
+			self::writeProgress(0, 0, array('phase' => 'error', 'error' => $a->message), true);
 			return CoreLogic::GenerateErrorResponse($a->message);
 		}
 		return CoreLogic::GenerateResponse(true, $results);
+	}
+
+	/**
+	 * GET /manutenzione/migration/progress
+	 * Stato dell'ultima migrazione in corso o appena conclusa. Letto dal client
+	 * ogni ~500ms durante la RUN per aggiornare la progress bar.
+	 */
+	public static function GetProgress() {
+		try {
+			$Person = CoreLogic::VerifyPerson();
+			$data = self::readProgress();
+		} catch (ApiException $a) {
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse(true, $data);
 	}
 
 	//-------------------------------------------------------------------------
@@ -443,6 +487,7 @@ class ManutenzioneApiLogic {
 
 	private static function executePlan($plan) {
 		$results = array();
+		$total   = count($plan);
 		foreach ($plan as $idx => $item) {
 			$res = array(
 				'id'         => $idx,
@@ -458,12 +503,16 @@ class ManutenzioneApiLogic {
 				$res['status']  = self::STATUS_SKIPPED;
 				$res['message'] = "Sorgente non esiste (gia' rinominata in uno step precedente?).";
 				$results[] = $res;
+				self::writeProgress($idx + 1, $total, array('phase' => 'running'));
 				continue;
 			}
 
 			// Step finale: merge ricorsivo del contenuto di old_path dentro new_path
 			// (che esiste gia' nel 99% dei casi).
 			if ($item['type'] === self::TYPE_ROOT_MERGE) {
+				// Per il merge ricorsivo forziamo un flush del progress (puo' essere lungo).
+				self::writeProgress($idx, $total, array('phase' => 'merging'), true);
+
 				$errors = array();
 				$moved = self::mergeDirectory($item['old_path'], $item['new_path'], $errors);
 				$srcGone = !file_exists($item['old_path']);
@@ -478,6 +527,7 @@ class ManutenzioneApiLogic {
 						. (count($errors) > 5 ? ' [...]' : '');
 				}
 				$results[] = $res;
+				self::writeProgress($idx + 1, $total, array('phase' => 'running'), true);
 				continue;
 			}
 
@@ -486,6 +536,7 @@ class ManutenzioneApiLogic {
 				$res['status']  = self::STATUS_SKIPPED;
 				$res['message'] = "Destinazione gia' esistente: skip per evitare sovrascrittura.";
 				$results[] = $res;
+				self::writeProgress($idx + 1, $total, array('phase' => 'running'));
 				continue;
 			}
 
@@ -499,6 +550,8 @@ class ManutenzioneApiLogic {
 				$res['message'] = $err && isset($err['message']) ? $err['message'] : 'rename() ha restituito false.';
 			}
 			$results[] = $res;
+			// Aggiorno il progress dopo ogni item (con rate-limit ~4 write/s).
+			self::writeProgress($idx + 1, $total, array('phase' => 'running'));
 		}
 		return $results;
 	}
@@ -596,5 +649,49 @@ class ManutenzioneApiLogic {
 
 	private static function isValidIdentifier($s) {
 		return is_string($s) && $s !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $s) === 1;
+	}
+
+	private static function progressPath() {
+		return rtrim(sys_get_temp_dir(), '/\\') . '/manutenzione_migration_progress.json';
+	}
+
+	/**
+	 * Scrive il file di stato della migrazione. Rate-limit ~4 Hz (1 write ogni 250ms)
+	 * per non saturare l'I/O su piani molto lunghi; $force=true bypassa il rate-limit
+	 * (usato per stato iniziale, finale, transizioni di fase).
+	 */
+	private static function writeProgress($processed, $total, $extra = array(), $force = false) {
+		$now = microtime(true);
+		if (!$force && ($now - self::$progressLastWriteTs) < 0.25 && $processed < $total) {
+			return;
+		}
+		self::$progressLastWriteTs = $now;
+		$payload = array_merge(array(
+			'processed'  => (int) $processed,
+			'total'      => (int) $total,
+			'percentage' => ($total > 0) ? round(($processed / $total) * 100, 1) : 0.0,
+			'ts'         => (int) round($now * 1000),
+			'done'       => ($total > 0 && $processed >= $total),
+		), $extra);
+		@file_put_contents(self::progressPath(), json_encode($payload), LOCK_EX);
+	}
+
+	private static function readProgress() {
+		$f = self::progressPath();
+		if (!file_exists($f)) {
+			return array(
+				'processed'  => 0,
+				'total'      => 0,
+				'percentage' => 0.0,
+				'done'       => false,
+				'idle'       => true,
+			);
+		}
+		$raw  = @file_get_contents($f);
+		$data = json_decode($raw, true);
+		if (!is_array($data)) {
+			return array('idle' => true);
+		}
+		return $data;
 	}
 }

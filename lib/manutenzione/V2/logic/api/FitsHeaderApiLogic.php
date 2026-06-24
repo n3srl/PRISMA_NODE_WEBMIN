@@ -42,6 +42,9 @@ class FitsHeaderApiLogic {
 	// nome-file (e quindi il prefisso stazione).
 	const FILENAME_KW = 'FILENAME';
 
+	// Stato di avanzamento del Run (vedi writeProgress/readProgress).
+	private static $progressLastWriteTs = 0.0;
+
 	// Mappa: chiave in configuration.cfg => keyword FITS scritta nell'header.
 	// Identita' tranne APERTURE -> APERTUR. STATION_NAME e COMMENT volutamente escluse.
 	private static $KEY_MAP = array(
@@ -89,9 +92,20 @@ class FitsHeaderApiLogic {
 	 * Applica i valori della config a tutti i file .fit della sorgente e ritorna il riepilogo.
 	 */
 	public static function Run($request) {
+		// Lo scan ricorsivo di /freeture/<src>/ e la riscrittura per-file possono
+		// richiedere parecchio: alziamo i limiti PHP solo su questo endpoint.
+		@ini_set('memory_limit', '1024M');
+		@set_time_limit(900);
+
 		try {
 			$Person = CoreLogic::VerifyPerson();
 			CoreLogic::CheckCSRF($request->get("token"));
+
+			// Rilascio il lock di sessione PHP: senza questo il polling parallelo del
+			// client su /fits/progress resta bloccato finche' questa request non finisce.
+			if (session_status() === PHP_SESSION_ACTIVE) {
+				@session_write_close();
+			}
 
 			$srcCode = self::readSrcCode($request);
 			if (!self::isValidIdentifier($srcCode)) {
@@ -107,11 +121,33 @@ class FitsHeaderApiLogic {
 				throw new ApiException("Cartella sorgente inesistente: $root");
 			}
 
+			// Stato iniziale (il totale reale viene impostato da applyToTree appena fa il count).
+			self::writeProgress(0, 0, array('phase' => 'running', 'srcCode' => $srcCode), true);
+
 			$result = self::applyToTree($root, $fitsCfg);
+
+			self::writeProgress((int) $result['totalFiles'], (int) $result['totalFiles'], array(
+				'phase' => 'done',
+			), true);
 		} catch (ApiException $a) {
+			self::writeProgress(0, 0, array('phase' => 'error', 'error' => $a->message), true);
 			return CoreLogic::GenerateErrorResponse($a->message);
 		}
 		return CoreLogic::GenerateResponse(true, $result);
+	}
+
+	/**
+	 * GET /manutenzione/fits/progress
+	 * Stato dell'ultima applicazione header in corso o appena conclusa.
+	 */
+	public static function GetProgress() {
+		try {
+			$Person = CoreLogic::VerifyPerson();
+			$data = self::readProgress();
+		} catch (ApiException $a) {
+			return CoreLogic::GenerateErrorResponse($a->message);
+		}
+		return CoreLogic::GenerateResponse(true, $data);
 	}
 
 	//-------------------------------------------------------------------------
@@ -281,8 +317,9 @@ class FitsHeaderApiLogic {
 
 	private static function applyToTree($root, $fitsCfg) {
 		$files = self::listFitFiles($root);
+		$total = count($files);
 		$result = array(
-			'totalFiles'    => count($files),
+			'totalFiles'    => $total,
 			'filesChanged'  => 0,
 			'filesSkipped'  => 0,
 			'filesError'    => 0,
@@ -295,7 +332,10 @@ class FitsHeaderApiLogic {
 		}
 		$result['perKeyword'][self::FILENAME_KW] = 0;
 
-		foreach ($files as $file) {
+		// Forzo un flush iniziale appena conosco il totale reale.
+		self::writeProgress(0, $total, array('phase' => 'running'), true);
+
+		foreach ($files as $i => $file) {
 			$err = '';
 			$written = self::applyFile($file, $fitsCfg, $result['perKeyword'], $err);
 			if ($written === null) {
@@ -303,14 +343,18 @@ class FitsHeaderApiLogic {
 				if (count($result['errors']) < 50) {
 					$result['errors'][] = basename($file) . ": " . $err;
 				}
-				continue;
-			}
-			if ($written > 0) {
+			} elseif ($written > 0) {
 				$result['filesChanged']++;
 				$result['cardsWritten'] += $written;
 			} else {
 				$result['filesSkipped']++;
 			}
+			self::writeProgress($i + 1, $total, array(
+				'phase'         => 'running',
+				'filesChanged'  => $result['filesChanged'],
+				'filesSkipped'  => $result['filesSkipped'],
+				'filesError'    => $result['filesError'],
+			));
 		}
 		return $result;
 	}
@@ -600,5 +644,51 @@ class FitsHeaderApiLogic {
 
 	private static function isValidIdentifier($s) {
 		return is_string($s) && $s !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $s) === 1;
+	}
+
+	//-------------------------------------------------------------------------
+	// Progress (file di stato condiviso file-system, polling lato client)
+	//-------------------------------------------------------------------------
+
+	private static function progressPath() {
+		return rtrim(sys_get_temp_dir(), '/\\') . '/manutenzione_fits_progress.json';
+	}
+
+	/**
+	 * Scrive il file di stato del Run. Rate-limit ~4 Hz; $force bypassa il limite.
+	 */
+	private static function writeProgress($processed, $total, $extra = array(), $force = false) {
+		$now = microtime(true);
+		if (!$force && ($now - self::$progressLastWriteTs) < 0.25 && $processed < $total) {
+			return;
+		}
+		self::$progressLastWriteTs = $now;
+		$payload = array_merge(array(
+			'processed'  => (int) $processed,
+			'total'      => (int) $total,
+			'percentage' => ($total > 0) ? round(($processed / $total) * 100, 1) : 0.0,
+			'ts'         => (int) round($now * 1000),
+			'done'       => ($total > 0 && $processed >= $total),
+		), $extra);
+		@file_put_contents(self::progressPath(), json_encode($payload), LOCK_EX);
+	}
+
+	private static function readProgress() {
+		$f = self::progressPath();
+		if (!file_exists($f)) {
+			return array(
+				'processed'  => 0,
+				'total'      => 0,
+				'percentage' => 0.0,
+				'done'       => false,
+				'idle'       => true,
+			);
+		}
+		$raw  = @file_get_contents($f);
+		$data = json_decode($raw, true);
+		if (!is_array($data)) {
+			return array('idle' => true);
+		}
+		return $data;
 	}
 }
