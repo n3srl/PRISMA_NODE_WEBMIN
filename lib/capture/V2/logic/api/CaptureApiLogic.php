@@ -504,6 +504,141 @@ class CaptureApiLogic {
         return $reply;
     }
 
+    /**
+     * GET /capture/completeness?dayDir=FOLDER_NAME
+     * Verifica che per il giorno selezionato siano presenti tutte le capture attese in
+     * base al periodo letto da ACQ_REGULAR_CFG (formato "HHhMMmSSs..."). Ritorna:
+     *   { complete, expectedCount, foundCount, periodSeconds, missingCount,
+     *     missingRanges: [{start, end, count}], dayDir }
+     */
+    public static function GetCompleteness($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $dayDir = isset($_GET['dayDir']) ? $_GET['dayDir'] : '';
+            if ($dayDir === '') {
+                throw new ApiException("Parametro dayDir mancante.");
+            }
+            $periodSec    = self::getCapturePeriodSeconds();
+            $foundSeconds = self::collectCaptureSecondsOfDay($dayDir);
+            $report       = self::buildCompletenessReport($foundSeconds, $periodSec);
+            $report['dayDir'] = $dayDir;
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $report);
+    }
+
+    // Parsa ACQ_REGULAR_CFG ("HHhMMmSSs[exposure]e..."). Default 600 s (10 min).
+    private static function getCapturePeriodSeconds() {
+        $freetureConf = _FREETURE_;
+        $defaultPeriod = 600;
+        if (!file_exists($freetureConf) || !is_file($freetureConf)) {
+            return $defaultPeriod;
+        }
+        foreach (file($freetureConf) as $line) {
+            if (!isset($line) || $line === '' || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                continue;
+            }
+            if ((strlen($line) - 1) === substr_count($line, " ")) {
+                continue;
+            }
+            if (self::getKey($line) !== "ACQ_REGULAR_CFG") {
+                continue;
+            }
+            $raw = self::getValue($line);
+            if (preg_match('/^\s*(\d+)h(\d+)m(\d+)s/i', $raw, $m)) {
+                $sec = ((int) $m[1]) * 3600 + ((int) $m[2]) * 60 + ((int) $m[3]);
+                if ($sec > 0) {
+                    return $sec;
+                }
+            }
+            return $defaultPeriod;
+        }
+        return $defaultPeriod;
+    }
+
+    // Estrae i secondi-dal-mezzanotte dai filename del giorno selezionato.
+    private static function collectCaptureSecondsOfDay($day_dir) {
+        $data_dir = self::getDataPath() . $day_dir . "/captures";
+        if (!is_dir($data_dir)) {
+            return array();
+        }
+        $datePattern = '/(\d{8})T(\d{6})/';
+        $foundSeconds = array();
+        foreach (scandir($data_dir) as $file) {
+            if ($file === '.' || $file === '..') continue;
+            if (substr_compare($file, '.fit', -4, 4, true) !== 0) continue;
+            if (!preg_match($datePattern, $file, $m)) continue;
+            $h  = (int) substr($m[2], 0, 2);
+            $mn = (int) substr($m[2], 2, 2);
+            $s  = (int) substr($m[2], 4, 2);
+            $foundSeconds[] = $h * 3600 + $mn * 60 + $s;
+        }
+        return $foundSeconds;
+    }
+
+    // Algoritmo di completeness (duplicato da StackApiLogic per disaccoppiare i moduli).
+    private static function buildCompletenessReport(array $foundSeconds, $periodSec) {
+        $periodSec = max(1, (int) $periodSec);
+        $expected  = (int) floor(86400 / $periodSec);
+
+        $hasFile = array_fill(0, $expected, false);
+        foreach ($foundSeconds as $sec) {
+            if ($sec < 0 || $sec >= 86400) continue;
+            $slot = (int) floor($sec / $periodSec);
+            if ($slot >= $expected) $slot = $expected - 1;
+            $hasFile[$slot] = true;
+        }
+
+        $missingRanges = array();
+        $runStart = null;
+        for ($k = 0; $k < $expected; $k++) {
+            if (!$hasFile[$k]) {
+                if ($runStart === null) $runStart = $k;
+            } elseif ($runStart !== null) {
+                $missingRanges[] = self::makeMissingRange($runStart, $k - 1, $periodSec);
+                $runStart = null;
+            }
+        }
+        if ($runStart !== null) {
+            $missingRanges[] = self::makeMissingRange($runStart, $expected - 1, $periodSec);
+        }
+
+        $missingCount = 0;
+        foreach ($missingRanges as $r) { $missingCount += $r['count']; }
+        $foundCount = $expected - $missingCount;
+        if ($foundCount < 0) $foundCount = 0;
+
+        return array(
+            'complete'      => ($missingCount === 0),
+            'expectedCount' => $expected,
+            'foundCount'    => $foundCount,
+            'periodSeconds' => $periodSec,
+            'missingCount'  => $missingCount,
+            'missingRanges' => $missingRanges,
+        );
+    }
+
+    private static function makeMissingRange($kStart, $kEnd, $periodSec) {
+        $startSec = $kStart * $periodSec;
+        $endSec   = ($kEnd + 1) * $periodSec - 1;
+        if ($endSec > 86399) $endSec = 86399;
+        return array(
+            'startSec' => $startSec,
+            'endSec'   => $endSec,
+            'start'    => self::fmtHMS($startSec),
+            'end'      => self::fmtHMS($endSec),
+            'count'    => $kEnd - $kStart + 1,
+        );
+    }
+
+    private static function fmtHMS($sec) {
+        $h = (int) floor($sec / 3600);
+        $m = (int) floor(($sec % 3600) / 60);
+        $s = $sec % 60;
+        return sprintf('%02d:%02d:%02d', $h, $m, $s);
+    }
+
     // Get all days and compute number of capture in that day
     public static function getCapturesDays($start, $end) {
         $i = 0;
