@@ -358,22 +358,51 @@ function loadStackCompleteness(dayDir) {
     var $box = $('#stack-completeness-status');
     if (!dayDir) { $box.empty(); return; }
     $box.html('<div class="alert alert-info" style="margin:0;">' + _('Controllo completezza...') + '</div>');
+    console.log('[stack/completeness] GET dayDir=' + dayDir);
     $.ajax({
         url: '/lib/stack/V2/stack/completeness',
         method: 'GET',
         data: { dayDir: dayDir },
         dataType: 'json',
         cache: false
-    }).done(function (resp) {
-        if (!resp || !resp.result || !resp.data) {
+    }).done(function (resp, textStatus, xhr) {
+        console.log('[stack/completeness] response', resp, 'status', xhr.status);
+        if (!resp) {
             $box.html('<div class="alert alert-warning" style="margin:0;">' +
-                _('Impossibile calcolare la completezza per questo giorno') + '.</div>');
+                _('Risposta vuota dal server') + '.</div>');
+            return;
+        }
+        if (!resp.result) {
+            $box.html('<div class="alert alert-warning" style="margin:0;">' +
+                '<b>' + _('Backend ha risposto con errore') + ':</b> ' +
+                (resp.data ? String(resp.data) : _('nessun messaggio')) + '</div>');
+            return;
+        }
+        if (!resp.data) {
+            $box.html('<div class="alert alert-warning" style="margin:0;">' +
+                _('Risultato senza payload data') + '.</div>');
             return;
         }
         $box.html(renderCompletenessHtml(resp.data, _('stack')));
-    }).fail(function () {
+    }).fail(function (xhr, textStatus, errorThrown) {
+        console.error('[stack/completeness] FAIL status=' + (xhr && xhr.status) +
+            ' textStatus=' + textStatus + ' errorThrown=' + errorThrown +
+            ' responseText=', xhr && xhr.responseText);
+        var detail = '';
+        if (xhr && xhr.responseText) {
+            try {
+                var parsed = JSON.parse(xhr.responseText);
+                if (parsed && parsed.data) { detail = String(parsed.data); }
+                else { detail = xhr.responseText.substring(0, 300); }
+            } catch (e) {
+                detail = xhr.responseText.substring(0, 300);
+            }
+        }
         $box.html('<div class="alert alert-warning" style="margin:0;">' +
-            _('Errore nel controllo di completezza') + '.</div>');
+            '<b>' + _('Errore nel controllo di completezza') + '</b> ' +
+            '(HTTP ' + (xhr && xhr.status) + ', ' + textStatus + ')' +
+            (detail ? ': <code style="white-space:pre-wrap;">' + $('<div>').text(detail).html() + '</code>' : '.') +
+            '</div>');
     });
 }
 
