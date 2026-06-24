@@ -127,7 +127,9 @@ class CameraLogic
             'firmware' => '/(?:DeviceFirmwareVersion|firmware(?:\s+version)?)\s*[:=]\s*([A-Za-z0-9_.\-]+)/i',
             'serial'   => '/(?:DeviceSerialNumber|serial(?:\s+number)?|s\/n)\s*[:=]\s*([A-Za-z0-9_.\-]+)/i',
             'aravis'   => '/aravis(?:\s+library)?\s+version\s*[:=]?\s*([0-9][A-Za-z0-9_.\-]*)/i',
-            'ip'       => '/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/',
+            // IP riconosciuto SOLO con contesto esplicito: senza, un firmware tipo
+            // "1.101.0.0" verrebbe scambiato per IP (e' un quad-ottetto valido).
+            'ip'       => '/(?:camera\s*ip|device\s*ip|cam\s*ip|gevdeviceaddress|gevcurrentip(?:configuration|address)?|host\s*address|ip\s*address|connecting\s*to)\b[^0-9]{0,30}?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/i',
         );
         // Riga di log freeture: "YYYY-MM-DD HH:MM:SS [LEVEL] [thread] msg" o
         // "YYYY-MM-DD HH:MM:SS; LEVEL; msg".
@@ -162,8 +164,14 @@ class CameraLogic
                     if (preg_match($regex, $line, $mm)) {
                         $val = trim($mm[1]);
                         if ($val === '') continue;
-                        // ip: ignora 0.0.0.0 e 127.0.0.1
-                        if ($key === 'ip' && ($val === '0.0.0.0' || strpos($val, '127.') === 0)) continue;
+                        if ($key === 'ip') {
+                            // Validazione stretta: deve essere un IP reale, no firmware-like.
+                            if (filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) continue;
+                            if ($val === '0.0.0.0' || strpos($val, '127.') === 0) continue;
+                            // Salta righe firmware (anche se hanno il contesto "ip" che non
+                            // dovrebbero, e' un cinturone di sicurezza in piu').
+                            if (stripos($line, 'firmware') !== false) continue;
+                        }
                         $out[$key] = $val;
                         if ($lastTs !== null) {
                             $out['lastSeenAt'] = $lastTs;
