@@ -769,21 +769,29 @@ function renderSwitchSection(sw) {
         (sw.uplinkPort ? ' &middot; <b>' + _('Uplink') + '</b>: <span class="label label-primary">Port ' + sw.uplinkPort + '</span>' : '') +
     '</div>';
 
-    // Riepilogo ruoli attesi: SEMPRE 3 (camera + nodo + uplink). Possono cadere
-    // sulla stessa porta dello switch, ma devono essere tutti identificati.
-    var intruders = sw.intruders || [];
-    var missing = sw.missingRoles || [];
+    // Riepilogo: i 3 ruoli (camera/nodo/uplink) devono cadere su 3 porte
+    // fisiche distinte del DGS-1210. Tre alert distinti, in ordine di gravita':
+    //   1) TOPOLOGIA VIOLATA (rosso scuro) -> ruoli che condividono porta
+    //   2) Allerta sicurezza (rosso)       -> porte UP non giustificate
+    //   3) Ruoli non identificati (giallo) -> MAC mancanti nel FDB
+    // "Configurazione OK" solo se nessuno dei tre scatta.
+    var intruders   = sw.intruders || [];
+    var missing     = sw.missingRoles || [];
+    var violations  = sw.topologyViolations || [];
     var fdbHint = sw.fdbSource
         ? ' <small class="text-muted">(FDB: ' + _escDeep(sw.fdbSource) + ', ' + (sw.fdbSize || 0) + ' MAC visti)</small>'
         : '';
 
-    if (missing.length > 0) {
-        html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
-            '<i class="fa fa-question-circle"></i> ' +
-            '<b>' + _('Ruoli non identificati') + '</b>: ' +
-            missing.map(function (m) { return '<code>' + _escDeep(m) + '</code>'; }).join(', ') +
-            '. ' + _('Il MAC corrispondente non e\' presente nel FDB dello switch.') + fdbHint +
-        '</div>';
+    if (violations.length > 0) {
+        html += '<div class="alert alert-danger" style="margin-bottom:10px; border-width:2px; font-size:14px;">' +
+            '<i class="fa fa-exclamation-circle fa-lg"></i> ' +
+            '<b>' + _('TOPOLOGIA DI RETE VIOLATA') + '</b>: ' +
+            _('camera, nodo e uplink devono essere collegati ognuno a una porta fisica diversa dello switch') + '.' +
+            '<ul style="margin:6px 0 0 0; padding-left:20px;">';
+        violations.forEach(function (v) {
+            html += '<li>' + _escDeep(v) + '</li>';
+        });
+        html += '</ul></div>';
     }
 
     if (intruders.length > 0) {
@@ -801,11 +809,22 @@ function renderSwitchSection(sw) {
                 ' (' + (it.speedMbps || 0) + ' Mb/s): ' + macList + '</li>';
         });
         html += '</ul></div>';
-    } else if (missing.length === 0) {
+    }
+
+    if (missing.length > 0) {
+        html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
+            '<i class="fa fa-question-circle"></i> ' +
+            '<b>' + _('Ruoli non identificati') + '</b>: ' +
+            missing.map(function (m) { return '<code>' + _escDeep(m) + '</code>'; }).join(', ') +
+            '. ' + _('Il MAC corrispondente non e\' presente nel FDB dello switch.') + fdbHint +
+        '</div>';
+    }
+
+    if (violations.length === 0 && intruders.length === 0 && missing.length === 0) {
         html += '<div class="alert alert-success" style="margin-bottom:10px;">' +
             '<i class="fa fa-shield"></i> ' +
             '<b>' + _('Configurazione OK') + '</b>: ' +
-            _('camera + nodo + uplink tutti identificati, nessun host non giustificato.') +
+            _('camera + nodo + uplink su tre porte fisiche dedicate, nessun host non giustificato.') +
             fdbHint +
         '</div>';
     }
