@@ -288,6 +288,9 @@ function runDefaultMigration() {
     $btnRun.prop('disabled', true);
     $status.html('<div class="alert alert-info">' + _('Migrazione in corso...') + '</div>');
 
+    _showMigrationProgress(0, nItems, 'starting');
+    var pollHandle = setInterval(_pollMigrationProgress, 500);
+
     _csrfTokenForMigration().then(function (token) {
         return $.ajax({
             url: '/lib/manutenzione/V2/manutenzione/migration/run',
@@ -305,6 +308,7 @@ function runDefaultMigration() {
         }
         var results = resp.data || [];
         var renamed = results.filter(function (r) { return r.status === 'renamed'; }).length;
+        var merged  = results.filter(function (r) { return r.status === 'merged'; }).length;
         var skipped = results.filter(function (r) { return r.status === 'skipped'; }).length;
         var errors  = results.filter(function (r) { return r.status === 'error'; }).length;
 
@@ -312,6 +316,7 @@ function runDefaultMigration() {
         $status.html('<div class="alert ' + cls + '">' +
             _('Migrazione completata.') + ' ' +
             _('Rinominati') + ': <b>' + renamed + '</b>, ' +
+            _('Uniti') + ': <b>' + merged + '</b>, ' +
             _('Saltati') + ': <b>' + skipped + '</b>, ' +
             _('Errori') + ': <b>' + errors + '</b>.' +
             '</div>');
@@ -323,7 +328,51 @@ function runDefaultMigration() {
         $status.html('<div class="alert alert-danger">' +
             _('Errore HTTP durante la migrazione') + ' ' + _escHtml(msg) + '</div>');
     }).always(function () {
-        // Lascio il bottone disabilitato finchè un nuovo scan non conferma che c'è ancora lavoro da fare.
+        clearInterval(pollHandle);
+        // Lascio la progress bar visibile al 100% per qualche secondo, poi la nascondo.
+        _pollMigrationProgress(); // ultimo refresh per portare la barra a 100%/error
+        setTimeout(_hideMigrationProgress, 2500);
+    });
+}
+
+// Aggiornamento visuale della progress bar di migrazione.
+function _showMigrationProgress(processed, total, phase) {
+    var pct = (total > 0) ? Math.round((processed / total) * 100) : 0;
+    var $bar  = $('#default-migration-progress-bar');
+    var $txt  = $('#default-migration-progress-text');
+    $('#default-migration-progress-wrap').show();
+    $bar.css('width', pct + '%').attr('aria-valuenow', pct).text(pct + '%');
+    if (phase === 'merging') {
+        $txt.text(_('Unione finale della cartella sorgente nella destinazione...'));
+    } else if (phase === 'starting') {
+        $txt.text(_('Avvio...') + ' (' + processed + '/' + total + ')');
+    } else if (phase === 'done') {
+        $txt.text(_('Completato') + ' (' + processed + '/' + total + ').');
+    } else if (phase === 'error') {
+        $bar.removeClass('progress-bar-striped active').addClass('progress-bar-danger');
+        $txt.text(_('Errore durante la migrazione.'));
+    } else {
+        $txt.text(_('Elementi processati') + ': ' + processed + ' / ' + total);
+    }
+}
+function _hideMigrationProgress() {
+    var $bar = $('#default-migration-progress-bar');
+    $bar.removeClass('progress-bar-danger').addClass('progress-bar-striped active')
+        .css('width', '0%').attr('aria-valuenow', 0).text('0%');
+    $('#default-migration-progress-text').text('');
+    $('#default-migration-progress-wrap').hide();
+}
+function _pollMigrationProgress() {
+    $.ajax({
+        url: '/lib/manutenzione/V2/manutenzione/migration/progress',
+        method: 'GET',
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) { return; }
+        var d = resp.data;
+        if (d.idle) { return; }
+        _showMigrationProgress(d.processed || 0, d.total || 0, d.phase || 'running');
     });
 }
 
