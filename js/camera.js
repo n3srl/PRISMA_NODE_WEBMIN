@@ -6,6 +6,9 @@ $(document).ready(function () {
     // Bottone "lettura deep": stop freeture -> arv-tool values -> start freeture.
     $('#btn-camera-hwinfo-deep').on('click', runCameraHwInfoDeep);
 
+    // Bottone "diagnostica rete nodo": ethtool/sys/ping. Non interrompe freeture.
+    $('#btn-camera-netdiag').on('click', runCameraNetDiag);
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -625,4 +628,113 @@ function renderCameraHwInfoDeep(data) {
     }
 
     $('#camera-hwinfo-deep').html(html).show();
+}
+
+// Diagnostica rete nodo->camera. Non interrompe freeture.
+function runCameraNetDiag() {
+    var $btn = $('#btn-camera-netdiag');
+    var $prog = $('#camera-netdiag-progress');
+    var $out = $('#camera-netdiag');
+    $btn.prop('disabled', true);
+    $prog.show();
+    $out.hide().empty();
+
+    var cameraIp = $('#camera-ip').val() || '';
+
+    $.ajax({
+        url: '/lib/camera/V1/camera/diag',
+        method: 'GET',
+        data: cameraIp ? { ip: cameraIp } : {},
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $out.html('<div class="alert alert-danger">' +
+                _('Errore durante la diagnostica') +
+                (resp && resp.data ? ': ' + _escDeep(String(resp.data)) : '') +
+            '</div>').show();
+            return;
+        }
+        renderCameraNetDiag(resp.data);
+    }).fail(function (xhr) {
+        console.error('[camera/diag] FAIL', xhr && xhr.status, xhr && xhr.responseText);
+        $out.html('<div class="alert alert-danger">' +
+            _('Errore HTTP durante la diagnostica') + ' (' + (xhr && xhr.status) + ')' +
+        '</div>').show();
+    }).always(function () {
+        $btn.prop('disabled', false);
+        $prog.hide();
+    });
+}
+
+function renderCameraNetDiag(data) {
+    var verdict  = data.verdict || [];
+    var link     = data.link || {};
+    var counters = data.counters || {};
+    var ping     = data.ping || {};
+    var warnings = data.warnings || [];
+
+    var statColors = { ok: '#1d7a44', warn: '#b07d00', err: '#b52c1d' };
+    var statIcons  = { ok: 'fa-check-circle', warn: 'fa-exclamation-triangle', err: 'fa-times-circle' };
+
+    var html = '';
+
+    // Header con riassunto
+    html += '<div class="alert alert-info" style="margin:0 0 10px 0;">' +
+        '<i class="fa fa-stethoscope"></i> ' +
+        _('Diagnostica nodo &rarr; camera completata') + '.' +
+        (data.nic ? ' <b>NIC</b>: <code>' + _escDeep(data.nic) + '</code>' : '') +
+        (data.cameraIp ? ' &middot; <b>' + _('IP camera') + '</b>: <code>' + _escDeep(data.cameraIp) + '</code>' : '') +
+        (link.cameraMac ? ' &middot; <b>MAC</b>: <code>' + _escDeep(link.cameraMac) + '</code>' : '') +
+    '</div>';
+
+    if (warnings.length) {
+        html += '<div class="alert alert-warning">' +
+            '<b>' + _('Avvisi') + ':</b><ul style="margin:4px 0 0 0; padding-left:20px;">' +
+            warnings.map(function (w) { return '<li>' + _escDeep(w) + '</li>'; }).join('') +
+        '</ul></div>';
+    }
+
+    // Verdetti principali
+    if (verdict.length) {
+        html += '<h4 style="margin-top:0;">' + _('Verdetti') + '</h4>' +
+                '<table class="table table-condensed table-striped" style="margin-bottom:14px;">' +
+                '<thead><tr><th style="width:25%;">' + _('Metrica') + '</th>' +
+                '<th style="width:35%;">' + _('Valore') + '</th>' +
+                '<th>' + _('Note') + '</th></tr></thead><tbody>';
+        verdict.forEach(function (v) {
+            var color = statColors[v.status] || '#666';
+            var icon  = statIcons[v.status] || '';
+            html += '<tr>' +
+                '<td><i class="fa ' + icon + '" style="color:' + color + '"></i> ' +
+                    _escDeep(v.label) + '</td>' +
+                '<td style="font-weight:600; color:' + color + '">' + _escDeep(v.value) + '</td>' +
+                '<td><small>' + (v.hint ? _escDeep(v.hint) : '') + '</small></td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+    }
+
+    // Sezione contatori completi (collapsible)
+    if (counters && Object.keys(counters).length) {
+        html += '<details style="margin-top:8px;">' +
+            '<summary style="cursor:pointer;"><b>' + _('Tutti i contatori NIC') + '</b></summary>' +
+            '<table class="table table-condensed" style="margin-top:6px; margin-bottom:0;">';
+        Object.keys(counters).sort().forEach(function (k) {
+            html += '<tr><th style="width:40%;"><code>' + _escDeep(k) + '</code></th>' +
+                    '<td>' + _escDeep(counters[k].toLocaleString('it-IT')) + '</td></tr>';
+        });
+        html += '</table></details>';
+    }
+
+    // Output ping grezzo (collapsible)
+    if (ping && ping.rawTail) {
+        html += '<details style="margin-top:8px;">' +
+            '<summary style="cursor:pointer;"><b>' + _('Output ping') + '</b></summary>' +
+            '<pre style="max-height:200px; overflow:auto; background:#f7f7f9; padding:8px; font-size:11px; margin-top:6px;">' +
+            _escDeep(ping.rawTail) +
+            '</pre></details>';
+    }
+
+    $('#camera-netdiag').html(html).show();
 }

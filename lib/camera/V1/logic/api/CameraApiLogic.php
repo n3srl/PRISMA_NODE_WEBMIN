@@ -122,6 +122,19 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function NetDiag($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $ip = $request->get("ip");
+            if (!is_string($ip) || trim($ip) === '') $ip = null;
+            $res = CameraLogic::NetDiag($ip);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function HwInfoDeep($request)
     {
         try {

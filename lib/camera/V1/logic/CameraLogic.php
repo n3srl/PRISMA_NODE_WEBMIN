@@ -69,6 +69,253 @@ class CameraLogic
     }
 
     /**
+     * Diagnostica rete nodo<->camera SENZA toccare la camera:
+     *   - Trova NIC che routa verso la camera
+     *   - Legge link speed/duplex/carrier/mtu da /sys (no sudo)
+     *   - Legge counters da /sys/class/net/<nic>/statistics/ (no sudo)
+     *   - Ping flood breve (50 pacchetti) per loss/RTT
+     *   - ARP lookup per MAC camera
+     *   - Calcola verdetti ok/warn/err per ciascuna metrica
+     *
+     * Tutto via SSH sull'host docker (i comandi sono Linux standard).
+     */
+    public static function NetDiag($cameraIp = null) {
+        $result = array(
+            'cameraIp' => $cameraIp,
+            'nic'      => null,
+            'link'     => array(),
+            'counters' => array(),
+            'ping'     => array(),
+            'verdict'  => array(),
+            'warnings' => array(),
+        );
+
+        // 1) Risolvi IP camera se non passato
+        if (!$cameraIp) {
+            $hw = self::detectHardwareFromLogs();
+            if (!empty($hw['ip'])) {
+                $cameraIp = $hw['ip'];
+            }
+            // Fallback: arv-tool list ritorna righe tipo "VENDOR-SERIAL (IP)"
+            if (!$cameraIp) {
+                $listOut = self::shellViaSsh("arv-tool-0.8 2>/dev/null");
+                if (preg_match('/\((\d{1,3}(?:\.\d{1,3}){3})\)/', $listOut, $m)) {
+                    $cameraIp = $m[1];
+                }
+            }
+            $result['cameraIp'] = $cameraIp;
+        }
+
+        // 2) NIC verso la camera (ip route get) o prima NIC con carrier come fallback
+        if ($cameraIp) {
+            $route = self::shellViaSsh("ip route get " . escapeshellarg($cameraIp) . " 2>/dev/null");
+            if (preg_match('/dev\s+(\S+)/', $route, $m)) {
+                $result['nic'] = $m[1];
+            }
+        }
+        if (!$result['nic']) {
+            $candidates = self::shellViaSsh(
+                "ls -1 /sys/class/net/ 2>/dev/null | grep -vE '^(lo|docker|tun|br-|veth|virbr)'"
+            );
+            foreach (preg_split('/\r?\n/', trim($candidates)) as $cand) {
+                if ($cand === '') continue;
+                $carrier = trim(self::shellViaSsh(
+                    "cat /sys/class/net/" . escapeshellarg($cand) . "/carrier 2>/dev/null"
+                ));
+                if ($carrier === '1') {
+                    $result['nic'] = $cand;
+                    break;
+                }
+            }
+        }
+        if (!$result['nic']) {
+            $result['warnings'][] = "Impossibile identificare la NIC verso la camera.";
+            $result['verdict'] = self::computeNetDiagVerdict($result);
+            return array("res" => true, "data" => $result);
+        }
+
+        $nic = $result['nic'];
+        $nicEsc = escapeshellarg($nic);
+
+        // 3) Link info via /sys (no sudo)
+        $linkKeys = array('speed', 'duplex', 'carrier', 'operstate', 'mtu', 'address');
+        $cmdLink = 'for f in ' . implode(' ', $linkKeys) . '; do '
+                 . 'echo "$f=$(cat /sys/class/net/' . $nic . '/$f 2>/dev/null)"; done';
+        $linkOut = self::shellViaSsh($cmdLink);
+        foreach (preg_split('/\r?\n/', trim($linkOut)) as $line) {
+            if (preg_match('/^(\w+)=(.*)$/', $line, $m)) {
+                $result['link'][$m[1]] = $m[2];
+            }
+        }
+
+        // 4) Counters via /sys/.../statistics/
+        $statsKeys = array(
+            'rx_packets','tx_packets','rx_bytes','tx_bytes',
+            'rx_errors','tx_errors','rx_dropped','tx_dropped',
+            'rx_crc_errors','rx_frame_errors','rx_length_errors',
+            'rx_over_errors','rx_missed_errors','rx_fifo_errors',
+            'collisions',
+        );
+        $cmdStats = 'for k in ' . implode(' ', $statsKeys) . '; do '
+                  . 'v=$(cat /sys/class/net/' . $nic . '/statistics/$k 2>/dev/null); '
+                  . '[ -n "$v" ] && echo "$k=$v"; done';
+        $statsOut = self::shellViaSsh($cmdStats);
+        foreach (preg_split('/\r?\n/', trim($statsOut)) as $line) {
+            if (preg_match('/^(\w+)=(\d+)$/', $line, $m)) {
+                $result['counters'][$m[1]] = (int) $m[2];
+            }
+        }
+
+        // 5) Ping camera (50 pacchetti, ~2.5s)
+        if ($cameraIp) {
+            $pingOut = self::shellViaSsh(
+                "ping -c 50 -i 0.05 -W 1 " . escapeshellarg($cameraIp) . " 2>&1"
+            );
+            $result['ping'] = self::parsePingOutput($pingOut);
+        }
+
+        // 6) MAC camera via ARP
+        if ($cameraIp) {
+            $arpOut = self::shellViaSsh("ip neigh show dev " . $nicEsc . " 2>/dev/null");
+            $needle = preg_quote($cameraIp, '/');
+            if (preg_match('/' . $needle . '\s+lladdr\s+(\S+)/', $arpOut, $m)) {
+                $result['link']['cameraMac'] = $m[1];
+            }
+        }
+
+        $result['verdict'] = self::computeNetDiagVerdict($result);
+        return array("res" => true, "data" => $result);
+    }
+
+    private static function parsePingOutput($out) {
+        $p = array('rawTail' => '');
+        if (preg_match('/(\d+)\s+packets transmitted,\s+(\d+)\s+received,\s+([\d.]+)%\s+packet loss/i', $out, $m)) {
+            $p['transmitted'] = (int) $m[1];
+            $p['received']    = (int) $m[2];
+            $p['lossPct']     = (float) $m[3];
+        }
+        if (preg_match('/rtt min\/avg\/max\/mdev\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)\/([\d.]+)\s*ms/', $out, $m)) {
+            $p['rttMin']  = (float) $m[1];
+            $p['rttAvg']  = (float) $m[2];
+            $p['rttMax']  = (float) $m[3];
+            $p['rttMdev'] = (float) $m[4];
+        }
+        // Ultime 8 righe per debug visibile
+        $lines = preg_split('/\r?\n/', trim($out));
+        $p['rawTail'] = implode("\n", array_slice($lines, -8));
+        return $p;
+    }
+
+    // Classifica ogni metrica in {ok, warn, err} con motivazione.
+    private static function computeNetDiagVerdict($r) {
+        $v = array();
+        $link = $r['link'];
+        $c    = $r['counters'];
+
+        // Link speed
+        $speed = isset($link['speed']) ? (int) $link['speed'] : 0;
+        $duplex = isset($link['duplex']) ? $link['duplex'] : '';
+        $carrier = isset($link['carrier']) ? $link['carrier'] : '';
+        if ($carrier === '0' || isset($link['operstate']) && strtolower($link['operstate']) === 'down') {
+            $v[] = self::verd('Link NIC', 'DOWN', 'err', 'NIC senza carrier');
+        } elseif ($speed >= 1000) {
+            $v[] = self::verd('Velocita link NIC', $speed . ' Mb/s ' . $duplex, 'ok', null);
+        } elseif ($speed >= 100) {
+            $v[] = self::verd('Velocita link NIC', $speed . ' Mb/s ' . $duplex, 'warn',
+                'Atteso 1 Gbps. Cavo Cat5/connettore o porta switch a 100 Mb/s.');
+        } elseif ($speed > 0) {
+            $v[] = self::verd('Velocita link NIC', $speed . ' Mb/s ' . $duplex, 'err',
+                'Link degradato sotto i 100 Mb/s.');
+        } else {
+            $v[] = self::verd('Velocita link NIC', 'sconosciuta', 'warn',
+                'NIC non e\' riportata da /sys (forse virtual o down)');
+        }
+
+        if ($duplex === 'half') {
+            $v[] = self::verd('Duplex', 'half', 'err',
+                'Half duplex su gigabit non e\' normale, indica auto-negotiation mismatch.');
+        }
+
+        // Rapporto errori RX
+        $rxPackets = isset($c['rx_packets']) ? $c['rx_packets'] : 0;
+        $rxErrors  = isset($c['rx_errors'])  ? $c['rx_errors']  : 0;
+        if ($rxPackets > 0) {
+            $pct = ($rxErrors / $rxPackets) * 100;
+            $stat = $pct < 0.001 ? 'ok' : ($pct < 0.1 ? 'warn' : 'err');
+            $hint = $stat === 'ok' ? null
+                : ($pct >= 0.1 ? 'Rumore elevato sul link: cavo/EMI sospetti.'
+                              : 'Errori presenti ma marginali, monitorare nel tempo.');
+            $v[] = self::verd('Tasso errori RX',
+                sprintf('%.4f%% (%s/%s)', $pct, number_format($rxErrors,0,'.',"'"), number_format($rxPackets,0,'.',"'")),
+                $stat, $hint);
+        }
+
+        // CRC errors (cavo difettoso classico)
+        if (!empty($c['rx_crc_errors'])) {
+            $v[] = self::verd('rx_crc_errors', $c['rx_crc_errors'], 'err',
+                'Frame con CRC sbagliato: cavo, connettori o EMI.');
+        }
+        if (!empty($c['rx_length_errors'])) {
+            $v[] = self::verd('rx_length_errors', $c['rx_length_errors'], 'warn',
+                'Frame oversize: MTU mismatch (la camera invia jumbo?) o NIC/driver.');
+        }
+        if (!empty($c['rx_missed_errors'])) {
+            $v[] = self::verd('rx_missed_errors', $c['rx_missed_errors'], 'warn',
+                'NIC ha perso frame (CPU/bus saturi o RX ring troppo piccolo).');
+        }
+        if (!empty($c['rx_over_errors'])) {
+            $v[] = self::verd('rx_over_errors', $c['rx_over_errors'], 'warn',
+                'Overruns sul buffer NIC.');
+        }
+        if (!empty($c['collisions'])) {
+            $v[] = self::verd('collisions', $c['collisions'], 'err',
+                'Collisioni su gigabit full-duplex non dovrebbero esistere.');
+        }
+
+        // Ping
+        if (!empty($r['ping'])) {
+            $loss = isset($r['ping']['lossPct']) ? $r['ping']['lossPct'] : null;
+            if ($loss !== null) {
+                $stat = $loss == 0 ? 'ok' : ($loss < 1 ? 'warn' : 'err');
+                $v[] = self::verd('Ping packet loss', sprintf('%.1f%%', $loss), $stat,
+                    $loss > 0 ? 'Pacchetti persi tra nodo e camera.' : null);
+            }
+            if (isset($r['ping']['rttAvg'])) {
+                $rtt = $r['ping']['rttAvg'];
+                $stat = $rtt < 1 ? 'ok' : ($rtt < 5 ? 'warn' : 'err');
+                $v[] = self::verd('RTT medio', sprintf('%.2f ms', $rtt), $stat, null);
+            }
+            if (isset($r['ping']['rttMdev'])) {
+                $j = $r['ping']['rttMdev'];
+                $stat = $j < 0.5 ? 'ok' : ($j < 2 ? 'warn' : 'err');
+                $v[] = self::verd('Jitter', sprintf('%.2f ms', $j), $stat,
+                    $j >= 2 ? 'Jitter alto: possibile saturazione link o congestione switch.' : null);
+            }
+        }
+
+        return $v;
+    }
+
+    private static function verd($label, $value, $status, $hint) {
+        return array('label' => $label, 'value' => (string) $value, 'status' => $status, 'hint' => $hint);
+    }
+
+    private static function shellViaSsh($cmd) {
+        $session = @ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        if (!$session) return '';
+        if (!@ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            unset($session);
+            return '';
+        }
+        $stream = @ssh2_exec($session, $cmd);
+        if (!$stream) { unset($session); return ''; }
+        stream_set_blocking($stream, true);
+        $out = stream_get_contents(ssh2_fetch_stream($stream, SSH2_STREAM_STDIO));
+        unset($session);
+        return (string) $out;
+    }
+
+    /**
      * Lettura "deep" dei parametri camera via arv-tool values.
      * GenICam permette un solo controller alla volta, quindi ferma freeture per
      * la durata della lettura e lo riavvia subito dopo (finally garantisce il restart
@@ -249,20 +496,35 @@ class CameraLogic
                 $out[$key] = self::decodePackedIp($val);
             } elseif ($key === 'GevMACAddress') {
                 $out[$key] = self::decodePackedMac($val);
-            } elseif ($key === 'DeviceLinkSpeed') {
-                $n = self::parseNumber($val);
-                if ($n !== null) {
-                    if ($n >= 1e9)       $out[$key] = sprintf('%.1f Gbps (%s)',  $n / 1e9, $val);
-                    elseif ($n >= 1e6)   $out[$key] = sprintf('%.1f Mbps (%s)',  $n / 1e6, $val);
-                }
-            } elseif ($key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
-                $n = self::parseNumber($val);
-                if ($n !== null && $n > 0) {
-                    $out[$key] = sprintf('%.1f MB/s (%s)', $n / 1e6, $val);
-                }
+            } elseif ($key === 'DeviceLinkSpeed' || $key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
+                // SFNC: DeviceLinkSpeed e simili sono in Byte/secondo (Bps), NON bit/s.
+                // Mostro in Gbps (per il link) + MB/s (per il throughput) per chiarezza.
+                $out[$key] = self::formatBytesPerSecond($val);
             }
         }
         return $out;
+    }
+
+    // Converte un valore Bps (byte/secondo, come da SFNC GenICam) in "X Gbps (Y MB/s)".
+    private static function formatBytesPerSecond($val) {
+        $bytesPerSec = self::parseNumber($val);
+        if ($bytesPerSec === null || $bytesPerSec <= 0) {
+            return $val;
+        }
+        $mbps = $bytesPerSec / 1e6;        // MB/s
+        $gbps = ($bytesPerSec * 8) / 1e9;  // Gbit/s
+
+        if ($gbps >= 1) {
+            return sprintf('%.2f Gbps (%.1f MB/s, %s Bps)',
+                $gbps, $mbps, self::formatInt($bytesPerSec));
+        }
+        $mbits = ($bytesPerSec * 8) / 1e6;
+        return sprintf('%.0f Mbps (%.1f MB/s, %s Bps)',
+            $mbits, $mbps, self::formatInt($bytesPerSec));
+    }
+
+    private static function formatInt($n) {
+        return number_format((float) $n, 0, '.', "'"); // 1'000'000'000 stile europeo
     }
 
     private static function parseNumber($val) {
