@@ -48,6 +48,138 @@ class CameraLogic
         return $out;
 	}
 
+    /**
+     * Ritorna informazioni hardware della camera SENZA interrogarla:
+     *   - "configured": chiavi camera-rilevanti lette da configuration.cfg
+     *     (statiche, sempre disponibili).
+     *   - "hardware":   vendor/model/firmware/serial/ip/aravis-version estratti
+     *     dai log freeture (sono righe scritte all'avvio di freeture quando
+     *     enumera la camera). Robusto: non disturba l'acquisizione.
+     */
+    public static function HwInfo() {
+        $hardware   = self::detectHardwareFromLogs();
+        $configured = self::readConfiguredCameraKeys();
+        return array(
+            "res"  => true,
+            "data" => array(
+                "hardware"   => $hardware,
+                "configured" => $configured,
+            ),
+        );
+    }
+
+    // Legge da configuration.cfg le chiavi di interesse per identificare la camera.
+    private static function readConfiguredCameraKeys() {
+        $keysMap = array(
+            'CAMERA'        => 'camera',
+            'INSTRUME'      => 'instrument',
+            'TELESCOP'      => 'telescope',
+            'CAMERA_ID'     => 'cameraId',
+            'ACQ_FORMAT'    => 'format',
+            'ACQ_RES_SIZE'  => 'resolution',
+            'ACQ_FPS'       => 'fps',
+        );
+        $out = array();
+        foreach ($keysMap as $alias) { $out[$alias] = null; }
+
+        $freetureConf = _FREETURE_;
+        if (!file_exists($freetureConf) || !is_file($freetureConf)) {
+            return $out;
+        }
+        foreach (file($freetureConf) as $line) {
+            if (!isset($line) || $line === '' || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                continue;
+            }
+            if (strpos($line, '=') === false) continue;
+            $parts = explode('=', $line, 2);
+            $key   = trim($parts[0]);
+            if (!isset($keysMap[$key])) continue;
+            $val = $parts[1];
+            $hashPos = strpos($val, '#'); // strip inline comments
+            if ($hashPos !== false) $val = substr($val, 0, $hashPos);
+            $out[$keysMap[$key]] = trim($val);
+        }
+        return $out;
+    }
+
+    // Estrae vendor/model/firmware/serial/ip/aravis dai log freeture, prendendo
+    // sempre l'ultima occorrenza (= dopo l'ultimo restart). Non disturba la camera.
+    private static function detectHardwareFromLogs() {
+        $out = array(
+            'vendor'     => null,
+            'model'      => null,
+            'firmware'   => null,
+            'serial'     => null,
+            'ip'         => null,
+            'aravis'     => null,
+            'lastSeenAt' => null,
+        );
+
+        $stationCode = CoreLogic::GetStationCode();
+        $logsDir     = _FREETURE_DATA_ . $stationCode . "/logs/";
+        if (!is_dir($logsDir)) {
+            return $out;
+        }
+
+        $patterns = array(
+            'vendor'   => '/(?:DeviceVendorName|vendor(?:\s+name)?)\s*[:=]\s*([A-Za-z0-9_.\-\s]+?)\s*(?:[\[\]\|;,]|$)/i',
+            'model'    => '/(?:DeviceModelName|model(?:\s+name)?)\s*[:=]\s*([A-Za-z0-9_.\-\s]+?)\s*(?:[\[\]\|;,]|$)/i',
+            'firmware' => '/(?:DeviceFirmwareVersion|firmware(?:\s+version)?)\s*[:=]\s*([A-Za-z0-9_.\-]+)/i',
+            'serial'   => '/(?:DeviceSerialNumber|serial(?:\s+number)?|s\/n)\s*[:=]\s*([A-Za-z0-9_.\-]+)/i',
+            'aravis'   => '/aravis(?:\s+library)?\s+version\s*[:=]?\s*([0-9][A-Za-z0-9_.\-]*)/i',
+            'ip'       => '/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/',
+        );
+        // Riga di log freeture: "YYYY-MM-DD HH:MM:SS [LEVEL] [thread] msg" o
+        // "YYYY-MM-DD HH:MM:SS; LEVEL; msg".
+        $tsPattern = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/';
+
+        $maxBytes = 8 * 1024 * 1024; // se un log e' enorme, leggo solo gli ultimi 8 MB
+        $files = glob($logsDir . "*.log");
+        // Preferenze: ACQ_THREAD.log per primo, e' dove freeture logga le info camera.
+        usort($files, function ($a, $b) {
+            $aIsAcq = (stripos(basename($a), 'ACQ') !== false) ? 1 : 0;
+            $bIsAcq = (stripos(basename($b), 'ACQ') !== false) ? 1 : 0;
+            if ($aIsAcq !== $bIsAcq) return $bIsAcq - $aIsAcq;
+            return strcmp($a, $b);
+        });
+
+        foreach ($files as $logFile) {
+            $fh = @fopen($logFile, 'rb');
+            if ($fh === false) continue;
+            $size = filesize($logFile);
+            if ($size > $maxBytes) {
+                @fseek($fh, $size - $maxBytes);
+                @fgets($fh); // scarta linea parziale
+            }
+            $lastTs = null;
+            while (($line = fgets($fh)) !== false) {
+                $line = rtrim($line, "\r\n");
+                if ($line === '') continue;
+                if (preg_match($tsPattern, $line, $tm)) {
+                    $lastTs = $tm[1];
+                }
+                foreach ($patterns as $key => $regex) {
+                    if (preg_match($regex, $line, $mm)) {
+                        $val = trim($mm[1]);
+                        if ($val === '') continue;
+                        // ip: ignora 0.0.0.0 e 127.0.0.1
+                        if ($key === 'ip' && ($val === '0.0.0.0' || strpos($val, '127.') === 0)) continue;
+                        $out[$key] = $val;
+                        if ($lastTs !== null) {
+                            $out['lastSeenAt'] = $lastTs;
+                        }
+                    }
+                }
+            }
+            fclose($fh);
+            // Se ho riempito tutti i campi principali, posso fermarmi.
+            if ($out['vendor'] && $out['model'] && $out['firmware'] && $out['serial']) {
+                break;
+            }
+        }
+        return $out;
+    }
+
     public static function CanRunCalibration() {
 
         $can = self::CanCalibrate();

@@ -1,5 +1,8 @@
 $(document).ready(function () {
 
+    // Carica info dispositivo (senza interrogare la camera: solo log + config).
+    loadCameraHwInfo();
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -348,11 +351,61 @@ function can_calibrate()
                         $("#calibration_form").hide();
                         $("#calibration_notice").show();
                     }
-                }  
+                }
             } catch (error)
             {
                 console.error(error);
             }
         }
+    });
+}
+
+// Popola il box "Informazioni dispositivo" leggendo /camera/hwinfo.
+// I dati arrivano da configuration.cfg (sempre disponibili) e dai log freeture
+// (vendor/model/firmware/serial, scritti all'avvio dell'acquisizione).
+function loadCameraHwInfo() {
+    function setCell(id, val) {
+        var $el = $('#' + id);
+        if (!$el.length) return;
+        if (val === null || val === undefined || val === '') {
+            $el.html('<span class="text-muted">&mdash;</span>');
+        } else {
+            $el.text(String(val));
+        }
+    }
+    $.ajax({
+        url: '/lib/camera/V1/camera/hwinfo',
+        method: 'GET',
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $('#camera-hwinfo-loading').text(_('Informazioni non disponibili'));
+            return;
+        }
+        var hw  = resp.data.hardware   || {};
+        var cfg = resp.data.configured || {};
+
+        setCell('hw-vendor',   hw.vendor);
+        setCell('hw-model',    hw.model);
+        setCell('hw-firmware', hw.firmware);
+        setCell('hw-serial',   hw.serial);
+        setCell('hw-ip',       hw.ip);
+        setCell('hw-aravis',   hw.aravis);
+        setCell('hw-lastseen', hw.lastSeenAt);
+
+        setCell('cfg-camera',     cfg.camera);
+        setCell('cfg-cameraId',   cfg.cameraId);
+        setCell('cfg-instrument', cfg.instrument);
+        setCell('cfg-telescope',  cfg.telescope);
+        setCell('cfg-format',     cfg.format);
+        setCell('cfg-resolution', cfg.resolution);
+        setCell('cfg-fps',        cfg.fps);
+
+        $('#camera-hwinfo-loading').hide();
+        $('#camera-hwinfo').show();
+    }).fail(function (xhr) {
+        console.error('[camera/hwinfo] FAIL', xhr && xhr.status, xhr && xhr.responseText);
+        $('#camera-hwinfo-loading').text(_('Errore nel caricamento delle informazioni dispositivo'));
     });
 }
