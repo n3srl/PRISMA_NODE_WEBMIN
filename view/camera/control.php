@@ -79,6 +79,24 @@
                             </span>
                         </div>
                         <div id='camera-hwinfo-deep' style='display:none; margin-top:14px;'></div>
+
+                        <hr style='margin: 14px 0;'>
+
+                        <!-- Diagnostica rete nodo<->camera: ethtool, /sys, ping, ARP. Non disturba freeture. -->
+                        <div>
+                            <button type='button' id='btn-camera-netdiag' class='btn btn-info'>
+                                <i class='fa fa-stethoscope'></i>
+                                <?= _('Diagnostica rete (nodo)') ?>
+                            </button>
+                            <small class='text-muted' style='margin-left:8px;'>
+                                <?= _('Verifica link, errori NIC, ping verso la camera. Non interrompe freeture.') ?>
+                            </small>
+                            <span id='camera-netdiag-progress' style='display:none; margin-left:12px;'>
+                                <i class='fa fa-spinner fa-spin'></i>
+                                <?= _('Diagnostica in corso...') ?>
+                            </span>
+                        </div>
+                        <div id='camera-netdiag' style='display:none; margin-top:14px;'></div>
                     </div>
                 </div>
             </div>
