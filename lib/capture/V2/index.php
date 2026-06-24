@@ -101,6 +101,22 @@ $app->PATCH('/capture', function (Application $app, Request $request) {
 
 /**
  *
+ * GET COMPLETENESS REPORT (slot mancanti per il giorno selezionato)
+ *
+ * NB: questa route DEVE stare prima di /capture/{captureId}, altrimenti il
+ *     placeholder cattura "completeness" come id e Silex chiama Get('completeness').
+ *
+ * */
+$app->GET('/capture/completeness', function (Application $app, Request $request) {
+
+    $result = CaptureApiLogic::GetCompleteness($request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
  * GET
  *
  * */
@@ -174,19 +190,6 @@ $app->GET('/capture/datatable/daylist', function (Application $app, Request $req
     $encode = json_encode($result);
     $resp = new Response($encode);
     $resp->setStatusCode(200);
-    return $resp;
-});
-
-/**
- *
- * GET COMPLETENESS REPORT (slot mancanti per il giorno selezionato)
- *
- * */
-$app->GET('/capture/completeness', function (Application $app, Request $request) {
-
-    $result = CaptureApiLogic::GetCompleteness($request);
-    $resp = new Response(json_encode($result));
-    $resp->setStatusCode($result->result ? 200 : 403);
     return $resp;
 });
 
