@@ -69,6 +69,12 @@ class ManutenzioneApiLogic {
 	// (la pagina di manutenzione disabilita il bottone durante la run).
 	private static $progressLastWriteTs = 0.0;
 
+	// Cartelle di servizio sotto _FREETURE_DATA_ che NON sono cartelle stazione:
+	// vanno escluse dal dropdown sorgenti. Match case-insensitive.
+	private static $SOURCE_BLACKLIST = array(
+		'debug', 'log', 'logs', 'tmp', 'temp', 'cache', 'lost+found',
+	);
+
 	/**
 	 * GET /manutenzione/migration/sources
 	 * Ritorna l'elenco delle cartelle stazione presenti sotto _FREETURE_DATA_ (candidate
@@ -83,7 +89,7 @@ class ManutenzioneApiLogic {
 			$dstName = self::getStationName();
 
 			$base    = rtrim(_FREETURE_DATA_, "/");
-			$sources = self::listDirs($base);
+			$sources = array_values(array_filter(self::listDirs($base), 'self::isPlausibleSourceDir'));
 			sort($sources, SORT_STRING | SORT_FLAG_CASE);
 
 			$payload = array(
@@ -649,6 +655,22 @@ class ManutenzioneApiLogic {
 
 	private static function isValidIdentifier($s) {
 		return is_string($s) && $s !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $s) === 1;
+	}
+
+	/**
+	 * Filtra le cartelle sotto _FREETURE_DATA_ scartando quelle di servizio
+	 * (debug, log, tmp, ...) e i nascosti. Le cartelle stazione PRISMA sono per
+	 * convenzione in MAIUSCOLO (ITLI05, ITPI01, eventualmente con suffisso .DEV);
+	 * accettiamo anche DEFAULT e l'identifier ammesso da isValidIdentifier.
+	 */
+	private static function isPlausibleSourceDir($name) {
+		if ($name === '' || $name[0] === '.') {
+			return false;
+		}
+		if (in_array(strtolower($name), self::$SOURCE_BLACKLIST, true)) {
+			return false;
+		}
+		return self::isValidIdentifier($name);
 	}
 
 	private static function progressPath() {
