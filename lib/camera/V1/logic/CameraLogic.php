@@ -394,6 +394,26 @@ class CameraLogic
         }
         $r['intruderCount'] = count($r['intruders']);
 
+        // Velocita' sub-gigabit sulle porte di ruolo: campanello d'allarme.
+        $roleByIfIndex = array();
+        if ($r['cameraPort']) $roleByIfIndex[(int) $r['cameraPort']][] = 'camera';
+        if ($r['nodePort'])   $roleByIfIndex[(int) $r['nodePort']][]   = 'nodo';
+        if ($r['uplinkPort']) $roleByIfIndex[(int) $r['uplinkPort']][] = 'uplink';
+
+        $r['speedWarnings'] = array();
+        foreach ($r['ports'] as $port) {
+            if (!$port['up']) continue;
+            if (!isset($roleByIfIndex[$port['ifIndex']])) continue;
+            $speed = (int) $port['speedMbps'];
+            if ($speed > 0 && $speed < 1000) {
+                $r['speedWarnings'][] = array(
+                    'port'      => $port['ifIndex'],
+                    'roles'     => $roleByIfIndex[$port['ifIndex']],
+                    'speedMbps' => $speed,
+                );
+            }
+        }
+
         return $r;
     }
 
