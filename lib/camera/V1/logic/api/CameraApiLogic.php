@@ -122,6 +122,20 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function HwInfoDeep($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
+            $ip = $request->get("ip");
+            if (!is_string($ip) || trim($ip) === '') $ip = null;
+            $res = CameraLogic::HwInfoDeep($ip);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function Calibration()
     {
         try {

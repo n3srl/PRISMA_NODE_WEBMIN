@@ -98,6 +98,16 @@ $app->GET('/camera/hwinfo', function (Application $app, Request $request) {
     return $resp;
 });
 
+// Lettura "deep" via arv-tool values: ferma freeture per 3-6 secondi,
+// dumpa tutti i parametri GenICam principali, riavvia freeture.
+$app->POST('/camera/hwinfo/deep', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::HwInfoDeep($request->request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 $app->POST('/camera/bounds', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::Bounds($request);

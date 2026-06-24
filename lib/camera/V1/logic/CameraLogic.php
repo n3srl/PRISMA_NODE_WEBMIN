@@ -68,6 +68,171 @@ class CameraLogic
         );
     }
 
+    /**
+     * Lettura "deep" dei parametri camera via arv-tool values.
+     * GenICam permette un solo controller alla volta, quindi ferma freeture per
+     * la durata della lettura e lo riavvia subito dopo (finally garantisce il restart
+     * anche se il parsing fallisce). Tempo tipico: 3-6 secondi.
+     */
+    public static function HwInfoDeep($ip = null) {
+        @set_time_limit(60);
+        $result = array(
+            'live'      => array(),
+            'raw'       => '',
+            'cameraIp'  => null,
+            'pausedSec' => null,
+            'warnings'  => array(),
+        );
+
+        // Se non ho un IP esplicito, provo a usare quello che il parser dei log ha
+        // gia' trovato (campo GevCurrentIPAddress non viene da li' ma e' meglio di niente).
+        if (!$ip) {
+            $detected = self::detectHardwareFromLogs();
+            if (!empty($detected['ip'])) {
+                $ip = $detected['ip'];
+            }
+        }
+        $result['cameraIp'] = $ip;
+
+        $startTs = microtime(true);
+        $stopOk  = false;
+        try {
+            // 1) Stop freeture per liberare la sessione GenICam.
+            DockerApiLogic::sshContainerStop("freeture");
+            $stopOk = true;
+            // 2) Piccola attesa per assicurarsi che il control channel sia rilasciato.
+            usleep(800 * 1000);
+
+            // 3) Dump arv-tool values.
+            $raw = self::runArvValuesRaw($ip);
+            $result['raw']  = $raw;
+            if ($raw === '' || stripos($raw, 'error') === 0 || stripos($raw, 'no device') !== false) {
+                $result['warnings'][] = "arv-tool non ha prodotto output utile (camera non raggiungibile?)";
+            }
+            $result['live'] = self::parseArvValues($raw);
+        } catch (\Throwable $t) {
+            error_log("[HwInfoDeep] EXCEPTION " . get_class($t) . ": " . $t->getMessage());
+            $result['warnings'][] = "Eccezione: " . $t->getMessage();
+        } finally {
+            // 4) Riavvio freeture comunque (cintura di sicurezza).
+            if ($stopOk) {
+                DockerApiLogic::sshContainerStart("freeture");
+            }
+        }
+        $result['pausedSec'] = round(microtime(true) - $startTs, 2);
+
+        return array("res" => true, "data" => $result);
+    }
+
+    // Esegue `arv-tool-0.8 [-a IP] values` via SSH e ritorna l'output grezzo.
+    private static function runArvValuesRaw($ip = null) {
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        if (!$session) return '';
+        $out = '';
+        if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            $host = $ip ? ('-a ' . escapeshellarg($ip)) : '';
+            $cmd  = "arv-tool-0.8 $host values 2>&1";
+            $stream = ssh2_exec($session, $cmd);
+            if ($stream) {
+                stream_set_blocking($stream, true);
+                $out = stream_get_contents(ssh2_fetch_stream($stream, SSH2_STREAM_STDIO));
+            }
+        }
+        unset($session);
+        return (string) $out;
+    }
+
+    // Estrae da $raw solo le feature GenICam che ci interessano, prettificando IP/MAC.
+    // arv-tool produce righe del tipo "  FeatureName = value" oppure "FeatureName: value (type)".
+    private static function parseArvValues($raw) {
+        $whitelist = array(
+            // Identita'
+            'DeviceVendorName', 'DeviceModelName', 'DeviceVersion',
+            'DeviceManufacturerInfo', 'DeviceSerialNumber',
+            'DeviceSFNCVersionMajor', 'DeviceSFNCVersionMinor', 'DeviceSFNCVersionSubMinor',
+            'DeviceTLType',
+            // Link & throughput
+            'DeviceMaxThroughput', 'DeviceLinkSpeed',
+            'DeviceLinkThroughputLimitMode', 'DeviceLinkThroughputLimit', 'DeviceLinkThroughputReserve',
+            'DeviceStreamChannelPacketSize',
+            'GevSCPSPacketSize', 'GevSCPD',
+            // Acquisizione
+            'AcquisitionMode', 'AcquisitionFrameRate', 'AcquisitionFrameRateEnable',
+            'AcquisitionFrameRateLinkLimitEnable',
+            'ExposureTime', 'ExposureAuto', 'Gain', 'GainAuto', 'BlackLevel',
+            'PixelFormat', 'Width', 'Height', 'OffsetX', 'OffsetY',
+            'TriggerMode', 'ADCBitDepth', 'SensorShutterMode',
+            // Sensore
+            'SensorWidth', 'SensorHeight', 'PhysicalPixelSize',
+            // Runtime
+            'DeviceTemperature', 'DevicePower', 'DeviceUpTime', 'LinkUpTime',
+            // GigE
+            'GevCurrentIPAddress', 'GevCurrentSubnetMask', 'GevCurrentDefaultGateway',
+            'GevMACAddress',
+        );
+        $wantSet = array_flip($whitelist);
+
+        $out = array();
+        $lines = preg_split('/\r?\n/', $raw);
+        // Pattern 1: "FeatureName = value"   (con eventuali spazi/tab iniziali)
+        // Pattern 2: "FeatureName: value"    (variante)
+        $pat = '/^\s*([A-Za-z][A-Za-z0-9_]*)\s*[:=]\s*(.+?)\s*(?:\((.+?)\))?\s*$/';
+        foreach ($lines as $line) {
+            if ($line === '') continue;
+            if (!preg_match($pat, $line, $m)) continue;
+            $key = $m[1];
+            if (!isset($wantSet[$key])) continue;
+            $val = trim($m[2]);
+
+            // Decodifica IP/MAC packed (int o 0x-hex).
+            if ($key === 'GevCurrentIPAddress' || $key === 'GevCurrentSubnetMask' || $key === 'GevCurrentDefaultGateway') {
+                $val = self::decodePackedIp($val);
+            } elseif ($key === 'GevMACAddress') {
+                $val = self::decodePackedMac($val);
+            } elseif ($key === 'DeviceLinkSpeed') {
+                // bit/s -> Mbps/Gbps human friendly accanto al raw.
+                $n = self::parseNumber($val);
+                if ($n !== null) {
+                    if ($n >= 1e9) $val = sprintf('%.1f Gbps (%s)', $n / 1e9, $val);
+                    elseif ($n >= 1e6) $val = sprintf('%.1f Mbps (%s)', $n / 1e6, $val);
+                }
+            } elseif ($key === 'DeviceLinkThroughputLimit' || $key === 'DeviceMaxThroughput') {
+                $n = self::parseNumber($val);
+                if ($n !== null && $n > 0) {
+                    $val = sprintf('%.1f MB/s (%s)', $n / 1e6, $val);
+                }
+            }
+            $out[$key] = $val;
+        }
+        return $out;
+    }
+
+    private static function parseNumber($val) {
+        $val = trim((string) $val);
+        if (strpos($val, '0x') === 0) return hexdec(substr($val, 2));
+        if (is_numeric($val)) return $val + 0; // int o float
+        // estrazione del primo numero presente
+        if (preg_match('/-?\d+(?:\.\d+)?/', $val, $m)) return $m[0] + 0;
+        return null;
+    }
+
+    private static function decodePackedIp($val) {
+        $n = self::parseNumber($val);
+        if ($n === null) return $val;
+        return long2ip((int) $n);
+    }
+
+    private static function decodePackedMac($val) {
+        $n = self::parseNumber($val);
+        if ($n === null) return $val;
+        $n = (int) $n;
+        return sprintf('%02x:%02x:%02x:%02x:%02x:%02x',
+            ($n >> 40) & 0xFF, ($n >> 32) & 0xFF,
+            ($n >> 24) & 0xFF, ($n >> 16) & 0xFF,
+            ($n >> 8)  & 0xFF, $n & 0xFF
+        );
+    }
+
     // Legge da configuration.cfg le chiavi di interesse per identificare la camera.
     private static function readConfiguredCameraKeys() {
         $keysMap = array(
