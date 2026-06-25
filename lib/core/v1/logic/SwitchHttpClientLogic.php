@@ -53,7 +53,7 @@ class SwitchHttpClientLogic
     {
         if (self::$gambit !== null) return self::$gambit;
         if (!self::isConfigured()) {
-            error_log("[SwitchHttpClient] login: switch non configurato (_SWITCH_IP_ o _SWITCH_HTTP_PASSWORD_ mancanti)");
+            self::trace("login: switch non configurato (_SWITCH_IP_ o _SWITCH_HTTP_PASSWORD_ mancanti)");
             return null;
         }
 
@@ -61,6 +61,7 @@ class SwitchHttpClientLogic
         // (entro GAMBIT_CACHE_TTL secondi).
         $cached = self::readGambitCache();
         if ($cached !== null) {
+            self::trace("login: riuso Gambit cached (eta " . (time() - self::readGambitCacheTs()) . "s) = " . substr($cached, 0, 16) . "...");
             self::$gambit = $cached;
             return $cached;
         }
@@ -70,11 +71,11 @@ class SwitchHttpClientLogic
         // 1) Estrazione chiave RSA pubblica
         $encJs = self::httpGet("http://$host/Encrypt.js");
         if (!is_string($encJs) || $encJs === '') {
-            error_log("[SwitchHttpClient] login: GET Encrypt.js fallita (host $host irraggiungibile o cURL non disponibile)");
+            self::trace("login step 1/3: GET Encrypt.js fallita (host $host irraggiungibile o cURL non disponibile)");
             return null;
         }
         if (!preg_match("/var EN_DATA\\s*=\\s*'([^']+)'/", $encJs, $m)) {
-            error_log("[SwitchHttpClient] login: Encrypt.js ricevuto ma EN_DATA non estraibile (" . strlen($encJs) . " bytes)");
+            self::trace("login step 1/3: Encrypt.js ricevuto (" . strlen($encJs) . " bytes) ma EN_DATA non estraibile, head=" . substr($encJs, 0, 200));
             return null;
         }
         $pubKeyPem = "-----BEGIN PUBLIC KEY-----\n"
@@ -88,7 +89,7 @@ class SwitchHttpClientLogic
         $encUser = self::rsaEnc($user, $pubKeyPem);
         $encPwd  = self::rsaEnc(_SWITCH_HTTP_PASSWORD_, $pubKeyPem);
         if ($encUser === null || $encPwd === null) {
-            error_log("[SwitchHttpClient] login: openssl_public_encrypt fallita (ext-openssl assente o chiave non valida)");
+            self::trace("login step 2/3: openssl_public_encrypt fallita (ext-openssl assente o chiave non valida)");
             return null;
         }
 
@@ -101,22 +102,31 @@ class SwitchHttpClientLogic
             'changlang'         => '0',
         ));
         if (!is_string($body) || $body === '') {
-            error_log("[SwitchHttpClient] login: POST /homepage.htm vuoto/false");
+            self::trace("login step 3/3: POST /homepage.htm vuoto/false");
             return null;
         }
         if (!preg_match('/Gambit[^A-Za-z0-9]+([0-9A-Fa-f]{32,})/', $body, $mm)) {
-            error_log("[SwitchHttpClient] login: Gambit non trovato nella response (body " . strlen($body) . " bytes, head=" . substr($body, 0, 200) . ")");
+            $head = preg_replace('/\\s+/', ' ', substr($body, 0, 300));
             // Detection specifico per "Maximum number of sessions reached":
-            // lo switch ha esaurito le 4 slot di sessione e non possiamo loggarci.
             if (stripos($body, 'Maximum number of sessions') !== false) {
-                error_log("[SwitchHttpClient] login: switch HA SATURATO le sessioni concorrenti (max 4 sul DGS-1210). Aspetta ~3 min o riduci 'Web Session Timeout' nello switch.");
+                self::trace("login step 3/3: switch HA SATURATO le sessioni concorrenti (max 4 sul DGS-1210). Aspetta ~3 min o riduci 'Web Session Timeout'.");
+            } else {
+                self::trace("login step 3/3: Gambit non trovato nella response (" . strlen($body) . " bytes), head=$head");
             }
             return null;
         }
 
         self::$gambit = $mm[1];
         self::writeGambitCache($mm[1]);
+        self::trace("login OK: nuovo Gambit=" . substr($mm[1], 0, 16) . "...");
         return self::$gambit;
+    }
+
+    private static function readGambitCacheTs() {
+        $f = self::gambitCachePath();
+        if (!file_exists($f)) return 0;
+        $data = @json_decode(@file_get_contents($f), true);
+        return is_array($data) && isset($data['ts']) ? (int) $data['ts'] : 0;
     }
 
     /**
@@ -188,6 +198,24 @@ class SwitchHttpClientLogic
         if ($g) self::logout($g);
     }
 
+    // Buffer di debug compilato durante una singola chiamata cableDiag(): tutti
+    // gli step (login, pre-touch, PortSetting, TDR) accodano qui un breve summary
+    // (status code, prime righe della response) cosi' in caso di errore possiamo
+    // ritornarlo nel response API per debug senza dipendere dai log file (in
+    // container con log_errors=Off i error_log() si perdono in stderr).
+    private static $debugTrace = array();
+
+    private static function trace($msg) {
+        self::$debugTrace[] = '[' . date('H:i:s') . '] ' . $msg;
+        error_log('[SwitchHttpClient] ' . $msg);
+    }
+
+    public static function flushTrace() {
+        $t = self::$debugTrace;
+        self::$debugTrace = array();
+        return $t;
+    }
+
     /**
      * Lancia il Cable Diagnostic sulla porta indicata e parse il JSON di risposta.
      * Ritorna array strutturato:
@@ -206,22 +234,28 @@ class SwitchHttpClientLogic
      */
     public static function cableDiag($port)
     {
+        // Reset del trace per questa chiamata: il flush lo fa il caller leggendo
+        // self::flushTrace() dopo il ritorno (sia in caso success che error).
+        self::$debugTrace = array();
+
         $port = (int) $port;
         if ($port <= 0) {
-            return array('ok' => false, 'error' => "Porta non valida ($port).");
+            return array('ok' => false, 'error' => "Porta non valida ($port).", 'trace' => self::flushTrace());
         }
         if (!self::isConfigured()) {
-            return array('ok' => false, 'error' => 'Switch HTTP non configurato in config.php.');
+            return array('ok' => false, 'error' => 'Switch HTTP non configurato in config.php.', 'trace' => self::flushTrace());
         }
+
+        self::trace("cableDiag start port=$port");
 
         $g = self::login();
         if (!$g) {
-            return array('ok' => false, 'error' => 'Login allo switch fallito (verifica _SWITCH_HTTP_PASSWORD_).');
+            return array('ok' => false, 'error' => 'Login allo switch fallito.', 'trace' => self::flushTrace());
         }
 
         $speedStatus = self::getSpeedStatus();
         if ($speedStatus === null || $speedStatus === '') {
-            return array('ok' => false, 'error' => 'Impossibile leggere Port Setting dello switch.');
+            return array('ok' => false, 'error' => 'Impossibile leggere Port Setting dello switch.', 'trace' => self::flushTrace());
         }
 
         $host    = _SWITCH_IP_;
@@ -234,29 +268,27 @@ class SwitchHttpClientLogic
         // se il link e' DOWN o c'e' una coppia rotta).
         $resp = self::httpGet($url, $referer, 15);
         if (!is_string($resp) || $resp === '') {
-            return array('ok' => false, 'error' => 'Nessuna risposta dallo switch.');
+            self::trace("cableDiag: response vuota/false dallo switch");
+            return array('ok' => false, 'error' => 'Nessuna risposta dallo switch.', 'trace' => self::flushTrace());
         }
+        self::trace("cableDiag TDR response: " . strlen($resp) . " bytes");
 
         $json = json_decode($resp, true);
         if (!is_array($json) || empty($json['Content'][0])) {
-            // Se la response e' HTML significa che la sessione e' scaduta o il
-            // login e' fallito: invalido il Gambit cache (con logout esplicito)
-            // per liberare la slot prima di farne una nuova.
             if (stripos($resp, '<html') !== false) {
                 $errMsg = 'Sessione switch scaduta o login rifiutato (ricevuto HTML).';
                 if (stripos($resp, 'Maximum number of sessions') !== false) {
-                    $errMsg = 'Switch ha esaurito le sessioni concorrenti (max 4 su DGS-1210). Aspetta 1-3 minuti che le sessioni stale scadano, o riduci "Web Session Timeout" nello switch.';
+                    $errMsg = 'Switch ha esaurito le sessioni concorrenti (max 4 su DGS-1210). Aspetta 1-3 minuti che le sessioni stale scadano.';
                 }
+                self::trace("cableDiag: ricevuto HTML, head=" . preg_replace('/\\s+/', ' ', substr($resp, 0, 200)));
                 self::invalidateGambit();
-                return array(
-                    'ok'    => false,
-                    'error' => $errMsg,
-                );
+                return array('ok' => false, 'error' => $errMsg, 'trace' => self::flushTrace());
             }
             return array(
                 'ok'    => false,
                 'error' => 'Risposta JSON non valida.',
                 'raw'   => substr($resp, 0, 500),
+                'trace' => self::flushTrace(),
             );
         }
 
@@ -288,12 +320,14 @@ class SwitchHttpClientLogic
             );
         }
 
+        self::trace("cableDiag OK: " . count($pairs) . " pairs, allOk=" . ($allOk ? 'true' : 'false'));
         return array(
             'ok'            => true,
             'port'          => isset($c['Port']) ? (int) $c['Port'] : $port,
             'pairs'         => $pairs,
             'averageLength' => isset($c['Averge_length']) ? $c['Averge_length'] : '',
             'allOk'         => $allOk,
+            'trace'         => self::flushTrace(),
         );
     }
 
@@ -372,26 +406,22 @@ class SwitchHttpClientLogic
         // Diagnostics: alcuni firmware DGS-1210 invalidano il Gambit se l'utente
         // salta direttamente alle .js senza aver caricato la pagina HTML che
         // dovrebbe ospitarle. Best-effort: ignoriamo errori.
-        self::httpGet("http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g", "http://$host/");
+        $preTouch = self::httpGet("http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g", "http://$host/");
+        self::trace("getSpeedStatus pre-touch Cable_Diagnostics_ajax.htm: " . (is_string($preTouch) ? strlen($preTouch) . " bytes" : "false"));
 
         $referer = "http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g";
         $url     = "http://$host/iss/specific/PortSetting.js?Gambit=$g&findPort=0";
         $ps      = self::httpGet($url, $referer);
         if (!is_string($ps) || $ps === '') {
-            error_log("[SwitchHttpClient] getSpeedStatus: GET PortSetting.js vuoto/false");
+            self::trace("getSpeedStatus: GET PortSetting.js vuoto/false");
             return null;
         }
-        // Diagnostica per pinpoint: se torna la pagina "Login timeout" (HTML
-        // anziche' JS) o se Port_Setting non c'e', logghiamo i primi byte per
-        // capire cosa lo switch ha effettivamente risposto.
         if (!preg_match('/Port_Setting\\s*=\\s*(\\[[^;]+\\])\\s*;/s', $ps, $m)) {
             $head = preg_replace('/\\s+/', ' ', substr($ps, 0, 300));
             $hint = '';
-            if (stripos($ps, '<html') !== false) $hint = ' (sembra HTML: sessione scaduta o login rifiutato)';
+            if (stripos($ps, '<html') !== false) $hint = ' (HTML: sessione scaduta o login rifiutato)';
             elseif (stripos($ps, 'Login') !== false && stripos($ps, 'timeout') !== false) $hint = ' (pagina di login timeout)';
-            error_log("[SwitchHttpClient] getSpeedStatus: Port_Setting non trovato (" . strlen($ps) . " bytes)$hint; head=$head");
-            // Invalida il Gambit cache (+ logout): alla prossima richiesta rifa
-            // login pulito e libera la slot di sessione corrente.
+            self::trace("getSpeedStatus: Port_Setting non trovato (" . strlen($ps) . " bytes)$hint; head=$head");
             self::invalidateGambit();
             return null;
         }
@@ -400,12 +430,12 @@ class SwitchHttpClientLogic
             foreach ($bm[1] as $b) $bits[] = $b;
         }
         if (empty($bits)) {
-            error_log("[SwitchHttpClient] getSpeedStatus: Port_Setting trovato ma vuoto");
+            self::trace("getSpeedStatus: Port_Setting trovato ma vuoto");
             return null;
         }
 
         self::$speedStatus = implode('', $bits);
-        error_log("[SwitchHttpClient] getSpeedStatus: speed_status=" . self::$speedStatus);
+        self::trace("getSpeedStatus OK: speed_status=" . self::$speedStatus);
         return self::$speedStatus;
     }
 

@@ -1097,9 +1097,31 @@ function runCableDiag(port, $btn) {
         var $cell = $resultRow.find('td').first();
         if (!resp || !resp.result) {
             var msg = (resp && resp.data) ? resp.data : _('Errore sconosciuto');
-            $cell.html('<div class="alert alert-danger" style="margin:0;">' +
-                '<b>' + _('Test cavo Port') + ' ' + port + '</b>: ' + _escDeep(msg) +
-            '</div>');
+            // L'errore puo' arrivare come stringa o come array { error, trace, raw }
+            var errText = msg, trace = null, raw = null;
+            if (typeof msg === 'object' && msg !== null) {
+                errText = msg.error || _('Errore sconosciuto');
+                trace   = msg.trace || null;
+                raw     = msg.raw || null;
+            }
+            var html = '<div class="alert alert-danger" style="margin:0;">' +
+                '<b>' + _('Test cavo Port') + ' ' + port + '</b>: ' + _escDeep(errText);
+            if (trace && trace.length) {
+                html += '<details style="margin-top:6px;">' +
+                    '<summary style="cursor:pointer;"><small>' + _('Dettagli diagnostici') + '</small></summary>' +
+                    '<pre style="font-size:11px; margin:6px 0 0 0; max-height:300px; overflow:auto; background:#fff; padding:6px;">' +
+                    _escDeep(trace.join('\n')) +
+                '</pre></details>';
+            }
+            if (raw) {
+                html += '<details style="margin-top:4px;">' +
+                    '<summary style="cursor:pointer;"><small>' + _('Response grezza switch') + '</small></summary>' +
+                    '<pre style="font-size:11px; margin:6px 0 0 0; max-height:200px; overflow:auto; background:#fff; padding:6px;">' +
+                    _escDeep(raw) +
+                '</pre></details>';
+            }
+            html += '</div>';
+            $cell.html(html);
             return;
         }
         $cell.html(renderCableDiagResult(resp.data));

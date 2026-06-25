@@ -732,14 +732,19 @@ class CameraLogic
     public static function SwitchCableDiag($port) {
         $port = (int) $port;
         if ($port <= 0) {
-            return array('res' => false, 'data' => 'Porta non valida.');
+            return array('res' => false, 'data' => array('error' => 'Porta non valida.'));
         }
         if (!SwitchHttpClientLogic::isConfigured()) {
-            return array('res' => false, 'data' => 'Switch HTTP non configurato (_SWITCH_IP_ / _SWITCH_HTTP_PASSWORD_).');
+            return array('res' => false, 'data' => array('error' => 'Switch HTTP non configurato (_SWITCH_IP_ / _SWITCH_HTTP_PASSWORD_).'));
         }
         $diag = SwitchHttpClientLogic::cableDiag($port);
         if (empty($diag['ok'])) {
-            return array('res' => false, 'data' => isset($diag['error']) ? $diag['error'] : 'Errore sconosciuto.');
+            // Propago error + trace + raw per debug lato UI.
+            return array('res' => false, 'data' => array(
+                'error' => isset($diag['error']) ? $diag['error'] : 'Errore sconosciuto.',
+                'trace' => isset($diag['trace']) ? $diag['trace'] : null,
+                'raw'   => isset($diag['raw'])   ? $diag['raw']   : null,
+            ));
         }
         return array('res' => true, 'data' => $diag);
     }
