@@ -179,7 +179,23 @@ class CameraLogic
             $arpOut = self::shellViaSsh("ip neigh show dev " . $nicEsc . " 2>/dev/null");
             $needle = preg_quote($cameraIp, '/');
             if (preg_match('/' . $needle . '\s+lladdr\s+(\S+)/', $arpOut, $m)) {
-                $result['link']['cameraMac'] = $m[1];
+                $result['link']['cameraMac']       = strtolower($m[1]);
+                $result['link']['cameraMacSource'] = 'arp';
+            }
+        }
+        // Fallback: se la camera e' offline da ore, ARP del nodo ha gia' scaduto
+        // la entry. Provo a recuperare il MAC dall'ultima lettura HwInfoDeep
+        // (GenICam GevMACAddress), che noi cachiamo in tmp. Cache accettata
+        // fino a 24h indietro: e' un fingerprint hardware, non cambia mai.
+        if (empty($result['link']['cameraMac'])) {
+            $cache = self::readHwInfoDeepCache(86400);
+            if ($cache && !empty($cache['live']['GevMACAddress'])) {
+                $cachedMac = strtolower(trim($cache['live']['GevMACAddress']));
+                if (preg_match('/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/', $cachedMac)) {
+                    $result['link']['cameraMac']       = $cachedMac;
+                    $result['link']['cameraMacSource'] = 'hwinfo-deep-cache';
+                    $result['link']['cameraMacAgeSec'] = $cache['ageSec'];
+                }
             }
         }
 
@@ -649,7 +665,101 @@ class CameraLogic
             }
         }
 
+        // CAMERA HEALTH: detection di camera "morta o sparita". Tre casi:
+        //  1) cameraPort risolto MA p.up=false -> camera link DOWN (stava qui,
+        //     ora non risponde piu' allo switch)
+        //  2) cameraMac noto MA NON nel FDB E ci sono porte DOWN con storico
+        //     traffico significativo -> probabile camera scomparsa (e ARP
+        //     scaduto, switch ha dimenticato il MAC dopo timeout FDB)
+        //  3) cameraMac sconosciuto + porte DOWN con storico + PoE attivo ->
+        //     non possiamo dire CHI, ma c'e' un endpoint scomparso
+        //
+        // In tutti i casi mettiamo a disposizione una lista 'suspectPorts' con
+        // dati (counters, PoE) cosi' la UI puo' offrire bottoni Test/Bounce
+        // direttamente sulle porte sospette.
+        $r['cameraHealth'] = null;
+        $TRAFFIC_THRESHOLD = 1024 * 1024; // 1 MB cumulativo come segno di "utilizzata davvero"
+        $suspectPorts = array();
+
+        if ($r['cameraPort']) {
+            // Caso 1: porta camera identificata
+            $cIdx = (int) $r['cameraPort'];
+            foreach ($r['ports'] as $p) {
+                if ($p['ifIndex'] !== $cIdx) continue;
+                if (!$p['up']) {
+                    $poePort = isset($poeByPort[$cIdx]) ? $poeByPort[$cIdx] : null;
+                    $r['cameraHealth'] = array(
+                        'severity' => 'danger',
+                        'reason'   => 'camera-link-down',
+                        'port'     => $cIdx,
+                        'cameraMac'=> $cameraMac,
+                        'inOctets' => (int) $p['inOctets'],
+                        'outOctets'=> (int) $p['outOctets'],
+                        'poe'      => $poePort,
+                        'message'  => "La camera (MAC " . ($cameraMac ?: '?') . ") risulta sulla Port $cIdx ma il link e' DOWN. Storico traffico: " . self::humanBytes($p['inOctets']) . " RX, " . self::humanBytes($p['outOctets']) . " TX. La camera era qui ma non risponde piu': probabile guasto camera, cavo rotto, o connettore staccato. Prova Test cavo e Bounce sulla Port $cIdx.",
+                    );
+                    $suspectPorts[] = $cIdx;
+                }
+                break;
+            }
+        } elseif ($cameraMac) {
+            // Caso 2: MAC camera noto ma non nel FDB switch -> camera scomparsa
+            // da tempo. Cerco porte DOWN con storico significativo: candidate.
+            foreach ($r['ports'] as $p) {
+                if ($p['up']) continue;
+                $traffic = (int) $p['inOctets'] + (int) $p['outOctets'];
+                if ($traffic < $TRAFFIC_THRESHOLD) continue;
+                $poePort = isset($poeByPort[$p['ifIndex']]) ? $poeByPort[$p['ifIndex']] : null;
+                $suspectPorts[] = (int) $p['ifIndex'];
+            }
+            if (!empty($suspectPorts)) {
+                $portsTxt = implode(', ', array_map(function ($n) { return "Port $n"; }, $suspectPorts));
+                $r['cameraHealth'] = array(
+                    'severity'     => 'danger',
+                    'reason'       => 'camera-orphan',
+                    'cameraMac'    => $cameraMac,
+                    'suspectPorts' => $suspectPorts,
+                    'message'      => "La camera (MAC $cameraMac) NON e' presente nel FDB dello switch e non risponde all'ARP del nodo: probabilmente offline da tempo (entry FDB switch ha timeout ~5 min). Porte DOWN con storico traffico significativo, candidate per la camera scomparsa: $portsTxt. Probabile guasto camera o cavo rotto. Prova Test cavo e Bounce su quelle porte.",
+                );
+            }
+        } else {
+            // Caso 3: nessun MAC camera disponibile (ARP scaduto + niente cache
+            // HwInfoDeep). Segnalo solo porte DOWN con storico + PoE attivo
+            // come "endpoint scomparso, identita' sconosciuta".
+            foreach ($r['ports'] as $p) {
+                if ($p['up']) continue;
+                $traffic = (int) $p['inOctets'] + (int) $p['outOctets'];
+                if ($traffic < $TRAFFIC_THRESHOLD) continue;
+                $poePort = isset($poeByPort[$p['ifIndex']]) ? $poeByPort[$p['ifIndex']] : null;
+                $poeOn   = $poePort && !empty($poePort['delivering']);
+                // Filtro stretto: serve PoE attivo o traffico molto grosso (>100MB).
+                if (!$poeOn && $traffic < 100 * 1024 * 1024) continue;
+                $suspectPorts[] = (int) $p['ifIndex'];
+            }
+            if (!empty($suspectPorts)) {
+                $portsTxt = implode(', ', array_map(function ($n) { return "Port $n"; }, $suspectPorts));
+                $r['cameraHealth'] = array(
+                    'severity'     => 'warning',
+                    'reason'       => 'unknown-endpoint-down',
+                    'suspectPorts' => $suspectPorts,
+                    'message'      => "Non e' possibile localizzare la camera (MAC sconosciuto). Pero' le porte $portsTxt sono DOWN ma con storico traffico/PoE attivo: probabile camera o altro endpoint scomparso. Lancia 'Lettura parametri completi' camera per memorizzare il MAC, oppure prova Test cavo / Bounce su quelle porte.",
+                );
+            }
+        }
+        $r['suspectPorts'] = $suspectPorts;
+
         return $r;
+    }
+
+    /**
+     * Formatta byte come "1.2 MB" / "934 MB" / "1.5 GB" per output user-facing.
+     */
+    private static function humanBytes($bytes) {
+        $bytes = (int) $bytes;
+        if ($bytes < 1024)         return $bytes . ' B';
+        if ($bytes < 1024 * 1024)  return round($bytes / 1024, 1) . ' KB';
+        if ($bytes < 1024 * 1024 * 1024) return round($bytes / (1024 * 1024), 1) . ' MB';
+        return round($bytes / (1024 * 1024 * 1024), 2) . ' GB';
     }
 
     /**

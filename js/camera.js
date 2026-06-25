@@ -34,6 +34,25 @@ $(document).ready(function () {
         if (port > 0) runPortBounce(port, roleHint, $btn);
     });
 
+    // Scorciatoie inline dal banner Camera Health: scroll alla riga della
+    // porta interessata + trigger del bottone Test/Bounce inline. I bottoni
+    // del banner sono fuori dalla tabella, quindi non possono usare runCableDiag
+    // direttamente (cerca closest('tr')).
+    $(document).on('click', '.js-cam-action', function () {
+        var port = parseInt($(this).data('port'), 10);
+        var action = $(this).data('action');
+        if (!port || !action) return;
+        var $row = $('tr[data-port-row="' + port + '"]');
+        if (!$row.length) return;
+        $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Lascio finire lo scroll prima di triggerare il click sul bottone
+        // inline della riga (test o bounce).
+        setTimeout(function () {
+            var selector = (action === 'test') ? '.js-cable-diag' : '.js-port-bounce';
+            $row.find(selector).first().trigger('click');
+        }, 350);
+    });
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -920,6 +939,41 @@ function renderSwitchSection(sw) {
         html += '</ul></div>';
     }
 
+    // Banner CAMERA HEALTH: link DOWN o camera "scomparsa" (MAC noto ma assente
+    // dal FDB). Stesso peso visivo della topologia violata.
+    var camHealth = sw.cameraHealth || null;
+    if (camHealth) {
+        var cls = camHealth.severity === 'danger' ? 'alert-danger' : 'alert-warning';
+        var ico = camHealth.severity === 'danger' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle';
+        var title = camHealth.reason === 'camera-link-down'
+            ? _('CAMERA LINK DOWN - probabile guasto')
+            : (camHealth.reason === 'camera-orphan'
+                ? _('CAMERA SCOMPARSA - probabile guasto')
+                : _('ENDPOINT SCOMPARSO'));
+        html += '<div class="alert ' + cls + '" style="margin-bottom:10px; border-width:2px; font-size:14px;">' +
+            '<i class="fa ' + ico + ' fa-lg"></i> ' +
+            '<b>' + title + '</b>: ' +
+            _escDeep(camHealth.message);
+        // Pulsanti scorciatoia: Test cavo + Bounce sulle porte sospette.
+        var suspect = camHealth.port ? [camHealth.port] : (camHealth.suspectPorts || []);
+        if (suspect.length) {
+            html += '<div style="margin-top:8px;">';
+            suspect.forEach(function (n) {
+                // I bottoni del banner sono FUORI dalla tabella porte: usano una
+                // classe dedicata (.js-cam-action) che fa scroll alla riga e
+                // triggera il bottone inline corrispondente.
+                html += '<button type="button" class="btn btn-default btn-xs js-cam-action" ' +
+                    'data-port="' + n + '" data-action="test" style="margin-right:6px;">' +
+                    '<i class="fa fa-bolt"></i> ' + _('Test cavo Port') + ' ' + n + '</button>' +
+                    '<button type="button" class="btn btn-warning btn-xs js-cam-action" ' +
+                    'data-port="' + n + '" data-action="bounce" style="margin-right:12px;">' +
+                    '<i class="fa fa-power-off"></i> ' + _('Bounce Port') + ' ' + n + '</button>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+
     // Banner PoE: severita' danger -> stesso peso visivo della topologia violata.
     var poeWarnings = sw.poeWarnings || [];
     var poeDanger   = poeWarnings.filter(function (w) { return w.severity === 'danger'; });
@@ -1111,6 +1165,8 @@ function renderSwitchSection(sw) {
 
     var intruderIfx = {};
     (sw.intruders || []).forEach(function (it) { intruderIfx[it.ifIndex] = true; });
+    var suspectIfx = {};
+    (sw.suspectPorts || []).forEach(function (n) { suspectIfx[n] = true; });
 
     sw.ports.forEach(function (p) {
         var noteParts = [];
@@ -1124,7 +1180,11 @@ function renderSwitchSection(sw) {
         if (sw.uplinkPort && p.ifIndex === sw.uplinkPort) {
             noteParts.push('<span class="label label-primary">uplink</span>');
         }
-        if (noteParts.length > 0) {
+        if (suspectIfx[p.ifIndex]) {
+            noteParts.push('<span class="label label-danger">' + _('sospetta') + '</span>');
+            rowClass = 'class="danger"';
+        }
+        if (noteParts.length > 0 && rowClass === '') {
             rowClass = 'class="info"';
         } else if (p.up && intruderIfx[p.ifIndex]) {
             noteParts.push('<span class="label label-danger">INTRUSO</span>');
