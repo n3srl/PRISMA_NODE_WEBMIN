@@ -1518,12 +1518,20 @@ function runPortLog(port, $btn) {
             entries.forEach(function (e) {
                 var sevCls = '';
                 if (/^warn/i.test(e.severity || ''))      sevCls = 'style="color:#b07d00;font-weight:600;"';
-                else if (/err|crit|alert/i.test(e.severity || '')) sevCls = 'style="color:#b52c1d;font-weight:600;"';
+                else if (/err|crit|alert|emerg/i.test(e.severity || '')) sevCls = 'style="color:#b52c1d;font-weight:600;"';
                 var descCls = /down/i.test(e.description) ? 'style="color:#b07d00;"' : '';
+                var catBadge = '';
+                if (e.category) {
+                    var catColor = 'default';
+                    if (/link/i.test(e.category))     catColor = 'info';
+                    else if (/poe/i.test(e.category)) catColor = 'warning';
+                    else if (/sys/i.test(e.category)) catColor = 'primary';
+                    catBadge = '<span class="label label-' + catColor + '" style="font-size:9px; margin-right:4px;">' + _escDeep(e.category) + '</span>';
+                }
                 html += '<tr>' +
                     '<td>' + e.id + '</td>' +
                     '<td><code>' + _escDeep(e.time) + '</code></td>' +
-                    '<td ' + descCls + '>' + _escDeep(e.description) + '</td>' +
+                    '<td ' + descCls + '>' + catBadge + _escDeep(e.description) + '</td>' +
                     '<td ' + sevCls + '>' + _escDeep(e.severity) + '</td>' +
                 '</tr>';
             });

@@ -623,20 +623,52 @@ class SwitchHttpClientLogic
                 return array('error' => 'Sessione switch scaduta', 'probes' => $probes);
             }
 
-            // Cerco tuple [id, time, description, severity]: ID numerico,
-            // Time stringa (Feb 13 06:50:46), description, severity (info/warning/...).
+            // Formato visto su DGS-1210 6.30 (file SysLog.js):
+            //   var SysLogTable = [
+            //     ['1', ' Jan 1 00:00:18 :POE-6:PoE Port 1 power off!'],
+            //     ['4', ' Jan 1 00:00:05 :LinkStatus-6:Port 7 link up, 1Gbps FULL duplex'],
+            //     ...
+            //   ];
+            // Tupla a 2 elementi: id + stringa "<time> :<category>-<sev>:<desc>".
+            // Il <sev> numerico segue syslog standard (0..7): 6=info, 4=warn,
+            // 3=err, 2=crit.
+            $sevMap = array(
+                0 => 'emerg', 1 => 'alert', 2 => 'crit', 3 => 'err',
+                4 => 'warn',  5 => 'notice', 6 => 'info', 7 => 'debug',
+            );
             $entries = array();
             if (preg_match_all(
-                '/\\[\\s*[\'"]?(\\d+)[\'"]?\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*\\]/',
+                '/\\[\\s*[\'"]?(\\d+)[\'"]?\\s*,\\s*[\'"]([^\'"]+)[\'"]\\s*\\]/',
                 $body, $rows, PREG_SET_ORDER
             )) {
                 foreach ($rows as $row) {
-                    $entries[] = array(
-                        'id'          => (int) $row[1],
-                        'time'        => $row[2],
-                        'description' => $row[3],
-                        'severity'    => $row[4],
-                    );
+                    $id   = (int) $row[1];
+                    $raw  = $row[2];
+                    // Split su " :<CAT>-<NUM>:" preservando time davanti e desc dopo.
+                    if (preg_match('/^\\s*(.+?)\\s*:([A-Za-z][A-Za-z0-9_]+)-(\\d+):(.*)$/', $raw, $m)) {
+                        $time     = trim($m[1]);
+                        $category = $m[2];
+                        $sevNum   = (int) $m[3];
+                        $desc     = trim($m[4]);
+                        $sevLabel = isset($sevMap[$sevNum]) ? $sevMap[$sevNum] : ('sev' . $sevNum);
+                        $entries[] = array(
+                            'id'          => $id,
+                            'time'        => $time,
+                            'description' => $desc,
+                            'category'    => $category,
+                            'severity'    => $sevLabel,
+                        );
+                    } else {
+                        // Fallback: nessuna struttura riconoscibile, lo stesso
+                        // mostro la entry grezza cosi' non si perde nulla.
+                        $entries[] = array(
+                            'id'          => $id,
+                            'time'        => '',
+                            'description' => trim($raw),
+                            'category'    => null,
+                            'severity'    => 'info',
+                        );
+                    }
                 }
             }
 
