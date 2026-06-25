@@ -170,6 +170,19 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function SwitchPortLog($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $port  = $request->get("port");
+            $limit = $request->get("limit");
+            $res = CameraLogic::SwitchPortLog($port, $limit !== null ? $limit : 50);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function NetDiag($request)
     {
         try {

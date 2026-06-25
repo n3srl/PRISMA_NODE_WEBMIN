@@ -143,6 +143,16 @@ $app->POST('/camera/diag/switch/port', function (Application $app, Request $requ
     return $resp;
 });
 
+// Recupera le ultime N entries del System Log dello switch, opzionalmente
+// filtrate per porta. Utile per diagnosticare link instabile.
+$app->GET('/camera/diag/switch/log', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::SwitchPortLog($request->query);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
 // Diagnostica rete nodo<->camera: ethtool/sys, ping, ARP. Non tocca la camera.
 $app->GET('/camera/diag', function (Application $app, Request $request) {
 

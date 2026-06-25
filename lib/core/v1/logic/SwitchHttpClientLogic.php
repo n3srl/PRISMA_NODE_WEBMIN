@@ -524,6 +524,110 @@ class SwitchHttpClientLogic
     }
 
     /**
+     * Scrape della pagina "System Log" della GUI dello switch. Ritorna le
+     * ultime $limit entries, opzionalmente filtrate per "Port N" nel testo
+     * descrizione. Utile per diagnosticare link ballerino (linkup/linkdown
+     * ripetuti) su una porta specifica.
+     *
+     * Ritorna array con campi:
+     *   array(
+     *     'entries' => array(
+     *         array('id'=>289, 'time'=>'Feb 13 06:50:46',
+     *               'description'=>'Port 1 link up, 1Gbps FULL duplex',
+     *               'severity'=>'info'),
+     *         ...
+     *     ),
+     *     'sourceUrl' => '...',
+     *     'totalAvailable' => N (entries totali viste prima del filtro),
+     *   )
+     * In caso di errore ritorna null.
+     */
+    public static function getSystemLog($portFilter = null, $limit = 50)
+    {
+        if (!self::isConfigured()) return null;
+        $g = self::login();
+        if (!$g) return null;
+
+        $host = _SWITCH_IP_;
+        // URL candidati pagine log DGS-1210 6.30. Il file .js companion
+        // contiene tipicamente l'array dei record come:
+        //   var SystemLog_Table = [
+        //     ['289', 'Feb 13 06:50:46', 'Port 1 link up, 1Gbps FULL duplex', 'info'],
+        //     ...
+        //   ];
+        $candidates = array(
+            "http://$host/iss/specific/SysLog.js?Gambit=$g",
+            "http://$host/iss/specific/SystemLog.js?Gambit=$g",
+            "http://$host/iss/specific/System_Log.js?Gambit=$g",
+            "http://$host/iss/specific/Syslog.js?Gambit=$g",
+            "http://$host/iss/specific/Log.js?Gambit=$g",
+            "http://$host/iss/specific/Sys_Log.js?Gambit=$g",
+            "http://$host/iss/SystemLog.htm?Gambit=$g",
+            "http://$host/iss/SysLog.htm?Gambit=$g",
+            "http://$host/iss/System_Log.htm?Gambit=$g",
+        );
+
+        foreach ($candidates as $url) {
+            $body = self::httpGet($url, "http://$host/");
+            if (!is_string($body) || $body === '') continue;
+            if (stripos($body, 'Login') !== false && stripos($body, 'timeout') !== false) {
+                self::invalidateGambit();
+                return null;
+            }
+
+            // Cerco tuple [id, time, description, severity]: ID numerico,
+            // Time stringa (Feb 13 06:50:46), description, severity (info/warning/...).
+            $entries = array();
+            // Pattern: tuple con 4 campi delimitati da virgole, primi 3 quoted
+            // e ID numerico (con o senza quote).
+            if (preg_match_all(
+                '/\\[\\s*[\'"]?(\\d+)[\'"]?\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*\\]/',
+                $body, $rows, PREG_SET_ORDER
+            )) {
+                foreach ($rows as $row) {
+                    $entries[] = array(
+                        'id'          => (int) $row[1],
+                        'time'        => $row[2],
+                        'description' => $row[3],
+                        'severity'    => $row[4],
+                    );
+                }
+            }
+
+            if (!empty($entries)) {
+                // Ordine: ID descrescente (entry piu' recenti per prime).
+                usort($entries, function ($a, $b) { return $b['id'] - $a['id']; });
+
+                $totalAvailable = count($entries);
+
+                // Filtro per porta se richiesto: cerco "Port N" o "port N" come
+                // token nel description.
+                if ($portFilter !== null && $portFilter > 0) {
+                    $needle = '/\\bport\\s+' . (int) $portFilter . '\\b/i';
+                    $entries = array_values(array_filter($entries, function ($e) use ($needle) {
+                        return preg_match($needle, $e['description']);
+                    }));
+                }
+
+                // Limit
+                if ($limit > 0 && count($entries) > $limit) {
+                    $entries = array_slice($entries, 0, (int) $limit);
+                }
+
+                self::trace("getSystemLog OK da $url: " . count($entries) . " entries (di $totalAvailable totali, filtro=" . ($portFilter ?: 'nessuno') . ")");
+                return array(
+                    'entries'        => $entries,
+                    'sourceUrl'      => preg_replace('/Gambit=[0-9A-Fa-f]+/', 'Gambit=...', $url),
+                    'totalAvailable' => $totalAvailable,
+                );
+            }
+            $head = preg_replace('/\\s+/', ' ', substr($body, 0, 300));
+            self::trace("getSystemLog: $url ha risposto ma pattern non matcha; head=$head");
+        }
+        return null;
+    }
+
+    /**
      * Scrape della pagina "PoE Port Settings" della GUI dello switch per
      * ottenere il consumo realtime in Watt + Voltage + Current + Class +
      * Status per ogni porta. Il MIB SNMP standard NON espone i Watt realtime,

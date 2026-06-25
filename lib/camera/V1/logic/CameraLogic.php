@@ -1055,6 +1055,28 @@ class CameraLogic
     }
 
     /**
+     * Recupera le ultime N entries del System Log dello switch, opzionalmente
+     * filtrate per una specifica porta. Utile per vedere link instabile
+     * (sequenza linkup/linkdown ripetuta su una porta = cavo/connettore
+     * difettoso o problema PHY).
+     */
+    public static function SwitchPortLog($port = null, $limit = 50) {
+        if (!SwitchHttpClientLogic::isConfigured()) {
+            return array('res' => false, 'data' => array('error' => 'Switch HTTP non configurato.'));
+        }
+        $port  = ($port !== null && $port !== '') ? (int) $port : null;
+        $limit = max(1, min(500, (int) $limit));
+        $res   = SwitchHttpClientLogic::getSystemLog($port, $limit);
+        if ($res === null) {
+            return array('res' => false, 'data' => array(
+                'error' => 'Impossibile leggere il System Log dello switch (URL della pagina non identificato o nessun match nel parser).',
+            ));
+        }
+        $res['port'] = $port;
+        return array('res' => true, 'data' => $res);
+    }
+
+    /**
      * Abilita o disabilita una porta dello switch via scraping HTTP.
      * $action: 'enable' / 'disable'. Spegnere-poi-riaccendere e' un modo
      * rapido per forzare la rinegoziazione del link (utile quando una

@@ -34,10 +34,18 @@ $(document).ready(function () {
         if (port > 0) runPortBounce(port, roleHint, $btn);
     });
 
+    // Bottoni "Log porta": scrape System Log switch filtrato per porta.
+    // Utile per vedere link instabile (linkup/linkdown ripetuti).
+    $(document).on('click', '.js-port-log', function () {
+        var $btn = $(this);
+        var port = parseInt($btn.data('port'), 10);
+        if (port > 0) runPortLog(port, $btn);
+    });
+
     // Scorciatoie inline dal banner Camera Health: scroll alla riga della
-    // porta interessata + trigger del bottone Test/Bounce inline. I bottoni
-    // del banner sono fuori dalla tabella, quindi non possono usare runCableDiag
-    // direttamente (cerca closest('tr')).
+    // porta interessata + trigger del bottone Test/Bounce/Log inline. I
+    // bottoni del banner sono fuori dalla tabella, quindi non possono usare
+    // i runner direttamente (cercano closest('tr')).
     $(document).on('click', '.js-cam-action', function () {
         var port = parseInt($(this).data('port'), 10);
         var action = $(this).data('action');
@@ -45,11 +53,12 @@ $(document).ready(function () {
         var $row = $('tr[data-port-row="' + port + '"]');
         if (!$row.length) return;
         $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Lascio finire lo scroll prima di triggerare il click sul bottone
-        // inline della riga (test o bounce).
         setTimeout(function () {
-            var selector = (action === 'test') ? '.js-cable-diag' : '.js-port-bounce';
-            $row.find(selector).first().trigger('click');
+            var selector = (action === 'test')   ? '.js-cable-diag'
+                         : (action === 'bounce') ? '.js-port-bounce'
+                         : (action === 'log')    ? '.js-port-log'
+                         : null;
+            if (selector) $row.find(selector).first().trigger('click');
         }, 350);
     });
 
@@ -966,8 +975,11 @@ function renderSwitchSection(sw) {
                     'data-port="' + n + '" data-action="test" style="margin-right:6px;">' +
                     '<i class="fa fa-bolt"></i> ' + _('Test cavo Port') + ' ' + n + '</button>' +
                     '<button type="button" class="btn btn-warning btn-xs js-cam-action" ' +
-                    'data-port="' + n + '" data-action="bounce" style="margin-right:12px;">' +
-                    '<i class="fa fa-power-off"></i> ' + _('Bounce Port') + ' ' + n + '</button>';
+                    'data-port="' + n + '" data-action="bounce" style="margin-right:6px;">' +
+                    '<i class="fa fa-power-off"></i> ' + _('Bounce Port') + ' ' + n + '</button>' +
+                    '<button type="button" class="btn btn-default btn-xs js-cam-action" ' +
+                    'data-port="' + n + '" data-action="log" style="margin-right:12px;">' +
+                    '<i class="fa fa-list-ul"></i> ' + _('Log Port') + ' ' + n + '</button>';
             });
             html += '</div>';
         }
@@ -1235,6 +1247,15 @@ function renderSwitchSection(sw) {
             '<i class="fa fa-power-off"></i> ' + _('Bounce') +
         '</button>';
 
+        // Bottone Log: scrape System Log switch filtrato per questa porta.
+        // Utile per vedere link instabile (linkup/linkdown ripetuti = cavo /
+        // connettore degradato o PHY problematico).
+        var logBtn = ' <button type="button" class="btn btn-default btn-xs js-port-log" ' +
+            'data-port="' + p.ifIndex + '" ' +
+            'title="' + _('Ultimi eventi log dello switch per questa porta') + '">' +
+            '<i class="fa fa-list-ul"></i> ' + _('Log') +
+        '</button>';
+
         // PoE cell: visibile solo se almeno una porta dello switch espone info
         // PoE. Per porte non-PoE (es. uplink 9-10 del DGS-1210-10P) o quando
         // i dati non sono in MIB, mostro "—". Cella: badge stato + Watt + class.
@@ -1299,7 +1320,7 @@ function renderSwitchSection(sw) {
             '<td' + ((p.inDiscards > 0) ? ' style="color:#b07d00;font-weight:600;"' : '') + '>' + (p.inDiscards || 0) + '</td>' +
             poeCell +
             '<td>' + note + '</td>' +
-            '<td>' + cableBtn + bounceBtn + '</td>' +
+            '<td>' + cableBtn + bounceBtn + logBtn + '</td>' +
         '</tr>';
     });
 
@@ -1407,6 +1428,107 @@ function runCableDiag(port, $btn) {
     }).always(function () {
         $btn.prop('disabled', false);
         $btn.html('<i class="fa fa-bolt"></i> ' + _('Test'));
+    });
+}
+
+// Recupera e mostra le ultime N entries del System Log dello switch
+// filtrate per la porta cliccata. Risultato in riga espandibile sotto la
+// porta (stesso pattern del Test cavo). Re-click chiude.
+function runPortLog(port, $btn) {
+    var $row = $btn.closest('tr');
+    var colspan = $row.children('td').length;
+    var $existing = $row.next('tr.port-log-row');
+    if ($existing.length) {
+        $existing.remove();
+        return;
+    }
+    // Chiudi eventuali altre righe risultato gia' aperte per la stessa porta.
+    $row.next('tr.cable-diag-row,tr.port-bounce-row').remove();
+
+    $btn.prop('disabled', true);
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> ' + _('Log...'));
+
+    var $resultRow = $('<tr class="port-log-row"><td colspan="' + colspan + '" style="background:#f7f9fc;">' +
+        '<div class="alert alert-info" style="margin:0;">' +
+        '<i class="fa fa-spinner fa-spin"></i> ' +
+        _('Lettura System Log switch per Port') + ' ' + port + '...' +
+        '</div></td></tr>');
+    $row.after($resultRow);
+
+    $.ajax({
+        url: '/lib/camera/V1/camera/diag/switch/log',
+        method: 'GET',
+        data: { port: port, limit: 50 },
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        var $cell = $resultRow.find('td').first();
+        if (!resp || !resp.result) {
+            var d = (resp && resp.data) ? resp.data : {};
+            var msg = (typeof d === 'object' && d.error) ? d.error : _('Errore sconosciuto');
+            $cell.html('<div class="alert alert-danger" style="margin:0;">' +
+                '<b>' + _('Log switch Port') + ' ' + port + '</b>: ' + _escDeep(msg) + '</div>');
+            return;
+        }
+        var d = resp.data || {};
+        var entries = d.entries || [];
+        var total = d.totalAvailable || 0;
+        var html = '<div class="alert alert-info" style="margin:0;">' +
+            '<b>' + _('System Log switch') + ' &mdash; Port ' + port + '</b>: ' +
+            entries.length + ' ' + _('entry') + ' ' +
+            (entries.length === 0 ? _('(nessun evento registrato per questa porta)') : '') +
+            ' <small class="text-muted">(' + total + ' ' + _('entry totali nel log') + ')</small>';
+        if (entries.length > 0) {
+            html += '<table class="table table-condensed" style="margin:8px 0 0 0; background:#fff; font-size:11px;">' +
+                '<thead><tr>' +
+                '<th style="width:50px;">#</th>' +
+                '<th style="width:170px;">' + _('Time') + '</th>' +
+                '<th>' + _('Evento') + '</th>' +
+                '<th style="width:70px;">' + _('Severity') + '</th>' +
+                '</tr></thead><tbody>';
+            entries.forEach(function (e) {
+                var sevCls = '';
+                if (/^warn/i.test(e.severity || ''))      sevCls = 'style="color:#b07d00;font-weight:600;"';
+                else if (/err|crit|alert/i.test(e.severity || '')) sevCls = 'style="color:#b52c1d;font-weight:600;"';
+                var descCls = /down/i.test(e.description) ? 'style="color:#b07d00;"' : '';
+                html += '<tr>' +
+                    '<td>' + e.id + '</td>' +
+                    '<td><code>' + _escDeep(e.time) + '</code></td>' +
+                    '<td ' + descCls + '>' + _escDeep(e.description) + '</td>' +
+                    '<td ' + sevCls + '>' + _escDeep(e.severity) + '</td>' +
+                '</tr>';
+            });
+            html += '</tbody></table>';
+            // Statistica linkup/linkdown per individuare flapping.
+            var downs = entries.filter(function (e) { return /link\s*down/i.test(e.description); }).length;
+            var ups   = entries.filter(function (e) { return /link\s*up/i.test(e.description); }).length;
+            if (downs >= 2 || ups >= 2) {
+                html += '<div class="alert alert-warning" style="margin:8px 0 0 0;">' +
+                    '<b>⚠ ' + _('Link instabile') + '</b>: ' +
+                    _('rilevati') + ' <b>' + ups + '</b> linkup e <b>' + downs + '</b> linkdown ' +
+                    _('nelle ultime entry visibili. Probabile cavo/connettore degradato o PHY in errore. Prova Test cavo + Bounce, e considera sostituzione del cavo.') +
+                '</div>';
+            }
+        }
+        html += '</div>';
+        $cell.html(html);
+    }).fail(function (xhr) {
+        var serverMsg = '';
+        try {
+            var body = xhr && xhr.responseJSON ? xhr.responseJSON : (xhr.responseText ? JSON.parse(xhr.responseText) : null);
+            if (body && body.data) {
+                var d = body.data;
+                serverMsg = (typeof d === 'object' && d.error) ? d.error : String(d);
+            }
+        } catch (e) {}
+        $resultRow.find('td').first().html(
+            '<div class="alert alert-danger" style="margin:0;">' +
+            '<b>' + _('Log switch Port') + ' ' + port + '</b>: ' +
+            (serverMsg ? _escDeep(serverMsg) : (_('errore HTTP') + ' ' + (xhr && xhr.status))) +
+        '</div>');
+    }).always(function () {
+        $btn.prop('disabled', false);
+        $btn.html('<i class="fa fa-list-ul"></i> ' + _('Log'));
     });
 }
 
