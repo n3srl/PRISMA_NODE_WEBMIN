@@ -988,10 +988,9 @@ function renderSwitchSection(sw) {
             '<ol style="margin:4px 0 0 0; padding-left:20px;">' +
             '<li>' + _('Sostituisci il cavo con un Cat5e/Cat6 nuovo (di norma e\' il problema piu\' comune)') + '.</li>' +
             '<li>' + _('Verifica connettori RJ45 (pin storti, sporcizia, terminazione cattiva)') + '.</li>' +
-            '<li>' + _('Usa Cable Diagnostics dalla GUI dello switch:') +
-                ' <code>http://localhost:8081 → L2 Functions → Diagnostics → Cable Diagnostics</code>' +
-                ' (' + _('o nel menu "Monitoring → Cable Diagnostics" a seconda del firmware') + '). ' +
-                _('Seleziona la porta interessata e lancia il test: indica lunghezza e stato per ciascuna delle 4 coppie del cavo (OK / Open / Short / Impedance Mismatch).') +
+            '<li>' + _('Lancia il Cable Diagnostic dal pulsante') +
+                ' <span class="btn btn-default btn-xs" style="cursor:default;"><i class="fa fa-bolt"></i> ' + _('Test') + '</span> ' +
+                _('nella riga della porta interessata (tabella in basso): indica lunghezza e stato per ciascuna delle 4 coppie del cavo (OK / Open / Short / Impedance Mismatch).') +
                 '</li>' +
             '<li>' + _('Se il test segnala una coppia "Open Circuit" o "Short", il cavo va sostituito') + '.</li>' +
             '</ol></div>' +
