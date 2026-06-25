@@ -274,20 +274,43 @@ class SwitchHttpClientLogic
         if (!$g) return null;
 
         $host    = _SWITCH_IP_;
-        $referer = "http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g";
-        $ps      = self::httpGet("http://$host/iss/specific/PortSetting.js?Gambit=$g&findPort=0", $referer);
-        if (!is_string($ps)) return null;
+        // Prima di chiedere PortSetting.js, "tocchiamo" la pagina del Cable
+        // Diagnostics: alcuni firmware DGS-1210 invalidano il Gambit se l'utente
+        // salta direttamente alle .js senza aver caricato la pagina HTML che
+        // dovrebbe ospitarle. Best-effort: ignoriamo errori.
+        self::httpGet("http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g", "http://$host/");
 
+        $referer = "http://$host/iss/Cable_Diagnostics_ajax.htm?Gambit=$g";
+        $url     = "http://$host/iss/specific/PortSetting.js?Gambit=$g&findPort=0";
+        $ps      = self::httpGet($url, $referer);
+        if (!is_string($ps) || $ps === '') {
+            error_log("[SwitchHttpClient] getSpeedStatus: GET PortSetting.js vuoto/false");
+            return null;
+        }
+        // Diagnostica per pinpoint: se torna la pagina "Login timeout" (HTML
+        // anziche' JS) o se Port_Setting non c'e', logghiamo i primi byte per
+        // capire cosa lo switch ha effettivamente risposto.
         if (!preg_match('/Port_Setting\\s*=\\s*(\\[[^;]+\\])\\s*;/s', $ps, $m)) {
+            $head = preg_replace('/\\s+/', ' ', substr($ps, 0, 300));
+            $hint = '';
+            if (stripos($ps, '<html') !== false) $hint = ' (sembra HTML: sessione scaduta o login rifiutato)';
+            elseif (stripos($ps, 'Login') !== false && stripos($ps, 'timeout') !== false) $hint = ' (pagina di login timeout)';
+            error_log("[SwitchHttpClient] getSpeedStatus: Port_Setting non trovato (" . strlen($ps) . " bytes)$hint; head=$head");
+            // Invalida il Gambit cache: alla prossima richiesta rifara' il login.
+            self::$gambit = null;
             return null;
         }
         $bits = array();
         if (preg_match_all('/\\[\\s*\\d+\\s*,\\s*(\\d+)/', $m[1], $bm)) {
             foreach ($bm[1] as $b) $bits[] = $b;
         }
-        if (empty($bits)) return null;
+        if (empty($bits)) {
+            error_log("[SwitchHttpClient] getSpeedStatus: Port_Setting trovato ma vuoto");
+            return null;
+        }
 
         self::$speedStatus = implode('', $bits);
+        error_log("[SwitchHttpClient] getSpeedStatus: speed_status=" . self::$speedStatus);
         return self::$speedStatus;
     }
 
