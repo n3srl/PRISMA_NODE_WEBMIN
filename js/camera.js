@@ -792,11 +792,29 @@ function renderJumboSection(j) {
         }
     }
 
+    // Camera packet size dal cache HwInfoDeep (lettura "pigra" - non stoppa freeture).
+    var cam = j.camera || {};
+    var camTxt;
+    if (cam.packetSize) {
+        var ageMin = cam.cacheAgeSec ? Math.round(cam.cacheAgeSec / 60) : 0;
+        var ageNote = ageMin >= 1 ? (' <small class="text-muted">(' + ageMin + ' min fa)</small>') : '';
+        var color = (cam.packetSize >= 8000) ? '#1d7a44'
+                  : (cam.packetSize > 1500)  ? '#b07d00'
+                  : '#b52c1d';
+        camTxt = '<span style="color:' + color + ';font-weight:600;">' + cam.packetSize + ' byte</span>' +
+                 ' <code style="font-size:11px;">' + _escDeep(cam.packetSource || '') + '</code>' +
+                 ageNote;
+    } else {
+        camTxt = '<span class="text-muted">' + _('sconosciuto') + ' &mdash; ' +
+                 _('esegui "Lettura parametri completi" per popolare il cache') + '</span>';
+    }
+
     html += '<div class="alert ' + alertCls + '" style="margin-bottom:10px;">' +
         '<i class="fa ' + iconCls + '"></i> ' +
         '<b>' + _('MTU NIC nodo') + '</b>: ' + _escDeep(nicMtuTxt) +
         ' &middot; <b>' + _('PMTU misurato') + '</b>: ' + _escDeep(pathMtuTxt) +
-        ' &middot; <b>' + _('Jumbo switch') + '</b>: ' + swTxt;
+        ' &middot; <b>' + _('Jumbo switch') + '</b>: ' + swTxt +
+        '<br><b>' + _('Camera packet size') + '</b>: ' + camTxt;
     if (j.warnings && j.warnings.length) {
         html += '<ul style="margin:6px 0 0 0; padding-left:20px;">';
         j.warnings.forEach(function (w) { html += '<li>' + _escDeep(w) + '</li>'; });
@@ -832,7 +850,7 @@ function renderJumboSection(j) {
     html += '</tbody></table>';
 
     html += '<div style="font-size:12px; color:#777;">' +
-        _('Il PMTU effettivo e\' il payload max che passa con DF set, + 28 byte di header IP/ICMP. Per camera GenICam a piena velocita\' tutto il path (NIC nodo + switch + camera) deve essere MTU 9000. Per la camera apri "Lettura parametri completi" e verifica') + ' <code>GevSCPSPacketSize</code>.' +
+        _('Il PMTU effettivo e\' il payload max che passa con DF set, + 28 byte di header IP/ICMP. Per camera GenICam a piena velocita\' tutto il path (NIC nodo + switch + camera) deve essere MTU 9000. Il valore camera viene letto dal cache di "Lettura parametri completi": se assente o vecchio, rilancia la lettura completa per aggiornarlo.') +
     '</div>';
 
     return html;

@@ -255,6 +255,36 @@ class CameraLogic
             $switchJumbo = SwitchHttpClientLogic::getJumboFrameStatus();
         }
 
+        // Lettura "pigra" del packet size camera dal cache di HwInfoDeep:
+        // se l'utente ha gia' eseguito "Lettura parametri completi" entro
+        // l'ultima ora, riutilizziamo quei valori senza fermare freeture.
+        // GevSCPSPacketSize e' il nome legacy GigE Vision, DeviceStreamChannel-
+        // PacketSize e' il nome SFNC moderno (entrambi indicano la stessa cosa:
+        // dimensione max del payload GVSP che la camera emette).
+        $camera = array(
+            'packetSize'   => null,   // dimensione payload (bytes)
+            'packetSource' => null,   // nome del parametro GenICam letto
+            'cacheAgeSec'  => null,   // eta del cache HwInfoDeep
+            'cacheStale'   => false,
+        );
+        $cache = self::readHwInfoDeepCache();
+        if ($cache !== null) {
+            $camera['cacheAgeSec'] = $cache['ageSec'];
+            $camera['cacheStale']  = $cache['ageSec'] > 600;  // >10min = un po' vecchio
+            $candidates = array('GevSCPSPacketSize', 'DeviceStreamChannelPacketSize');
+            foreach ($candidates as $key) {
+                if (!empty($cache['live'][$key])) {
+                    // I valori arrivano come stringhe ("8192", "8192 B", ...). Estraggo
+                    // solo il primo numero.
+                    if (preg_match('/(\d+)/', (string) $cache['live'][$key], $m)) {
+                        $camera['packetSize']   = (int) $m[1];
+                        $camera['packetSource'] = $key;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Verdict end-to-end
         //  - pathMtu = maxOkPayload + 28  (header IP+ICMP)
         //  - se pathMtu >= 9000 e nicMtu >= 9000  -> coherent jumbo
@@ -270,15 +300,30 @@ class CameraLogic
         } else {
             if ($nicMtu > 0 && $pathMtu < $nicMtu) {
                 $level = 'warning';
-                $warnings[] = "PMTU effettivo ($pathMtu) inferiore alla MTU della NIC ($nicMtu): c'e' uno step del path che limita il payload (probabilmente lo switch con jumbo disabilitato, o la camera con GevSCPSPacketSize basso).";
+                $warnings[] = "PMTU effettivo ($pathMtu) inferiore alla MTU della NIC ($nicMtu): c'e' uno step del path che limita il payload.";
             }
             if ($pathMtu <= 1500 && $nicMtu > 1500) {
                 $level = 'warning';
                 $warnings[] = "Jumbo Frame NON attivo end-to-end (PMTU <= 1500) nonostante la NIC sia MTU $nicMtu.";
             }
             if ($switchJumbo !== null && isset($switchJumbo['enabled']) && $switchJumbo['enabled'] === false && $nicMtu > 1500) {
-                $warnings[] = "Switch ha Jumbo Frame DISABILITATO, ma la NIC del nodo e' MTU $nicMtu: configurazione incoerente, abilita Jumbo nel pannello System -> Jumbo Frame.";
+                $warnings[] = "Switch ha Jumbo Frame DISABILITATO, ma la NIC del nodo e' MTU $nicMtu: configurazione incoerente, abilita Jumbo nel pannello System -> Jumbo Frame dello switch.";
                 $level = 'warning';
+            }
+            // Confronto camera vs PMTU (solo se abbiamo il packet size dal cache).
+            if ($camera['packetSize'] !== null && $pathMtu !== null) {
+                $cps = $camera['packetSize'];
+                // GVSP packet size include header IP+UDP+GVSP, quindi il limite
+                // strict e' cameraPacketSize <= pathMtu. Se >, la camera droppera'
+                // o frammentera' (a seconda di GevSCPSDoNotFragment).
+                if ($cps > $pathMtu) {
+                    $level = 'warning';
+                    $warnings[] = "Camera packet size ({$cps}B, da " . $camera['packetSource'] . ") MAGGIORE del PMTU misurato ($pathMtu): la camera invia frame piu' grandi di quanto il path possa reggere -> drop o frammentazione.";
+                }
+                if ($cps <= 1500 && $nicMtu > 1500) {
+                    $warnings[] = "Camera packet size ({$cps}B) NON sta sfruttando i jumbo: nonostante NIC=$nicMtu, la camera emette frame piccoli (stessa CPU, meno throughput).";
+                    if ($level !== 'warning') $level = 'warning';
+                }
             }
         }
 
@@ -288,6 +333,7 @@ class CameraLogic
             'maxOkPayload'  => $maxOkPayload,
             'pathMtu'       => $pathMtu,
             'switchJumbo'   => $switchJumbo,
+            'camera'        => $camera,
             'level'         => $level,    // 'ok' | 'warning'
             'warnings'      => $warnings,
         );
@@ -792,6 +838,13 @@ class CameraLogic
             $parsed = self::parseArvValues($raw);
             $result['live']        = $parsed['values'];
             $result['parserUsed']  = $parsed['parser'];
+
+            // Cache su filesystem dei valori live: usato da NetDiag/jumbo per
+            // chiudere il verdict sul terzo segmento (camera) senza dover rifare
+            // un readout deep (che fermerebbe freeture di nuovo).
+            if (!empty($result['live'])) {
+                self::writeHwInfoDeepCache($result['live'], $ip);
+            }
         } catch (\Throwable $t) {
             error_log("[HwInfoDeep] EXCEPTION " . get_class($t) . ": " . $t->getMessage());
             $result['warnings'][] = "Eccezione: " . $t->getMessage();
@@ -804,6 +857,38 @@ class CameraLogic
         $result['pausedSec'] = round(microtime(true) - $startTs, 2);
 
         return array("res" => true, "data" => $result);
+    }
+
+    /**
+     * Path del file di cache del HwInfoDeep. tmp dir del container PHP.
+     */
+    private static function hwInfoDeepCachePath() {
+        return rtrim(sys_get_temp_dir(), '/\\') . '/camera_hwinfo_deep.json';
+    }
+
+    private static function writeHwInfoDeepCache(array $live, $cameraIp) {
+        @file_put_contents(self::hwInfoDeepCachePath(), json_encode(array(
+            'ts'       => time(),
+            'cameraIp' => $cameraIp,
+            'live'     => $live,
+        )), LOCK_EX);
+    }
+
+    /**
+     * Legge l'ultimo cache di HwInfoDeep se presente. Ritorna null se assente
+     * o piu' vecchio di $maxAgeSec (default 1h: dopo quel tempo i valori GenICam
+     * possono essere cambiati senza che l'utente se ne accorga).
+     */
+    private static function readHwInfoDeepCache($maxAgeSec = 3600) {
+        $f = self::hwInfoDeepCachePath();
+        if (!file_exists($f)) return null;
+        $raw  = @file_get_contents($f);
+        $data = @json_decode($raw, true);
+        if (!is_array($data) || empty($data['live'])) return null;
+        $age = time() - (int) (isset($data['ts']) ? $data['ts'] : 0);
+        if ($age > $maxAgeSec) return null;
+        $data['ageSec'] = $age;
+        return $data;
     }
 
     // Esegue `arv-tool-0.8 [-a IP] values` via SSH e ritorna l'output grezzo.

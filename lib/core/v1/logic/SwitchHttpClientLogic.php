@@ -39,18 +39,27 @@ class SwitchHttpClientLogic
 
     /**
      * Esegue login allo switch. Ritorna il Gambit (hex) oppure null in errore.
+     * In caso di fallimento error_log() segnala lo step preciso per debug
+     * (allow_url_fopen, RSA, regex Gambit, ecc.).
      */
     public static function login()
     {
         if (self::$gambit !== null) return self::$gambit;
-        if (!self::isConfigured()) return null;
+        if (!self::isConfigured()) {
+            error_log("[SwitchHttpClient] login: switch non configurato (_SWITCH_IP_ o _SWITCH_HTTP_PASSWORD_ mancanti)");
+            return null;
+        }
 
         $host = _SWITCH_IP_;
 
         // 1) Estrazione chiave RSA pubblica
         $encJs = self::httpGet("http://$host/Encrypt.js");
-        if (!is_string($encJs)
-            || !preg_match("/var EN_DATA\\s*=\\s*'([^']+)'/", $encJs, $m)) {
+        if (!is_string($encJs) || $encJs === '') {
+            error_log("[SwitchHttpClient] login: GET Encrypt.js fallita (host $host irraggiungibile o cURL non disponibile)");
+            return null;
+        }
+        if (!preg_match("/var EN_DATA\\s*=\\s*'([^']+)'/", $encJs, $m)) {
+            error_log("[SwitchHttpClient] login: Encrypt.js ricevuto ma EN_DATA non estraibile (" . strlen($encJs) . " bytes)");
             return null;
         }
         $pubKeyPem = "-----BEGIN PUBLIC KEY-----\n"
@@ -63,7 +72,10 @@ class SwitchHttpClientLogic
             ? _SWITCH_HTTP_USER_ : 'admin';
         $encUser = self::rsaEnc($user, $pubKeyPem);
         $encPwd  = self::rsaEnc(_SWITCH_HTTP_PASSWORD_, $pubKeyPem);
-        if ($encUser === null || $encPwd === null) return null;
+        if ($encUser === null || $encPwd === null) {
+            error_log("[SwitchHttpClient] login: openssl_public_encrypt fallita (ext-openssl assente o chiave non valida)");
+            return null;
+        }
 
         // 3) POST login form
         $body = self::httpPost("http://$host/homepage.htm", array(
@@ -73,8 +85,12 @@ class SwitchHttpClientLogic
             'currlang'          => '0',
             'changlang'         => '0',
         ));
-        if (!is_string($body)
-            || !preg_match('/Gambit[^A-Za-z0-9]+([0-9A-Fa-f]{32,})/', $body, $mm)) {
+        if (!is_string($body) || $body === '') {
+            error_log("[SwitchHttpClient] login: POST /homepage.htm vuoto/false");
+            return null;
+        }
+        if (!preg_match('/Gambit[^A-Za-z0-9]+([0-9A-Fa-f]{32,})/', $body, $mm)) {
+            error_log("[SwitchHttpClient] login: Gambit non trovato nella response (body " . strlen($body) . " bytes, head=" . substr($body, 0, 200) . ")");
             return null;
         }
 
@@ -284,18 +300,17 @@ class SwitchHttpClientLogic
         return base64_encode($out);
     }
 
+    // Usiamo cURL (sempre disponibile in PHP Apache) invece di file_get_contents
+    // su URL HTTP: in molti container Apache "allow_url_fopen" e' disabilitato
+    // per sicurezza, e file_get_contents() ritorna silenziosamente false.
+    // cURL non dipende da quella ini e da' anche errori espliciti se qualcosa
+    // va storto.
+
     private static function httpGet($url, $referer = null, $timeoutSec = 8)
     {
-        $hdr  = "User-Agent: Mozilla/5.0\r\n";
-        if ($referer) $hdr .= "Referer: $referer\r\n";
-        $ctx = stream_context_create(array('http' => array(
-            'method'          => 'GET',
-            'header'          => $hdr,
-            'timeout'         => $timeoutSec,
-            'ignore_errors'   => true,
-            'follow_location' => 0,
-        )));
-        return @file_get_contents($url, false, $ctx);
+        $headers = array('User-Agent: Mozilla/5.0');
+        if ($referer) $headers[] = "Referer: $referer";
+        return self::curlExec($url, false, null, $headers, $timeoutSec);
     }
 
     private static function httpPost($url, $fields, $timeoutSec = 10)
@@ -303,17 +318,47 @@ class SwitchHttpClientLogic
         // Il DGS-1210 e' suscettibile alla presenza di un Referer "buono":
         // mettiamo la root dell'host come referer.
         $rootRef = preg_replace('#^(https?://[^/]+).*$#', '$1/', $url);
-        $hdr     = "User-Agent: Mozilla/5.0\r\n"
-                 . "Referer: $rootRef\r\n"
-                 . "Content-Type: application/x-www-form-urlencoded\r\n";
-        $ctx = stream_context_create(array('http' => array(
-            'method'          => 'POST',
-            'header'          => $hdr,
-            'content'         => http_build_query($fields),
-            'timeout'         => $timeoutSec,
-            'ignore_errors'   => true,
-            'follow_location' => 0,
-        )));
-        return @file_get_contents($url, false, $ctx);
+        $headers = array(
+            'User-Agent: Mozilla/5.0',
+            "Referer: $rootRef",
+            'Content-Type: application/x-www-form-urlencoded',
+        );
+        return self::curlExec($url, true, http_build_query($fields), $headers, $timeoutSec);
+    }
+
+    private static function curlExec($url, $post, $postFields, $headers, $timeoutSec)
+    {
+        if (!function_exists('curl_init')) {
+            error_log("[SwitchHttpClient] estensione ext-curl mancante: impossibile contattare lo switch.");
+            return false;
+        }
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER,     $headers);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT,        (int) $timeoutSec);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+        curl_setopt($ch, CURLOPT_FAILONERROR,    false);
+        // L'http server del DGS-1210 manda risposte con Connection: close;
+        // disattiviamo il reuse per evitare race condition sul socket.
+        curl_setopt($ch, CURLOPT_FORBID_REUSE,   true);
+        if ($post) {
+            curl_setopt($ch, CURLOPT_POST,       true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+        }
+        $body = curl_exec($ch);
+        $err  = curl_error($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($body === false) {
+            error_log("[SwitchHttpClient] cURL " . ($post ? 'POST' : 'GET') . " $url fallita: $err");
+            return false;
+        }
+        // 401/403 dello switch e' comunque utile da loggare ma non lo trattiamo
+        // come errore: il parser piu' a monte decide.
+        if ($code >= 400) {
+            error_log("[SwitchHttpClient] cURL " . ($post ? 'POST' : 'GET') . " $url HTTP $code");
+        }
+        return $body;
     }
 }
