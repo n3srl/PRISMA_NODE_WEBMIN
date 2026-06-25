@@ -1085,21 +1085,21 @@ function renderSwitchSection(sw) {
         '</button>';
 
         // Bottone "Bounce" (spegni e riaccendi) per forzare rinegoziazione del
-        // link. Solo se la porta e' UP (su porta gia' DOWN non ha senso).
+        // link e power-cycle del PoE. Sempre visibile: utile sia su porta UP
+        // (rinegoziazione speed/duplex stuck a 100M) sia su porta DOWN ma con
+        // PoE attivo (dispositivo alimentato ma link dati morto -> bounce PoE
+        // puo' farlo ripartire).
         // Tag data-roles serve a passare contesto per il confirm dialog.
         var roleStr = '';
         if (sw.cameraPort && p.ifIndex === sw.cameraPort) roleStr += 'camera ';
         if (sw.nodePort   && p.ifIndex === sw.nodePort)   roleStr += 'nodo ';
         if (sw.uplinkPort && p.ifIndex === sw.uplinkPort) roleStr += 'uplink ';
         roleStr = roleStr.trim();
-        var bounceBtn = '';
-        if (p.up) {
-            bounceBtn = ' <button type="button" class="btn btn-warning btn-xs js-port-bounce" ' +
-                'data-port="' + p.ifIndex + '" data-roles="' + roleStr + '" ' +
-                'title="' + _('Spegni e riaccendi la porta (forza rinegoziazione link, ~5s)') + '">' +
-                '<i class="fa fa-power-off"></i> ' + _('Bounce') +
-            '</button>';
-        }
+        var bounceBtn = ' <button type="button" class="btn btn-warning btn-xs js-port-bounce" ' +
+            'data-port="' + p.ifIndex + '" data-roles="' + roleStr + '" ' +
+            'title="' + _('Spegni e riaccendi la porta (forza rinegoziazione link + power-cycle PoE, ~5s)') + '">' +
+            '<i class="fa fa-power-off"></i> ' + _('Bounce') +
+        '</button>';
 
         // PoE cell: visibile solo se almeno una porta dello switch espone info
         // PoE. Per porte non-PoE (es. uplink 9-10 del DGS-1210-10P) o quando
@@ -1299,7 +1299,7 @@ function runPortBounce(port, roleHint, $btn) {
     // Confirm con avviso specifico se la porta serve uplink/nodo (perdita
     // connessione webmin durante il bounce).
     var msg = _('Spegni e riaccendi la Port') + ' ' + port + '?\n\n' +
-              _('Il link va giu\' per ~3 secondi, poi torna su forzando la rinegoziazione.');
+              _('La porta viene disabilitata per ~3 secondi (link DOWN e PoE OFF), poi torna su forzando rinegoziazione e power-cycle del dispositivo PoE collegato.');
     if (/uplink|nodo/i.test(roleHint || '')) {
         msg += '\n\n⚠ ' + _('ATTENZIONE') + ': ' +
                _('questa porta serve') + ' "' + roleHint + '". ' +
