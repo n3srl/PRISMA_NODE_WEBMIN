@@ -464,22 +464,40 @@ class SwitchHttpClientLogic
         $host = _SWITCH_IP_;
 
         // Lista larga di URL candidati. Pattern noti del DGS-1210 6.30:
-        //   /iss/<PageName>.htm           = pagina HTML
-        //   /iss/specific/<PageName>.js   = file JS con i dati come array JavaScript
+        //   /iss/<PageName>.htm           = pagina HTML (top-level: spesso un
+        //                                   frameset generico che mostra
+        //                                   DeviceInfo come default, NON utile)
+        //   /iss/specific/<PageName>.js   = file JS con i dati come array
+        //                                   JavaScript (questo e' quello utile)
+        //
+        // L'utente ITER10 ha confermato che il link del menu apre
+        // "PoE_Port_Setting.htm" (SINGOLARE), quindi i file JS companion piu'
+        // probabili sono "PoE_Port_Setting.js" / "specific/PoE_Port_Setting.js".
+        // Provo entrambe le forme (singolare + plurale) + alcune varianti
+        // camelcase note dei vari firmware D-Link.
         $candidates = array(
+            // .htm singolare (URL confermato dal menu del DGS-1210 6.30)
+            "http://$host/iss/PoE_Port_Setting.htm?Gambit=$g",
             "http://$host/iss/PoE_Port_Settings.htm?Gambit=$g",
             "http://$host/iss/PoE_PortSetting.htm?Gambit=$g",
             "http://$host/iss/PoE_Setting.htm?Gambit=$g",
             "http://$host/iss/PoE_Status.htm?Gambit=$g",
             "http://$host/iss/PoE.htm?Gambit=$g",
+            // .js companion del file HTML omonimo - prima la forma singolare
+            "http://$host/iss/specific/PoE_Port_Setting.js?Gambit=$g",
             "http://$host/iss/specific/PoE_Port_Settings.js?Gambit=$g",
             "http://$host/iss/specific/PoE_PortSetting.js?Gambit=$g",
             "http://$host/iss/specific/PoE_Setting.js?Gambit=$g",
             "http://$host/iss/specific/PoE_Status.js?Gambit=$g",
             "http://$host/iss/specific/PoEPortInfo.js?Gambit=$g",
+            "http://$host/iss/specific/PoEPortSetting.js?Gambit=$g",
             "http://$host/iss/specific/PoESetting.js?Gambit=$g",
             "http://$host/iss/specific/PoE.js?Gambit=$g",
             "http://$host/iss/specific/PoEPortSetting_Ajax_Data.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_Port_Setting_Ajax_Data.js?Gambit=$g",
+            // Alcuni firmware espongono un main frame separato
+            "http://$host/iss/PoE_Port_Setting_main.htm?Gambit=$g",
+            "http://$host/iss/PoE_Port_Setting_iframe.htm?Gambit=$g",
         );
         foreach ($candidates as $url) {
             $body = self::httpGet($url, "http://$host/");
@@ -528,12 +546,18 @@ class SwitchHttpClientLogic
         if (!$g) return array();
 
         $host = _SWITCH_IP_;
-        // URL candidati della pagina PoE Port Settings sul DGS-1210 firmware 6.30.
-        // L'endpoint .js dovrebbe contenere i dati come array JavaScript.
+        // URL candidati della pagina PoE Port Settings sul DGS-1210 6.30.
+        // L'URL del menu e' "PoE_Port_Setting.htm" (SINGOLARE, confermato sul
+        // nodo ITER10), quindi il file JS companion piu' probabile e'
+        // "PoE_Port_Setting.js". Mantengo anche le varianti plurali e camelcase
+        // per supportare altri firmware D-Link.
         $candidates = array(
+            "http://$host/iss/specific/PoE_Port_Setting.js?Gambit=$g",
             "http://$host/iss/specific/PoE_Port_Settings.js?Gambit=$g",
             "http://$host/iss/specific/PoE_PortSetting.js?Gambit=$g",
+            "http://$host/iss/specific/PoEPortSetting.js?Gambit=$g",
             "http://$host/iss/specific/PoE_Setting.js?Gambit=$g",
+            "http://$host/iss/PoE_Port_Setting.htm?Gambit=$g",
             "http://$host/iss/PoE_Port_Settings.htm?Gambit=$g",
             "http://$host/iss/PoE_PortSetting.htm?Gambit=$g",
         );
