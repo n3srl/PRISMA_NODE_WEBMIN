@@ -443,6 +443,105 @@ class SwitchHttpClientLogic
     }
 
     /**
+     * Scrape della pagina "PoE Port Settings" della GUI dello switch per
+     * ottenere il consumo realtime in Watt + Voltage + Current + Class +
+     * Status per ogni porta. Il MIB SNMP standard NON espone i Watt realtime,
+     * e il MIB privato D-Link sul DGS-1210 6.30 nemmeno: l'unica via e' la GUI.
+     *
+     * Ritorna map ifIndex -> array(
+     *   'powerW'  => 2.8,
+     *   'voltage' => 53.2,
+     *   'current' => 53.0,
+     *   'class'   => 'Class 1' | 'N/A',
+     *   'status'  => 'POWER ON' | 'POWER OFF',
+     * )
+     * Se nessuna pagina candidata risponde con dati riconoscibili, ritorna
+     * array vuoto (il caller fallback su SNMP-only).
+     */
+    public static function getPoEPortPower()
+    {
+        if (!self::isConfigured()) return array();
+        $g = self::login();
+        if (!$g) return array();
+
+        $host = _SWITCH_IP_;
+        // URL candidati della pagina PoE Port Settings sul DGS-1210 firmware 6.30.
+        // L'endpoint .js dovrebbe contenere i dati come array JavaScript.
+        $candidates = array(
+            "http://$host/iss/specific/PoE_Port_Settings.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_PortSetting.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_Setting.js?Gambit=$g",
+            "http://$host/iss/PoE_Port_Settings.htm?Gambit=$g",
+            "http://$host/iss/PoE_PortSetting.htm?Gambit=$g",
+        );
+
+        foreach ($candidates as $url) {
+            $body = self::httpGet($url, "http://$host/");
+            if (!is_string($body) || $body === '') continue;
+            if (stripos($body, 'Login') !== false && stripos($body, 'timeout') !== false) {
+                self::invalidateGambit();
+                return array();
+            }
+
+            // Pattern 1: array JavaScript "var PoE_Setting = [['1','Enabled','Normal',...,
+            //   power_W, voltage_V, current_mA, classification, status], ...];"
+            // Cerchiamo il primo array che assomiglia a una tabella PoE: deve avere
+            // almeno una tupla con valori numerici simili a Watt/Voltage/Current.
+            // Pattern molto tollerante: estraggo tutte le tuple [...] che contengono
+            // 'POWER ON' o 'POWER OFF' e parso da li'.
+            $result = array();
+            if (preg_match_all('/\\[\\s*[\'"]?(\\d+)[\'"]?\\s*,([^\\[\\]]+?)(?:POWER\\s*ON|POWER\\s*OFF)[^\\[\\]]*\\]/i', $body, $tuples, PREG_SET_ORDER)) {
+                foreach ($tuples as $t) {
+                    $portN = (int) $t[1];
+                    if ($portN <= 0) continue;
+                    // Riprendo l'intera tupla matchata per parsarla per intero.
+                    $fullTuple = $t[0];
+                    // Estraggo tutti i valori (stringhe quoted o numeri).
+                    if (!preg_match_all('/[\'"]([^\'"]*)[\'"]|(-?\\d+(?:\\.\\d+)?)/', $fullTuple, $vals)) continue;
+                    $items = array();
+                    foreach ($vals[0] as $i => $v) {
+                        if ($vals[1][$i] !== '') $items[] = $vals[1][$i];
+                        else if ($vals[2][$i] !== '') $items[] = $vals[2][$i];
+                    }
+                    // Posizioni tipiche su DGS-1210 PoE_Setting:
+                    //   [0]=port, [1]=state, [2]=time_range, [3]=priority,
+                    //   [4]=delay_power_detect, [5]=legacy_pd, [6]=power_limit_text,
+                    //   [7]=power_W, [8]=voltage_V, [9]=current_mA,
+                    //   [10]=classification, [11]=status
+                    // Approccio robusto: cerco l'item che e' "POWER ON"/"POWER OFF"
+                    // e prendo gli ultimi 5 prima.
+                    $statusIdx = -1;
+                    foreach ($items as $i => $v) {
+                        if (preg_match('/^POWER\\s*(ON|OFF)$/i', $v)) { $statusIdx = $i; break; }
+                    }
+                    if ($statusIdx < 4) continue;
+                    $classification = $items[$statusIdx - 1];
+                    $currentMa      = isset($items[$statusIdx - 2]) ? (float) $items[$statusIdx - 2] : null;
+                    $voltageV       = isset($items[$statusIdx - 3]) ? (float) $items[$statusIdx - 3] : null;
+                    $powerW         = isset($items[$statusIdx - 4]) ? (float) $items[$statusIdx - 4] : null;
+                    $result[$portN] = array(
+                        'powerW'  => $powerW,
+                        'voltage' => $voltageV,
+                        'current' => $currentMa,
+                        'class'   => $classification,
+                        'status'  => $items[$statusIdx],
+                    );
+                }
+            }
+
+            if (!empty($result)) {
+                self::trace("getPoEPortPower OK da $url: " . count($result) . " porte");
+                return $result;
+            }
+            // Se la pagina ha risposto ma non abbiamo trovato il pattern,
+            // logghiamo i primi byte per debug.
+            $head = preg_replace('/\\s+/', ' ', substr($body, 0, 300));
+            self::trace("getPoEPortPower: $url ha risposto ma pattern non matcha; head=$head");
+        }
+        return array();
+    }
+
+    /**
      * Legge lo status Jumbo Frame dalla web GUI dello switch. Sul DGS-1210 e'
      * un singolo flag switch-wide. Best-effort: prova diversi endpoint candidati
      * perche' l'URL varia con la versione di firmware. Ritorna:

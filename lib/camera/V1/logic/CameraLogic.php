@@ -594,25 +594,23 @@ class CameraLogic
                         'message'  => "La camera e' collegata alla Port $cIdx ma il PoE su quella porta e' DISABILITATO nello switch. La camera sta usando un alimentatore esterno; se viene staccato la camera si spegne. Abilita PoE su questa porta dalla GUI dello switch.",
                     );
                 } elseif ($powerW !== null && $powerW < 0.5) {
+                    // Wattaggio noto e ~0: zero-watt confermato.
                     $r['poeWarnings'][] = array(
                         'severity' => 'danger',
                         'port'     => $cIdx,
                         'reason'   => 'zero-watt',
-                        'message'  => "La camera e' UP via dati ma il PoE eroga 0 W sulla Port $cIdx: la camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
+                        'message'  => "La camera e' UP via dati ma il PoE eroga " . number_format($powerW, 1) . " W sulla Port $cIdx: la camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
                     );
-                } elseif (!$delivering) {
-                    // PoE admin enabled ma NON sta erogando (status searching/fault/
-                    // test/other). Lo switch ha PoE acceso ma la camera NON risulta
-                    // un Powered Device su quel cavo: e' alimentata da sorgente
-                    // esterna. Stesso scenario "alimentazione esterna" del zero-watt,
-                    // valido anche quando non leggiamo i Watt realtime perche' la
-                    // branch private MIB di questo firmware non e' tra quelle note.
+                } elseif ($powerW === null && !$delivering) {
+                    // Watt sconosciuti (scrape fallito) MA tutti i segnali indiretti
+                    // dicono "nessun PD" (status != delivering, class == default, no
+                    // POWER ON): la camera non e' alimentata via PoE.
                     $statusLbl = isset($cameraPoe['statusLabel']) ? $cameraPoe['statusLabel'] : '?';
                     $r['poeWarnings'][] = array(
                         'severity' => 'danger',
                         'port'     => $cIdx,
                         'reason'   => 'not-delivering',
-                        'message'  => "La camera e' UP via dati ma il PoE sulla Port $cIdx NON sta alimentando (stato: $statusLbl). La camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
+                        'message'  => "La camera e' UP via dati ma il PoE sulla Port $cIdx NON sta alimentando (stato: $statusLbl, class " . ($cameraPoe['class'] === null ? '?' : $cameraPoe['class']) . "). La camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
                     );
                 }
             }
@@ -644,37 +642,20 @@ class CameraLogic
             4 => 'fault', 5 => 'test', 6 => 'other',
         );
 
-        // POWER-ETHERNET-MIB (RFC 3621)
-        $stdAdmin  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.3');   // adminEnable
-        $stdStatus = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.6');   // detectStatus
-        $stdClass  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.10');  // class (0..4)
-        $stdLimit  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.11');  // powerLimit (mW)
+        // POWER-ETHERNET-MIB (RFC 3621): admin, detection-status, class.
+        // NB: l'OID .105.1.1.1.11 NON e' powerLimit ma invalidSignatureCounter,
+        // quindi lo ignoro. Il consumo realtime non e' nel MIB standard.
+        $stdAdmin  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.3');
+        $stdStatus = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.6');
+        $stdClass  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.10');
 
-        // Private MIB D-Link per consumo realtime. Lo standard NON espone il
-        // consumo in Watt, solo il limite. Provo branch candidate dei DGS-1210.
-        $consumeCandidates = array(
-            '1.3.6.1.4.1.171.10.76.10.10.1.1.4',
-            '1.3.6.1.4.1.171.10.76.11.10.1.1.4',
-            '1.3.6.1.4.1.171.10.76.12.10.1.1.4',
-            '1.3.6.1.4.1.171.11.153.1000.10.1.1.4',
-            '1.3.6.1.4.1.171.11.153.1010.10.1.1.4',
-        );
-        $consumeMap    = array();
-        $consumeBranch = null;
-        foreach ($consumeCandidates as $branch) {
-            $walk = self::snmpWalkViaSsh($ip, $community, $branch);
-            if (!empty($walk)) {
-                $consumeMap    = $walk;
-                $consumeBranch = $branch;
-                break;
-            }
+        // Watt realtime: scrape della GUI HTTP (il MIB privato del DGS-1210
+        // firmware 6.30 non li espone). getPoEPortPower ritorna map
+        // portNumber -> array('powerW', 'voltage', 'current', 'class', 'status').
+        $httpPoe = array();
+        if (SwitchHttpClientLogic::isConfigured()) {
+            $httpPoe = SwitchHttpClientLogic::getPoEPortPower();
         }
-
-        // Unita': i DGS-1210 espongono il consumo in centesimi (es. 1234 = 12.34 W)
-        // o in decimi (es. 56 = 5.6 W). Euristica: se max value > 100 -> centesimi.
-        $maxConsume = 0;
-        foreach ($consumeMap as $v) { if ((int) $v > $maxConsume) $maxConsume = (int) $v; }
-        $divisor = ($maxConsume > 100) ? 100.0 : 10.0;
 
         // suffix groupIndex.portIndex -> ifIndex. Su DGS-1210 portIndex == ifIndex
         // (porte 1..8 PoE, 9..10 uplink non-PoE).
@@ -686,29 +667,60 @@ class CameraLogic
 
         $result = array();
         $allSuffix = array();
-        foreach (array($stdAdmin, $stdStatus, $stdClass, $stdLimit, $consumeMap) as $arr) {
+        foreach (array($stdAdmin, $stdStatus, $stdClass) as $arr) {
             foreach ($arr as $s => $_) $allSuffix[$s] = true;
         }
+        // Aggiungo anche gli ifIndex visti dalla GUI HTTP, nel caso SNMP non
+        // sia disponibile per qualche motivo.
+        foreach ($httpPoe as $ifIdx => $_) $allSuffix["1.$ifIdx"] = true;
+
         foreach (array_keys($allSuffix) as $suffix) {
             $ifIdx = $suffixToIf($suffix);
             if ($ifIdx <= 0) continue;
-            $admin  = isset($stdAdmin[$suffix])  ? ((int) $stdAdmin[$suffix] === 1)   : null;
-            $status = isset($stdStatus[$suffix]) ? (int) $stdStatus[$suffix]          : null;
-            $class  = isset($stdClass[$suffix])  ? (int) $stdClass[$suffix]           : null;
-            $limMw  = isset($stdLimit[$suffix])  ? (int) $stdLimit[$suffix]           : null;
-            $powerW = null;
-            if (isset($consumeMap[$suffix])) {
-                $powerW = round(((int) $consumeMap[$suffix]) / $divisor, 2);
+            $admin  = isset($stdAdmin[$suffix])  ? ((int) $stdAdmin[$suffix] === 1) : null;
+            $status = isset($stdStatus[$suffix]) ? (int) $stdStatus[$suffix]        : null;
+            $class  = isset($stdClass[$suffix])  ? (int) $stdClass[$suffix]         : null;
+
+            // Watt realtime dal scrape GUI (l'unica fonte affidabile su DGS-1210).
+            $powerW      = null;
+            $powerSource = null;
+            $httpStatus  = null;
+            if (isset($httpPoe[$ifIdx])) {
+                $h = $httpPoe[$ifIdx];
+                if (isset($h['powerW']))    $powerW      = (float) $h['powerW'];
+                if (isset($h['status']))    $httpStatus  = $h['status']; // 'POWER ON' / 'POWER OFF' / ...
+                $powerSource = 'http-scrape';
             }
+
+            // "delivering" = la porta sta erogando potenza a un PD.
+            // Lo standard dice status==3, ma il firmware DGS-1210 6.30 usa
+            // valori non-standard (visto in produzione: status=2 con
+            // GUI=POWER ON e 2.8W). Combiniamo piu' segnali per essere
+            // robusti su firmware diversi:
+            //   1) Watt > 0.5 dal scrape HTTP -> SI, sta erogando
+            //   2) GUI HTTP dice "POWER ON" -> SI
+            //   3) status==3 (standard) -> SI
+            //   4) class != null && class > 1 (=class0/default) -> PD detectato
+            $delivering = false;
+            if ($powerW !== null && $powerW >= 0.5) {
+                $delivering = true;
+            } elseif ($httpStatus !== null && stripos($httpStatus, 'POWER ON') !== false) {
+                $delivering = true;
+            } elseif ($status === 3) {
+                $delivering = true;
+            } elseif ($class !== null && $class > 1 && $admin === true) {
+                $delivering = true;
+            }
+
             $result[$ifIdx] = array(
                 'adminEnable' => $admin,
                 'status'      => $status,
                 'statusLabel' => ($status !== null && isset($statusLabels[$status])) ? $statusLabels[$status] : null,
-                'delivering'  => $status === 3,
+                'delivering'  => $delivering,
                 'class'       => $class,
-                'powerLimitW' => $limMw !== null ? round($limMw / 1000.0, 2) : null,
                 'powerW'      => $powerW,
-                'powerSource' => $powerW !== null ? ('private-mib:' . $consumeBranch) : null,
+                'powerSource' => $powerSource,
+                'httpStatus'  => $httpStatus,
             );
         }
         return $result;
