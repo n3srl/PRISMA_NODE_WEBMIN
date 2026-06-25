@@ -188,8 +188,109 @@ class CameraLogic
         $nodeMac   = isset($result['link']['address'])   ? $result['link']['address']   : null;
         $result['switch'] = self::probeSwitchViaSnmp($cameraMac, $nodeMac);
 
+        // 8) Coerenza Jumbo Frame end-to-end (NIC + path + switch). Calcolata su
+        //    base ping -M do con size crescenti: identifica il max payload che
+        //    sopravvive intero, quindi il PMTU effettivo del path camera<->nodo.
+        //    Se _SWITCH_IP_ + HTTP password configurate, prova anche a leggere
+        //    lo status jumbo dalla GUI dello switch (scraping).
+        if ($cameraIp) {
+            $result['jumbo'] = self::jumboFrameCheck($cameraIp, $result['link']);
+        }
+
         $result['verdict'] = self::computeNetDiagVerdict($result);
         return array("res" => true, "data" => $result);
+    }
+
+    /**
+     * Verifica coerenza Jumbo Frame end-to-end usando ping -M do (Don't Fragment)
+     * con 3 size crescenti:
+     *   - 1472 byte payload  = MTU 1500 (baseline, deve sempre passare)
+     *   - 4472 byte payload  = MTU 4500 (jumbo parziale, rivela mismatch)
+     *   - 8972 byte payload  = MTU 9000 (jumbo full)
+     * Se ping a size N passa con DF set significa che TUTTI gli step del path
+     * (NIC nodo, switch, camera) accettano frame N+28 byte. Il primo size che
+     * fallisce identifica il PMTU.
+     *
+     * Aggiunge anche, se possibile, lo status jumbo dello switch via scraping
+     * della web GUI (DGS-1210 non lo espone in SNMP standard).
+     */
+    private static function jumboFrameCheck($cameraIp, $link) {
+        // Payload sizes scelte per coprire i 3 setting tipici delle camere
+        // GigE Vision. Manteniamo il numero di ping basso (1 + 2 in caso di
+        // primo retry) per non rallentare la diagnostica.
+        $tests = array(
+            array('size' => 1472, 'mtuLabel' => 1500, 'desc' => 'baseline (no jumbo)'),
+            array('size' => 4472, 'mtuLabel' => 4500, 'desc' => 'jumbo parziale'),
+            array('size' => 8972, 'mtuLabel' => 9000, 'desc' => 'jumbo full'),
+        );
+        $results = array();
+        $maxOkPayload = 0;
+        foreach ($tests as $t) {
+            $size = (int) $t['size'];
+            // -M do = Don't Fragment, -c 2 = 2 pacchetti (uno potrebbe perdersi),
+            // -W 1 = timeout 1s. Catturiamo anche stderr per leggere il messaggio
+            // "Frag needed and DF set" oppure "Message too long" lato kernel.
+            $out = self::shellViaSsh(
+                "ping -M do -s $size -c 2 -W 1 " . escapeshellarg($cameraIp) . " 2>&1"
+            );
+            $ok       = (preg_match('/\b(\d+) received/', $out, $m) && (int) $m[1] >= 1);
+            $fragFlag = (stripos($out, 'frag needed') !== false || stripos($out, 'message too long') !== false);
+            if ($ok) {
+                $maxOkPayload = max($maxOkPayload, $size);
+            }
+            $results[] = array(
+                'size'        => $size,
+                'mtuLabel'    => (int) $t['mtuLabel'],
+                'description' => $t['desc'],
+                'ok'          => $ok,
+                'fragNeeded'  => $fragFlag,
+            );
+        }
+
+        $nicMtu = isset($link['mtu']) ? (int) $link['mtu'] : 0;
+
+        // Status jumbo lato switch via HTTP scraping (best-effort).
+        $switchJumbo = null;
+        if (SwitchHttpClientLogic::isConfigured()) {
+            $switchJumbo = SwitchHttpClientLogic::getJumboFrameStatus();
+        }
+
+        // Verdict end-to-end
+        //  - pathMtu = maxOkPayload + 28  (header IP+ICMP)
+        //  - se pathMtu >= 9000 e nicMtu >= 9000  -> coherent jumbo
+        //  - se pathMtu < nicMtu                  -> path-limited, NIC sopra il path
+        //  - se pathMtu == 1500                   -> jumbo NON attivo end-to-end
+        $pathMtu = $maxOkPayload > 0 ? ($maxOkPayload + 28) : null;
+        $warnings = array();
+        $level = 'ok';
+
+        if ($pathMtu === null) {
+            $level = 'warning';
+            $warnings[] = "Nessun ping con DF e' passato: la camera non risponde o il path e' rotto.";
+        } else {
+            if ($nicMtu > 0 && $pathMtu < $nicMtu) {
+                $level = 'warning';
+                $warnings[] = "PMTU effettivo ($pathMtu) inferiore alla MTU della NIC ($nicMtu): c'e' uno step del path che limita il payload (probabilmente lo switch con jumbo disabilitato, o la camera con GevSCPSPacketSize basso).";
+            }
+            if ($pathMtu <= 1500 && $nicMtu > 1500) {
+                $level = 'warning';
+                $warnings[] = "Jumbo Frame NON attivo end-to-end (PMTU <= 1500) nonostante la NIC sia MTU $nicMtu.";
+            }
+            if ($switchJumbo !== null && isset($switchJumbo['enabled']) && $switchJumbo['enabled'] === false && $nicMtu > 1500) {
+                $warnings[] = "Switch ha Jumbo Frame DISABILITATO, ma la NIC del nodo e' MTU $nicMtu: configurazione incoerente, abilita Jumbo nel pannello System -> Jumbo Frame.";
+                $level = 'warning';
+            }
+        }
+
+        return array(
+            'nicMtu'        => $nicMtu,
+            'tests'         => $results,
+            'maxOkPayload'  => $maxOkPayload,
+            'pathMtu'       => $pathMtu,
+            'switchJumbo'   => $switchJumbo,
+            'level'         => $level,    // 'ok' | 'warning'
+            'warnings'      => $warnings,
+        );
     }
 
     // Interroga lo switch via SNMP (v2c) usando snmpget/snmpwalk sull'host docker.

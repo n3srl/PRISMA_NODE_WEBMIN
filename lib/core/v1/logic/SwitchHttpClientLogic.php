@@ -188,6 +188,64 @@ class SwitchHttpClientLogic
     }
 
     /**
+     * Legge lo status Jumbo Frame dalla web GUI dello switch. Sul DGS-1210 e'
+     * un singolo flag switch-wide. Best-effort: prova diversi endpoint candidati
+     * perche' l'URL varia con la versione di firmware. Ritorna:
+     *   array('enabled' => true|false, 'maxFrameSize' => 1536|10000|...)
+     * oppure null se non riesce a determinarlo (l'utente vedra' "sconosciuto"
+     * lato UI e potra' verificare a mano).
+     */
+    public static function getJumboFrameStatus()
+    {
+        if (!self::isConfigured()) return null;
+        $g = self::login();
+        if (!$g) return null;
+
+        $host = _SWITCH_IP_;
+        // Endpoint candidati sul firmware 6.30.x. Nessuna garanzia: se non
+        // matcha nulla ritorniamo null e la UI mostra "stato sconosciuto".
+        $candidates = array(
+            "http://$host/iss/specific/Jumbo_Frame.js?Gambit=$g",
+            "http://$host/iss/specific/JumboFrame.js?Gambit=$g",
+            "http://$host/iss/specific/Jumbo_Frame.htm?Gambit=$g",
+            "http://$host/iss/Jumbo_Frame.htm?Gambit=$g",
+        );
+        foreach ($candidates as $url) {
+            $body = self::httpGet($url, "http://$host/");
+            if (!is_string($body) || $body === '') continue;
+            if (stripos($body, 'Login') !== false && stripos($body, 'timeout') !== false) {
+                // Sessione scaduta -> reset e abbandono
+                self::$gambit = null;
+                return null;
+            }
+            // Pattern 1: JS con variabili (firmware nuovo)
+            //   var jumbo_state = '1';   oppure  var Jumbo_Enable = '1';
+            //   var jumbo_size = '10000';
+            $enabled = null; $size = null;
+            if (preg_match('/(?:jumbo[_\s]*(?:state|enable|status))[^=]*=\s*[\'"]?(\d+)/i', $body, $m)) {
+                $enabled = ((int) $m[1] === 1);
+            }
+            if (preg_match('/(?:jumbo[_\s]*(?:size|len|frame[_\s]*size|max[_\s]*size))[^=]*=\s*[\'"]?(\d+)/i', $body, $m)) {
+                $size = (int) $m[1];
+            }
+            // Pattern 2: HTML form con radio (firmware vecchio)
+            //   <input type=radio name=jumbo_state value=1 checked>Enable
+            if ($enabled === null
+                && preg_match('/name\s*=\s*[\'"]?jumbo[_\s]*\w*[\'"]?[^>]*value\s*=\s*[\'"]?(\d+)[\'"]?[^>]*checked/i', $body, $m)) {
+                $enabled = ((int) $m[1] === 1);
+            }
+            if ($enabled !== null || $size !== null) {
+                return array(
+                    'enabled'      => $enabled,
+                    'maxFrameSize' => $size,
+                    'source'       => 'http-scrape',
+                );
+            }
+        }
+        return null;
+    }
+
+    /**
      * Recupera Port_Setting.js e ricostruisce la stringa Speed_status che il TDR
      * pretende come parametro: e' la concatenazione di Port_Setting[i][1] per
      * ogni porta dello switch.

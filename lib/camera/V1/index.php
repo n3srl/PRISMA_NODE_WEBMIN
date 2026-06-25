@@ -110,11 +110,15 @@ $app->GET('/camera/diag/switch/explore', function (Application $app, Request $re
 
 // Triggera Cable Diagnostic (TDR) sulla porta indicata via scraping della GUI
 // web del DGS-1210 e ritorna stato + lunghezza per le 4 coppie del cavo.
+// NB: rispondiamo sempre 200 anche quando result=false. Gli errori qui sono
+// "rete/switch non raggiungibile, login fallito, JSON malformato" e NON
+// "Forbidden": tornare 403 inganna il client che mostrerebbe "Errore HTTP"
+// invece del messaggio diagnostico utile.
 $app->GET('/camera/diag/switch/cable', function (Application $app, Request $request) {
 
     $result = CameraApiLogic::SwitchCableDiag($request->query);
     $resp = new Response(json_encode($result));
-    $resp->setStatusCode($result->result ? 200 : 403);
+    $resp->setStatusCode(200);
     return $resp;
 });
 

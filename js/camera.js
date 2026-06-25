@@ -747,12 +747,95 @@ function renderCameraNetDiag(data) {
             '</pre></details>';
     }
 
+    // Sezione Jumbo Frame (fase 3): coerenza MTU end-to-end. Visibile solo
+    // se la diagnostica ha potuto eseguire i ping (cameraIp risolto).
+    if (data.jumbo) {
+        html += renderJumboSection(data.jumbo);
+    }
+
     // Sezione switch (fase 2). Visibile solo se configurato in config.php.
     if (data.switch && data.switch.configured) {
         html += renderSwitchSection(data.switch);
     }
 
     $('#camera-netdiag').html(html).show();
+}
+
+// Render del check coerenza Jumbo Frame: confronta MTU NIC, PMTU effettivo
+// del path (ricavato da ping -M do a size crescenti) e status jumbo dello
+// switch (scrape best-effort, puo' essere null).
+function renderJumboSection(j) {
+    var html = '<hr style="margin:14px 0;">';
+    html += '<h4 style="margin-top:0;">' + _('Coerenza Jumbo Frame end-to-end') + '</h4>';
+
+    var alertCls = (j.level === 'warning') ? 'alert-warning' : 'alert-success';
+    var iconCls  = (j.level === 'warning') ? 'fa-exclamation-triangle' : 'fa-check-circle';
+
+    // Riepilogo: MTU NIC, PMTU effettivo, status switch
+    var nicMtuTxt = j.nicMtu ? (j.nicMtu + ' byte') : '-';
+    var pathMtuTxt = j.pathMtu ? (j.pathMtu + ' byte') : _('non determinato');
+    var swTxt;
+    if (!j.switchJumbo) {
+        swTxt = '<span class="text-muted">' + _('sconosciuto (scrape non riuscito o switch non configurato)') + '</span>';
+    } else {
+        var en = j.switchJumbo.enabled;
+        var sz = j.switchJumbo.maxFrameSize;
+        if (en === true) {
+            swTxt = '<span style="color:#1d7a44;font-weight:600;">' + _('ABILITATO') + '</span>' +
+                    (sz ? ' (max ' + sz + ' byte)' : '');
+        } else if (en === false) {
+            swTxt = '<span style="color:#b52c1d;font-weight:600;">' + _('DISABILITATO') + '</span>' +
+                    (sz ? ' (max ' + sz + ' byte)' : '');
+        } else {
+            swTxt = '<span class="text-muted">' + _('non determinato') + '</span>' +
+                    (sz ? ' (max ' + sz + ' byte)' : '');
+        }
+    }
+
+    html += '<div class="alert ' + alertCls + '" style="margin-bottom:10px;">' +
+        '<i class="fa ' + iconCls + '"></i> ' +
+        '<b>' + _('MTU NIC nodo') + '</b>: ' + _escDeep(nicMtuTxt) +
+        ' &middot; <b>' + _('PMTU misurato') + '</b>: ' + _escDeep(pathMtuTxt) +
+        ' &middot; <b>' + _('Jumbo switch') + '</b>: ' + swTxt;
+    if (j.warnings && j.warnings.length) {
+        html += '<ul style="margin:6px 0 0 0; padding-left:20px;">';
+        j.warnings.forEach(function (w) { html += '<li>' + _escDeep(w) + '</li>'; });
+        html += '</ul>';
+    }
+    html += '</div>';
+
+    // Tabella dei 3 ping -M do progressivi
+    html += '<table class="table table-condensed" style="margin-bottom:8px; font-size:12px;">' +
+            '<thead><tr>' +
+                '<th>' + _('Test') + '</th>' +
+                '<th>' + _('Payload') + '</th>' +
+                '<th>' + _('MTU equivalente') + '</th>' +
+                '<th>' + _('Esito') + '</th>' +
+                '<th>' + _('Note') + '</th>' +
+            '</tr></thead><tbody>';
+    (j.tests || []).forEach(function (t) {
+        var esito = t.ok
+            ? '<span style="color:#1d7a44;font-weight:600;"><i class="fa fa-check"></i> ' + _('passa') + '</span>'
+            : '<span style="color:#b52c1d;font-weight:600;"><i class="fa fa-times"></i> ' + _('fallisce') + '</span>';
+        var nota = '';
+        if (!t.ok && t.fragNeeded) {
+            nota = '<small>' + _('frammentazione richiesta (PMTU < ' + (t.size + 28) + ')') + '</small>';
+        }
+        html += '<tr>' +
+            '<td><code>ping -M do -s ' + t.size + '</code></td>' +
+            '<td>' + t.size + ' byte</td>' +
+            '<td>' + t.mtuLabel + ' (' + _escDeep(t.description) + ')</td>' +
+            '<td>' + esito + '</td>' +
+            '<td>' + nota + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+
+    html += '<div style="font-size:12px; color:#777;">' +
+        _('Il PMTU effettivo e\' il payload max che passa con DF set, + 28 byte di header IP/ICMP. Per camera GenICam a piena velocita\' tutto il path (NIC nodo + switch + camera) deve essere MTU 9000. Per la camera apri "Lettura parametri completi" e verifica') + ' <code>GevSCPSPacketSize</code>.' +
+    '</div>';
+
+    return html;
 }
 
 function renderSwitchSection(sw) {
@@ -1003,10 +1086,24 @@ function runCableDiag(port, $btn) {
         }
         $cell.html(renderCableDiagResult(resp.data));
     }).fail(function (xhr) {
+        // Anche su HTTP error proviamo a leggere il body JSON: il backend puo'
+        // aver messo un messaggio diagnostico (login switch fallito, scraping
+        // tornato HTML invece di JSON, etc.) che e' molto piu' utile di un
+        // generico "Errore HTTP 403".
+        var serverMsg = '';
+        try {
+            var body = xhr && xhr.responseJSON
+                ? xhr.responseJSON
+                : (xhr && xhr.responseText ? JSON.parse(xhr.responseText) : null);
+            if (body && body.data) serverMsg = String(body.data);
+        } catch (e) { /* ignore */ }
+
         $resultRow.find('td').first().html(
             '<div class="alert alert-danger" style="margin:0;">' +
-            _('Errore HTTP') + ' (' + (xhr && xhr.status) + ') ' +
-            _('contattando lo switch') +
+            '<b>' + _('Test cavo Port') + ' ' + port + '</b>: ' +
+            (serverMsg
+                ? _escDeep(serverMsg)
+                : (_('errore HTTP') + ' ' + (xhr && xhr.status) + ' ' + _('contattando lo switch'))) +
         '</div>');
     }).always(function () {
         $btn.prop('disabled', false);
