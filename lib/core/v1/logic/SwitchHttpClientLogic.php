@@ -425,12 +425,20 @@ class SwitchHttpClientLogic
             self::invalidateGambit();
             return null;
         }
+        // Estrazione del secondo elemento di ogni sub-tupla [portN, speedBits, ...].
+        // Tolleriamo tre formati che firmware DGS-1210 diversi usano:
+        //   - puri numeri:        [1, 0, 5, ...]
+        //   - quote singole:      ['1', '0', '5', ...]   (visto su ITER10/ITUM03)
+        //   - quote doppie:       ["1", "0", "5", ...]
         $bits = array();
-        if (preg_match_all('/\\[\\s*\\d+\\s*,\\s*(\\d+)/', $m[1], $bm)) {
+        if (preg_match_all('/\\[\\s*[\'"]?\\d+[\'"]?\\s*,\\s*[\'"]?(\\d+)[\'"]?/', $m[1], $bm)) {
             foreach ($bm[1] as $b) $bits[] = $b;
         }
         if (empty($bits)) {
-            self::trace("getSpeedStatus: Port_Setting trovato ma vuoto");
+            // Dump dei primi 300 char della porzione catturata per capire il
+            // formato esatto del firmware quando ci capita un nuovo modello.
+            $headInner = preg_replace('/\\s+/', ' ', substr($m[1], 0, 300));
+            self::trace("getSpeedStatus: Port_Setting trovato (" . strlen($m[1]) . " bytes) ma sub-tuple non parsabili. head=$headInner");
             return null;
         }
 
@@ -490,6 +498,12 @@ class SwitchHttpClientLogic
         // L'http server del DGS-1210 manda risposte con Connection: close;
         // disattiviamo il reuse per evitare race condition sul socket.
         curl_setopt($ch, CURLOPT_FORBID_REUSE,   true);
+        // Alcuni endpoint del firmware DGS-1210 (es. Jumbo_Frame.htm) rispondono
+        // in HTTP/0.9 (senza header). cURL >= 7.66 lo rifiuta di default con
+        // "Received HTTP/0.9 when not allowed": abilitiamo esplicitamente.
+        if (defined('CURLOPT_HTTP09_ALLOWED')) {
+            curl_setopt($ch, CURLOPT_HTTP09_ALLOWED, true);
+        }
         if ($post) {
             curl_setopt($ch, CURLOPT_POST,       true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
