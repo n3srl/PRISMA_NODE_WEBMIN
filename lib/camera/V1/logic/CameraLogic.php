@@ -480,6 +480,12 @@ class CameraLogic
         $r['cameraPort'] = $lookupPort($cameraMac);
         $r['nodePort']   = $lookupPort($nodeMac);
 
+        // Espongo anche i MAC degli endpoint conosciuti (utile per debug quando
+        // un ruolo non viene risolto: l'utente vede cosa cerchiamo e cosa lo
+        // switch ha effettivamente visto nel suo FDB).
+        $r['cameraMac'] = $cameraMac ? strtolower($cameraMac) : null;
+        $r['nodeMac']   = $nodeMac   ? strtolower($nodeMac)   : null;
+
         // Uplink: MAC del default gateway visto dal nodo.
         $gatewayIp = trim(self::shellViaSsh(
             "ip route show default 2>/dev/null | awk '{for (i=1; i<=NF; i++) if (\$i==\"via\") print \$(i+1)}' | head -1"
@@ -568,6 +574,33 @@ class CameraLogic
                 );
             }
         }
+
+        // Lista completa dei MAC visti nel FDB dello switch, raggruppati per
+        // porta + ruolo se conosciuto. Visibile lato UI come <details>
+        // collassabile per fare debug rapido quando un ruolo non viene
+        // risolto (es. camera non nel FDB).
+        $r['fdbEntries'] = array();
+        // Mappa bridgePort -> ifIndex per le entry FDB.
+        foreach ($portToMacs as $bridgePort => $macs) {
+            $ifIdx = isset($bridgePortToIf[$bridgePort]) ? (int) $bridgePortToIf[$bridgePort] : (int) $bridgePort;
+            $uniqMacs = array_values(array_unique($macs));
+            foreach ($uniqMacs as $mac) {
+                $macLow = strtolower($mac);
+                $role = null;
+                if ($cameraMac && strtolower($cameraMac) === $macLow) $role = 'camera';
+                elseif ($nodeMac && strtolower($nodeMac) === $macLow) $role = 'nodo';
+                elseif ($gatewayMac && strtolower($gatewayMac) === $macLow) $role = 'uplink';
+                $r['fdbEntries'][] = array(
+                    'mac'     => $macLow,
+                    'ifIndex' => $ifIdx,
+                    'role'    => $role,
+                );
+            }
+        }
+        usort($r['fdbEntries'], function ($a, $b) {
+            if ($a['ifIndex'] !== $b['ifIndex']) return $a['ifIndex'] - $b['ifIndex'];
+            return strcmp($a['mac'], $b['mac']);
+        });
 
         // PoE: warning prominente se la camera e' UP via cavo ma NON sta tirando
         // alimentazione (0 W). Significa che la camera ha una sorgente esterna

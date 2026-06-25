@@ -964,10 +964,20 @@ function renderSwitchSection(sw) {
     }
 
     if (missing.length > 0) {
+        // Per ogni ruolo mancante mostro anche il MAC che stavamo cercando,
+        // cosi' l'utente sa cosa il FDB non ha visto.
+        var roleMacMap = {
+            'camera': sw.cameraMac,
+            'nodo':   sw.nodeMac,
+            'uplink': sw.gatewayMac,
+        };
         html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
             '<i class="fa fa-question-circle"></i> ' +
             '<b>' + _('Ruoli non identificati') + '</b>: ' +
-            missing.map(function (m) { return '<code>' + _escDeep(m) + '</code>'; }).join(', ') +
+            missing.map(function (m) {
+                var mac = roleMacMap[m];
+                return '<code>' + _escDeep(m) + '</code>' + (mac ? ' (' + _escDeep(mac) + ')' : ' (' + _('MAC sconosciuto') + ')');
+            }).join(', ') +
             '. ' + _('Il MAC corrispondente non e\' presente nel FDB dello switch.') + fdbHint +
         '</div>';
     }
@@ -1017,6 +1027,70 @@ function renderSwitchSection(sw) {
         html += '<div class="alert alert-warning">' + _('Nessuna porta ethernet trovata via SNMP.') + '</div>';
         return html;
     }
+
+    // Blocco diagnostico "Endpoint & FDB switch": elenca i 3 MAC dei ruoli
+    // (camera/nodo/uplink) con stato risolto/non risolto + il FDB completo
+    // dello switch. Collapsabile per non rubare spazio quando tutto va bene,
+    // ma sempre presente per debug rapido.
+    var fdbEntries = sw.fdbEntries || [];
+    var anyMissing = (sw.missingRoles && sw.missingRoles.length) || fdbEntries.length === 0;
+    html += '<details style="margin-bottom:10px;" ' + (anyMissing ? 'open' : '') + '>' +
+        '<summary style="cursor:pointer; font-weight:600;">' +
+        _('Endpoint & FDB dello switch') +
+        ' <small class="text-muted">(' + fdbEntries.length + ' ' + _('MAC visti') + ')</small>' +
+        '</summary>' +
+        '<table class="table table-condensed" style="margin-top:8px; font-size:12px;">' +
+        '<thead><tr><th style="width:90px;">' + _('Ruolo') + '</th>' +
+        '<th>MAC</th><th style="width:80px;">' + _('Porta') + '</th>' +
+        '<th>' + _('Note') + '</th></tr></thead><tbody>';
+
+    function _macRow(roleLabel, mac, port, labelCls, note) {
+        if (mac) {
+            var portTxt = port
+                ? '<span class="label label-' + labelCls + '">Port ' + port + '</span>'
+                : '<span class="label label-warning">' + _('non trovata nel FDB') + '</span>';
+            return '<tr>' +
+                '<td><span class="label label-' + labelCls + '">' + roleLabel + '</span></td>' +
+                '<td><code>' + _escDeep(mac) + '</code></td>' +
+                '<td>' + portTxt + '</td>' +
+                '<td><small class="text-muted">' + _escDeep(note || '') + '</small></td>' +
+            '</tr>';
+        }
+        return '<tr>' +
+            '<td><span class="label label-' + labelCls + '">' + roleLabel + '</span></td>' +
+            '<td colspan="2"><span class="text-muted">' + _('MAC sconosciuto') + '</span></td>' +
+            '<td><small class="text-muted">' + _escDeep(note || '') + '</small></td>' +
+        '</tr>';
+    }
+    html += _macRow('camera', sw.cameraMac,  sw.cameraPort, 'success', _('MAC della camera (visto da ARP del nodo)'));
+    html += _macRow('nodo',   sw.nodeMac,    sw.nodePort,   'info',    _('MAC della NIC del nodo (link.address)'));
+    html += _macRow('uplink', sw.gatewayMac, sw.uplinkPort, 'primary', _('MAC del default gateway') + (sw.gatewayIp ? ' (' + sw.gatewayIp + ')' : ''));
+    html += '</tbody></table>';
+
+    // FDB completo (raggruppato per porta).
+    if (fdbEntries.length) {
+        html += '<div style="font-weight:600; margin-top:8px;">' + _('FDB switch') +
+            ' <small class="text-muted">(' + _('tutti i MAC visti dallo switch') +
+            (sw.fdbSource ? ', ' + _('via') + ' ' + _escDeep(sw.fdbSource) : '') + ')</small></div>' +
+            '<table class="table table-condensed" style="margin-top:4px; font-size:12px;">' +
+            '<thead><tr><th style="width:80px;">' + _('Porta') + '</th>' +
+            '<th>MAC</th><th>' + _('Ruolo') + '</th></tr></thead><tbody>';
+        fdbEntries.forEach(function (e) {
+            var roleLbl = '';
+            if (e.role === 'camera')      roleLbl = '<span class="label label-success">camera</span>';
+            else if (e.role === 'nodo')   roleLbl = '<span class="label label-info">nodo</span>';
+            else if (e.role === 'uplink') roleLbl = '<span class="label label-primary">uplink</span>';
+            else                          roleLbl = '<span class="text-muted">' + _('sconosciuto') + '</span>';
+            html += '<tr>' +
+                '<td>Port ' + e.ifIndex + '</td>' +
+                '<td><code>' + _escDeep(e.mac) + '</code></td>' +
+                '<td>' + roleLbl + '</td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+    }
+
+    html += '</details>';
 
     // Tabella porte
     html += '<table id="switch-ports-table" class="table table-condensed table-striped" style="margin-bottom:8px;">' +
