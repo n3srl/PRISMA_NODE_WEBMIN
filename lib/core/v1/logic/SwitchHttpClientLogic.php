@@ -557,7 +557,22 @@ class SwitchHttpClientLogic
         //   ];
         // L'URL esatto varia con la versione di firmware. Tento un set
         // generoso di nomi noti su DGS-1210 e su altri D-Link smart switch.
+        // Pattern noto del DGS-1210 6.30: top-level "<Page>.htm" e' un frameset
+        // generico, i dati veri stanno in un iframe interno "<Page>table.htm"
+        // (es. DeviceInfo.htm -> DeviceInfotable.htm). Quindi per System_Log
+        // il file dati e' probabilmente System_Logtable.htm o simile. Provo
+        // tutte le varianti note + il file companion .js classico.
         $candidates = array(
+            // iframe interno con la tabella eventi (pattern DGS-1210 6.30)
+            "http://$host/iss/System_Logtable.htm?Gambit=$g",
+            "http://$host/iss/SystemLogtable.htm?Gambit=$g",
+            "http://$host/iss/System_Log_table.htm?Gambit=$g",
+            "http://$host/iss/SystemLog_table.htm?Gambit=$g",
+            "http://$host/iss/Sys_Logtable.htm?Gambit=$g",
+            "http://$host/iss/SysLogtable.htm?Gambit=$g",
+            "http://$host/iss/Logtable.htm?Gambit=$g",
+            "http://$host/iss/Sw_Logtable.htm?Gambit=$g",
+            // File .js companion classico
             "http://$host/iss/specific/SysLog.js?Gambit=$g",
             "http://$host/iss/specific/SystemLog.js?Gambit=$g",
             "http://$host/iss/specific/System_Log.js?Gambit=$g",
@@ -570,6 +585,7 @@ class SwitchHttpClientLogic
             "http://$host/iss/specific/Logs.js?Gambit=$g",
             "http://$host/iss/specific/Sw_Log.js?Gambit=$g",
             "http://$host/iss/specific/Switch_Log.js?Gambit=$g",
+            // Top-level htm (frameset, di solito non utile ma capita)
             "http://$host/iss/SystemLog.htm?Gambit=$g",
             "http://$host/iss/SysLog.htm?Gambit=$g",
             "http://$host/iss/System_Log.htm?Gambit=$g",
