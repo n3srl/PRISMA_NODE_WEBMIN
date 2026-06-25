@@ -1069,7 +1069,18 @@ class CameraLogic
         $res   = SwitchHttpClientLogic::getSystemLog($port, $limit);
         if ($res === null) {
             return array('res' => false, 'data' => array(
-                'error' => 'Impossibile leggere il System Log dello switch (URL della pagina non identificato o nessun match nel parser).',
+                'error' => 'Impossibile leggere il System Log dello switch (richiesta cURL fallita).',
+            ));
+        }
+        // Errore "no-match": nessuno degli URL candidati ha risposto col pattern
+        // atteso. Propago la lista probes cosi' la UI puo' farne <details>.
+        if (isset($res['error'])) {
+            $msg = ($res['error'] === 'no-match')
+                ? "URL della pagina System Log non identificato su questo firmware. Espandi 'Dettagli diagnostici' per vedere cosa ogni URL candidato ha risposto."
+                : $res['error'];
+            return array('res' => false, 'data' => array(
+                'error'  => $msg,
+                'probes' => isset($res['probes']) ? $res['probes'] : null,
             ));
         }
         $res['port'] = $port;

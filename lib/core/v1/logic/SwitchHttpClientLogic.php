@@ -549,12 +549,14 @@ class SwitchHttpClientLogic
         if (!$g) return null;
 
         $host = _SWITCH_IP_;
-        // URL candidati pagine log DGS-1210 6.30. Il file .js companion
-        // contiene tipicamente l'array dei record come:
+        // URL candidati pagine log DGS-1210. Il file .js companion contiene
+        // tipicamente l'array dei record come:
         //   var SystemLog_Table = [
         //     ['289', 'Feb 13 06:50:46', 'Port 1 link up, 1Gbps FULL duplex', 'info'],
         //     ...
         //   ];
+        // L'URL esatto varia con la versione di firmware. Tento un set
+        // generoso di nomi noti su DGS-1210 e su altri D-Link smart switch.
         $candidates = array(
             "http://$host/iss/specific/SysLog.js?Gambit=$g",
             "http://$host/iss/specific/SystemLog.js?Gambit=$g",
@@ -562,24 +564,52 @@ class SwitchHttpClientLogic
             "http://$host/iss/specific/Syslog.js?Gambit=$g",
             "http://$host/iss/specific/Log.js?Gambit=$g",
             "http://$host/iss/specific/Sys_Log.js?Gambit=$g",
+            "http://$host/iss/specific/SystemLog_View.js?Gambit=$g",
+            "http://$host/iss/specific/Show_SystemLog.js?Gambit=$g",
+            "http://$host/iss/specific/ShowSystemLog.js?Gambit=$g",
+            "http://$host/iss/specific/Logs.js?Gambit=$g",
+            "http://$host/iss/specific/Sw_Log.js?Gambit=$g",
+            "http://$host/iss/specific/Switch_Log.js?Gambit=$g",
             "http://$host/iss/SystemLog.htm?Gambit=$g",
             "http://$host/iss/SysLog.htm?Gambit=$g",
             "http://$host/iss/System_Log.htm?Gambit=$g",
+            "http://$host/iss/Syslog.htm?Gambit=$g",
+            "http://$host/iss/SystemLog_View.htm?Gambit=$g",
+            "http://$host/iss/Show_SystemLog.htm?Gambit=$g",
         );
+
+        $probes = array(); // diagnostica per UI quando nessun match
 
         foreach ($candidates as $url) {
             $body = self::httpGet($url, "http://$host/");
-            if (!is_string($body) || $body === '') continue;
+            $isStr = is_string($body);
+            $size  = $isStr ? strlen($body) : 0;
+            $headSnip = $isStr ? preg_replace('/\\s+/', ' ', substr($body, 0, 300)) : '';
+            $looksLikeLog = false;
+            if ($isStr && (
+                stripos($body, 'link up') !== false ||
+                stripos($body, 'link down') !== false ||
+                preg_match('/SystemLog|SysLog|Syslog_Table|Log_Table/', $body) ||
+                preg_match('/[\'"](info|warning|error|critical|alert|notice)[\'"]/i', $body)
+            )) {
+                $looksLikeLog = true;
+            }
+            $probes[] = array(
+                'url'         => preg_replace('/Gambit=[0-9A-Fa-f]+/', 'Gambit=...', $url),
+                'size'        => $size,
+                'looksLikeLog'=> $looksLikeLog,
+                'head'        => $headSnip,
+            );
+
+            if (!$isStr || $body === '') continue;
             if (stripos($body, 'Login') !== false && stripos($body, 'timeout') !== false) {
                 self::invalidateGambit();
-                return null;
+                return array('error' => 'Sessione switch scaduta', 'probes' => $probes);
             }
 
             // Cerco tuple [id, time, description, severity]: ID numerico,
             // Time stringa (Feb 13 06:50:46), description, severity (info/warning/...).
             $entries = array();
-            // Pattern: tuple con 4 campi delimitati da virgole, primi 3 quoted
-            // e ID numerico (con o senza quote).
             if (preg_match_all(
                 '/\\[\\s*[\'"]?(\\d+)[\'"]?\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*,\\s*[\'"]([^\'"]*)[\'"]\\s*\\]/',
                 $body, $rows, PREG_SET_ORDER
@@ -621,10 +651,13 @@ class SwitchHttpClientLogic
                     'totalAvailable' => $totalAvailable,
                 );
             }
-            $head = preg_replace('/\\s+/', ' ', substr($body, 0, 300));
-            self::trace("getSystemLog: $url ha risposto ma pattern non matcha; head=$head");
+            self::trace("getSystemLog: $url ha risposto (" . $size . " bytes) ma pattern non matcha");
         }
-        return null;
+
+        // Nessun candidato ha matchato il pattern. Ritorno i probes diagnostici
+        // cosi' la UI puo' mostrare la lista dei tentativi (size, looksLikeLog)
+        // e l'utente identifica l'URL corretto guardando F12.
+        return array('error' => 'no-match', 'probes' => $probes);
     }
 
     /**

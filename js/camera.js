@@ -1466,8 +1466,37 @@ function runPortLog(port, $btn) {
         if (!resp || !resp.result) {
             var d = (resp && resp.data) ? resp.data : {};
             var msg = (typeof d === 'object' && d.error) ? d.error : _('Errore sconosciuto');
-            $cell.html('<div class="alert alert-danger" style="margin:0;">' +
-                '<b>' + _('Log switch Port') + ' ' + port + '</b>: ' + _escDeep(msg) + '</div>');
+            var probes = (typeof d === 'object' && d.probes) ? d.probes : null;
+            var html = '<div class="alert alert-danger" style="margin:0;">' +
+                '<b>' + _('Log switch Port') + ' ' + port + '</b>: ' + _escDeep(msg);
+            if (probes && probes.length) {
+                var hits = probes.filter(function (p) { return p.looksLikeLog; });
+                html += '<details style="margin-top:8px;" ' + (hits.length ? 'open' : '') + '>' +
+                    '<summary style="cursor:pointer;"><small>' + _('Dettagli diagnostici') + '</small> ' +
+                    '<span class="label label-default">' + probes.length + ' ' + _('URL provati') +
+                    ', <b>' + hits.length + '</b> ' + _('candidati validi') + '</span></summary>';
+                if (hits.length === 0) {
+                    html += '<div style="margin:6px 0;"><small>' +
+                        _('Nessun URL candidato ha ritornato dati che assomigliano a un System Log. Apri la GUI switch, F12 -> Network tab, naviga in Monitoring -> System Log, identifica l\'URL del file .js o .htm che porta la tabella eventi e dimmelo: lo aggiungo ai candidati.') +
+                        '</small></div>';
+                }
+                probes.forEach(function (p) {
+                    var labelCls = p.looksLikeLog ? 'success' : (p.size > 0 ? 'default' : 'danger');
+                    var labelTxt = p.looksLikeLog ? 'log!' : (p.size > 0 ? p.size + 'B' : 'fail');
+                    html += '<details style="margin-bottom:4px;" ' + (p.looksLikeLog ? 'open' : '') + '>' +
+                        '<summary style="cursor:pointer; font-size:11px;">' +
+                        '<span class="label label-' + labelCls + '">' + labelTxt + '</span> ' +
+                        '<code style="font-size:10px;">' + _escDeep(p.url) + '</code></summary>';
+                    if (p.head) {
+                        html += '<pre style="font-size:10px; margin:4px 0 0 0; max-height:150px; overflow:auto; background:#fff; padding:4px;">' +
+                            _escDeep(p.head) + '</pre>';
+                    }
+                    html += '</details>';
+                });
+                html += '</details>';
+            }
+            html += '</div>';
+            $cell.html(html);
             return;
         }
         var d = resp.data || {};
