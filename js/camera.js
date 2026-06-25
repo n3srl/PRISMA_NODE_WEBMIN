@@ -12,6 +12,10 @@ $(document).ready(function () {
     // Bottone "esplora MIB cable diag" (creato dinamicamente dal render): event delegation.
     $(document).on('click', '#btn-explore-cablediag', exploreSwitchCableDiag);
 
+    // Bottone "esplora MIB PoE": stesso pattern del cable diag, walka branch
+    // standard POWER-ETHERNET-MIB + private D-Link candidate.
+    $(document).on('click', '#btn-explore-poe', exploreSwitchPoE);
+
     // Bottoni "Test cavo" per ciascuna riga porta della tabella switch.
     // Anche questi vivono in HTML rigenerato ad ogni run di diagnostica.
     $(document).on('click', '.js-cable-diag', function () {
@@ -1147,6 +1151,21 @@ function renderSwitchSection(sw) {
     });
 
     html += '</tbody></table>';
+
+    // Bottone di debug "Esplora MIB PoE": walka POWER-ETHERNET-MIB + branch
+    // private D-Link candidate. Sempre presente, anche se poeAvailable e' false,
+    // perche' serve proprio per scoprire quale branch tentare quando il probe
+    // base non trova nulla.
+    html += '<div style="margin-top:6px; font-size:12px;">' +
+        '<button type="button" id="btn-explore-poe" class="btn btn-default btn-xs">' +
+            '<i class="fa fa-search"></i> ' + _('Esplora MIB PoE') +
+        '</button>' +
+        ' <small class="text-muted">' +
+            _('walk SNMP su POWER-ETHERNET-MIB + branch private D-Link per identificare l\'OID del consumo realtime su questo firmware') +
+        '</small>' +
+        '<div id="poe-explore-out" style="margin-top:8px;"></div>' +
+    '</div>';
+
     return html;
 }
 
@@ -1451,6 +1470,73 @@ function exploreSwitchCableDiag() {
                 html += '<table class="table table-condensed" style="margin-top:6px; font-size:11px;">';
                 b.sample.forEach(function (e) {
                     html += '<tr><td style="font-family:monospace; width:50%; word-break:break-all;">' +
+                        _escDeep(e.oid) + '</td><td>' + _escDeep(e.value) + '</td></tr>';
+                });
+                html += '</table>';
+            }
+            html += '</details>';
+        });
+
+        $out.html(html);
+    }).fail(function (xhr) {
+        $out.html('<div class="alert alert-danger">' +
+            _('Errore HTTP') + ' (' + (xhr && xhr.status) + ')' +
+        '</div>');
+    }).always(function () {
+        $btn.prop('disabled', false);
+    });
+}
+
+// Esplora la MIB PoE dello switch: POWER-ETHERNET-MIB standard + branch private
+// D-Link candidate. Serve a identificare l'OID del consumo realtime sul firmware
+// specifico quando il probe automatico non trova nulla.
+function exploreSwitchPoE() {
+    var $btn = $('#btn-explore-poe');
+    var $out = $('#poe-explore-out');
+    $btn.prop('disabled', true);
+    $out.html('<div class="alert alert-info" style="margin:0;"><i class="fa fa-spinner fa-spin"></i> ' +
+        _('Walk SNMP in corso (puo\' richiedere 10-30 secondi)...') + '</div>');
+
+    $.ajax({
+        url: '/lib/camera/V1/camera/diag/switch/poe/explore',
+        method: 'GET',
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        if (!resp || !resp.result || !resp.data) {
+            $out.html('<div class="alert alert-danger">' + _('Errore nell\'esplorazione PoE') + '</div>');
+            return;
+        }
+        var d = resp.data;
+        if (!d.configured) {
+            $out.html('<div class="alert alert-warning">' + _('Switch non configurato in config.php') + '</div>');
+            return;
+        }
+        var html = '';
+        var totalEntries = 0;
+        d.branches.forEach(function (b) { totalEntries += b.count; });
+
+        if (totalEntries === 0) {
+            html += '<div class="alert alert-warning">' +
+                _('Nessun OID risponde sulle branch PoE tentate. Il switch potrebbe non supportare PoE, oppure il firmware lo espone su una branch ancora diversa.') +
+            '</div>';
+        } else {
+            html += '<div class="alert alert-success" style="margin-bottom:8px;">' +
+                _('Trovate') + ' <b>' + totalEntries + '</b> ' + _('entry totali. Cerca i numeri che corrispondono al consumo in W mostrato nella GUI dello switch (PoE -> Port Settings) per identificare l\'OID giusto.') +
+            '</div>';
+        }
+
+        d.branches.forEach(function (b) {
+            html += '<details style="margin-bottom:8px;" ' + (b.count > 0 ? 'open' : '') + '>' +
+                '<summary style="cursor:pointer;">' +
+                '<b>' + _escDeep(b.base) + '</b> &mdash; ' + _escDeep(b.desc) +
+                ' <span class="label label-' + (b.count > 0 ? 'success' : 'default') + '">' +
+                b.count + ' ' + _('entry') + '</span>' +
+                '</summary>';
+            if (b.sample.length > 0) {
+                html += '<table class="table table-condensed" style="margin-top:6px; font-size:11px;">';
+                b.sample.forEach(function (e) {
+                    html += '<tr><td style="font-family:monospace; width:55%; word-break:break-all;">' +
                         _escDeep(e.oid) + '</td><td>' + _escDeep(e.value) + '</td></tr>';
                 });
                 html += '</table>';

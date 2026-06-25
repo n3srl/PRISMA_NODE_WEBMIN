@@ -133,6 +133,17 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function ExploreSwitchPoE($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $res = CameraLogic::ExploreSwitchPoE();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function SwitchCableDiag($request)
     {
         try {

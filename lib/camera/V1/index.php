@@ -108,6 +108,17 @@ $app->GET('/camera/diag/switch/explore', function (Application $app, Request $re
     return $resp;
 });
 
+// Probe esplorativo della MIB PoE: standard POWER-ETHERNET-MIB + branch private
+// D-Link candidate, per identificare l'OID del consumo realtime sul firmware
+// specifico.
+$app->GET('/camera/diag/switch/poe/explore', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::ExploreSwitchPoE($request->query);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 // Triggera Cable Diagnostic (TDR) sulla porta indicata via scraping della GUI
 // web del DGS-1210 e ritorna stato + lunghezza per le 4 coppie del cavo.
 // NB: rispondiamo sempre 200 anche quando result=false. Gli errori qui sono

@@ -972,6 +972,69 @@ class CameraLogic
     }
 
     /**
+     * Probe esplorativo della MIB PoE. Walka:
+     *  - POWER-ETHERNET-MIB standard (RFC 3621) per confronto
+     *  - branch private D-Link DGS-1210 candidates per il consumo realtime
+     *
+     * Utile per identificare l'OID del consumo PoE realtime su un firmware
+     * specifico quando probePoEViaSnmp() non riesce a leggerlo. Mostra valori
+     * grezzi: l'utente puo' confrontare con la GUI dello switch (PoE -> Port
+     * Settings, colonna "Power consumption") per matchare l'OID giusto.
+     */
+    public static function ExploreSwitchPoE() {
+        $r = array(
+            'configured' => false,
+            'ip'         => null,
+            'branches'   => array(),
+        );
+        if (!defined('_SWITCH_IP_') || trim(_SWITCH_IP_) === '') {
+            return array('res' => true, 'data' => $r);
+        }
+        $ip = _SWITCH_IP_;
+        $c  = defined('_SWITCH_SNMP_COMMUNITY_') && _SWITCH_SNMP_COMMUNITY_ !== ''
+            ? _SWITCH_SNMP_COMMUNITY_ : 'public';
+        $r['configured'] = true;
+        $r['ip']         = $ip;
+
+        // Mix di OID standard (per confronto) e candidate private MIB.
+        $branches = array(
+            // STANDARD POWER-ETHERNET-MIB (RFC 3621): admin, status, class, limit
+            array('oid' => '1.3.6.1.2.1.105.1.1.1.3',  'desc' => 'POWER-ETHERNET-MIB pethPsePortAdminEnable (1=enable, 2=disable)'),
+            array('oid' => '1.3.6.1.2.1.105.1.1.1.6',  'desc' => 'POWER-ETHERNET-MIB pethPsePortDetectionStatus (1=disabled, 2=searching, 3=deliveringPower, 4=fault, 5=test, 6=otherFault)'),
+            array('oid' => '1.3.6.1.2.1.105.1.1.1.10', 'desc' => 'POWER-ETHERNET-MIB pethPsePortPowerClassifications (0..4)'),
+            array('oid' => '1.3.6.1.2.1.105.1.1.1.11', 'desc' => 'POWER-ETHERNET-MIB pethPsePortPowerLimit (mW)'),
+            // PRIVATE D-Link: candidate per consumo realtime
+            array('oid' => '1.3.6.1.4.1.171.10.76.10.10.1.1.4', 'desc' => 'D-Link DGS-1210 candidate A (.10.76.10.10.1.1.4)'),
+            array('oid' => '1.3.6.1.4.1.171.10.76.11.10.1.1.4', 'desc' => 'D-Link DGS-1210 candidate B (.10.76.11.10.1.1.4)'),
+            array('oid' => '1.3.6.1.4.1.171.10.76.12.10.1.1.4', 'desc' => 'D-Link DGS-1210 candidate C (.10.76.12.10.1.1.4)'),
+            array('oid' => '1.3.6.1.4.1.171.11.153.1000.10.1.1.4', 'desc' => 'D-Link DGS-1210 candidate D (.11.153.1000.10.1.1.4)'),
+            // Branch piu' larghe per scoperta esplorativa (limite 200 entry per evitare flood)
+            array('oid' => '1.3.6.1.4.1.171.10.76.10.10', 'desc' => 'D-Link DGS-1210 PoE branch .10.76.10.10 (esplorativo)'),
+            array('oid' => '1.3.6.1.4.1.171.10.153.1.1.10', 'desc' => 'DGS-1210-10P/F1 specific PoE subtree (esplorativo)'),
+        );
+
+        foreach ($branches as $b) {
+            $walked = SnmpClientLogic::walk($ip, $c, $b['oid'], 4, 1000);
+            $entries = array();
+            $i = 0;
+            foreach ($walked as $suffix => $val) {
+                $entries[] = array(
+                    'oid'   => '.' . trim($b['oid'], '.') . '.' . $suffix,
+                    'value' => is_string($val) ? $val : (string) $val,
+                );
+                if (++$i >= 200) break; // safety
+            }
+            $r['branches'][] = array(
+                'base'    => '.' . trim($b['oid'], '.'),
+                'desc'    => $b['desc'],
+                'count'   => count($walked),
+                'sample'  => $entries,
+            );
+        }
+        return array('res' => true, 'data' => $r);
+    }
+
+    /**
      * Lettura "deep" dei parametri camera via arv-tool values.
      * GenICam permette un solo controller alla volta, quindi ferma freeture per
      * la durata della lettura e lo riavvia subito dopo (finally garantisce il restart
