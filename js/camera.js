@@ -1104,7 +1104,7 @@ function renderSwitchSection(sw) {
 
         // PoE cell: visibile solo se almeno una porta dello switch espone info
         // PoE. Per porte non-PoE (es. uplink 9-10 del DGS-1210-10P) o quando
-        // i dati non sono in MIB, mostro "—".
+        // i dati non sono in MIB, mostro "—". Cella: badge stato + Watt + class.
         var poeCell = '';
         if (sw.poeAvailable) {
             var poe = p.poe;
@@ -1114,23 +1114,43 @@ function renderSwitchSection(sw) {
                 var watts = (poe.powerW !== null && poe.powerW !== undefined) ? poe.powerW : null;
                 var deliv = !!poe.delivering;
                 var adminOff = (poe.adminEnable === false);
-                var col, txt;
+
+                // Badge stato: priorita' al testo httpStatus dal scrape (mappa
+                // 1:1 con la GUI), fallback su deduzione "delivering" o
+                // statusLabel SNMP. Drop del prefisso "POWER " per restare
+                // compatti nella cella.
+                var stateTxt, stateCls;
                 if (adminOff) {
-                    col = '#b52c1d'; txt = 'OFF';
-                } else if (watts !== null) {
-                    txt = watts.toFixed(1) + ' W';
-                    if (watts < 0.5)       col = '#b52c1d';
-                    else if (watts < 1.0)  col = '#b07d00';
-                    else                   col = '#1d7a44';
+                    stateTxt = 'DISABLED'; stateCls = 'danger';
+                } else if (poe.httpStatus) {
+                    stateTxt = poe.httpStatus.replace(/^POWER\s*/i, '');
+                    if (/^ON$/i.test(stateTxt))                 stateCls = 'success';
+                    else if (/FAULT|ERR|SHORT/i.test(stateTxt)) stateCls = 'danger';
+                    else                                        stateCls = 'default';
                 } else if (deliv) {
-                    col = '#1d7a44'; txt = _('on');
+                    stateTxt = 'ON';  stateCls = 'success';
+                } else if (poe.statusLabel) {
+                    stateTxt = poe.statusLabel.toUpperCase();
+                    stateCls = (poe.statusLabel === 'fault' || poe.statusLabel === 'other') ? 'danger' : 'default';
                 } else {
-                    col = '#777';   txt = poe.statusLabel || '?';
+                    stateTxt = '?'; stateCls = 'default';
                 }
+                var stateBadge = '<span class="label label-' + stateCls + '" style="font-size:10px;">' + _escDeep(stateTxt) + '</span>';
+
+                // Watt: colorati per fascia (verde >=1W, ambra 0.5-1W, rosso <0.5W).
+                var wattHtml = '';
+                if (watts !== null) {
+                    var wcol;
+                    if (watts < 0.5)       wcol = '#b52c1d';
+                    else if (watts < 1.0)  wcol = '#b07d00';
+                    else                   wcol = '#1d7a44';
+                    wattHtml = ' <span style="color:' + wcol + ';font-weight:600;">' + watts.toFixed(1) + ' W</span>';
+                }
+
                 var classLbl = (poe.class !== null && poe.class !== undefined)
                     ? ' <small style="color:#777;">cl.' + poe.class + '</small>'
                     : '';
-                poeCell = '<td><span style="color:' + col + ';font-weight:600;">' + txt + '</span>' + classLbl + '</td>';
+                poeCell = '<td style="white-space:nowrap;">' + stateBadge + wattHtml + classLbl + '</td>';
             }
         }
 
