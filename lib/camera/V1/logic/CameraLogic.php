@@ -600,12 +600,19 @@ class CameraLogic
                         'reason'   => 'zero-watt',
                         'message'  => "La camera e' UP via dati ma il PoE eroga 0 W sulla Port $cIdx: la camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
                     );
-                } elseif (!$delivering && $powerW === null) {
+                } elseif (!$delivering) {
+                    // PoE admin enabled ma NON sta erogando (status searching/fault/
+                    // test/other). Lo switch ha PoE acceso ma la camera NON risulta
+                    // un Powered Device su quel cavo: e' alimentata da sorgente
+                    // esterna. Stesso scenario "alimentazione esterna" del zero-watt,
+                    // valido anche quando non leggiamo i Watt realtime perche' la
+                    // branch private MIB di questo firmware non e' tra quelle note.
+                    $statusLbl = isset($cameraPoe['statusLabel']) ? $cameraPoe['statusLabel'] : '?';
                     $r['poeWarnings'][] = array(
-                        'severity' => 'warning',
+                        'severity' => 'danger',
                         'port'     => $cIdx,
                         'reason'   => 'not-delivering',
-                        'message'  => "Il PoE sulla Port $cIdx della camera non e' in stato 'delivering' (stato: " . (isset($cameraPoe['statusLabel']) ? $cameraPoe['statusLabel'] : '?') . "). Verifica che la camera sia un dispositivo PoE-powered.",
+                        'message'  => "La camera e' UP via dati ma il PoE sulla Port $cIdx NON sta alimentando (stato: $statusLbl). La camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
                     );
                 }
             }
