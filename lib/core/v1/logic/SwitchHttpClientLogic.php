@@ -24,12 +24,16 @@
  */
 class SwitchHttpClientLogic
 {
-    // Cache per request: il login dello switch dura ~30s, ma una pagina del webmin
-    // ne richiede al massimo qualche chiamata consecutiva quindi la teniamo statica
-    // e basta. Una nuova request HTTP del browser rifa' tutto da capo (PHP-FPM/Apache
-    // ricarica la classe).
+    // Cache per request (static): vive solo dentro una singola request PHP.
     private static $gambit = null;
     private static $speedStatus = null;
+
+    // Cache persistente cross-request: il DGS-1210 limita a 4 sessioni web
+    // concorrenti (firmware 6.30). Se ogni click "Test cavo" facesse un nuovo
+    // login, in 4 click ravvicinati otteniamo "Maximum number of sessions
+    // reached". Memorizziamo il Gambit su file con TTL piu' basso del timeout
+    // dello switch (default switch=180s -> noi cachiamo 120s).
+    const GAMBIT_CACHE_TTL = 120;
 
     public static function isConfigured()
     {
@@ -39,6 +43,9 @@ class SwitchHttpClientLogic
 
     /**
      * Esegue login allo switch. Ritorna il Gambit (hex) oppure null in errore.
+     * Prima cerca un Gambit cached su file (TTL 120s, sotto il timeout di
+     * sessione dello switch) per non saturare il pool delle 4 sessioni
+     * concorrenti permesse dal firmware DGS-1210 6.30.
      * In caso di fallimento error_log() segnala lo step preciso per debug
      * (allow_url_fopen, RSA, regex Gambit, ecc.).
      */
@@ -48,6 +55,14 @@ class SwitchHttpClientLogic
         if (!self::isConfigured()) {
             error_log("[SwitchHttpClient] login: switch non configurato (_SWITCH_IP_ o _SWITCH_HTTP_PASSWORD_ mancanti)");
             return null;
+        }
+
+        // Tentiamo prima di riusare un Gambit cached da una request precedente
+        // (entro GAMBIT_CACHE_TTL secondi).
+        $cached = self::readGambitCache();
+        if ($cached !== null) {
+            self::$gambit = $cached;
+            return $cached;
         }
 
         $host = _SWITCH_IP_;
@@ -91,11 +106,86 @@ class SwitchHttpClientLogic
         }
         if (!preg_match('/Gambit[^A-Za-z0-9]+([0-9A-Fa-f]{32,})/', $body, $mm)) {
             error_log("[SwitchHttpClient] login: Gambit non trovato nella response (body " . strlen($body) . " bytes, head=" . substr($body, 0, 200) . ")");
+            // Detection specifico per "Maximum number of sessions reached":
+            // lo switch ha esaurito le 4 slot di sessione e non possiamo loggarci.
+            if (stripos($body, 'Maximum number of sessions') !== false) {
+                error_log("[SwitchHttpClient] login: switch HA SATURATO le sessioni concorrenti (max 4 sul DGS-1210). Aspetta ~3 min o riduci 'Web Session Timeout' nello switch.");
+            }
             return null;
         }
 
         self::$gambit = $mm[1];
+        self::writeGambitCache($mm[1]);
         return self::$gambit;
+    }
+
+    /**
+     * Logout esplicito dello switch (libera la slot di sessione).
+     * Da chiamare quando il client decide di non riusare piu' il Gambit
+     * cached (es. cache scaduta). Best-effort: ignora errori HTTP.
+     */
+    public static function logout($gambit = null)
+    {
+        if (!self::isConfigured()) return;
+        $g = $gambit !== null ? $gambit : self::$gambit;
+        if (!$g) return;
+        $host = _SWITCH_IP_;
+        // Sui DGS-1210 firmware 6.30 il logout della GUI accede tipicamente a
+        // /iss/logoff.htm o /iss/logout.htm. Provo entrambi best-effort.
+        foreach (array("http://$host/iss/logoff.htm?Gambit=$g", "http://$host/iss/logout.htm?Gambit=$g", "http://$host/logout.cgi?Gambit=$g") as $u) {
+            self::httpGet($u, "http://$host/");
+        }
+        error_log("[SwitchHttpClient] logout: chiamato logout per Gambit=" . substr($g, 0, 16) . "...");
+    }
+
+    //--------------------------------------------------------------------
+    // Cache Gambit persistente su filesystem
+    //--------------------------------------------------------------------
+
+    private static function gambitCachePath()
+    {
+        return rtrim(sys_get_temp_dir(), '/\\') . '/dlink_switch_gambit.json';
+    }
+
+    private static function writeGambitCache($gambit)
+    {
+        @file_put_contents(self::gambitCachePath(), json_encode(array(
+            'ts'     => time(),
+            'gambit' => $gambit,
+            'host'   => _SWITCH_IP_,
+        )), LOCK_EX);
+    }
+
+    private static function readGambitCache()
+    {
+        $f = self::gambitCachePath();
+        if (!file_exists($f)) return null;
+        $data = @json_decode(@file_get_contents($f), true);
+        if (!is_array($data) || empty($data['gambit'])) return null;
+        // Invalida se il switch e' cambiato (utente ha aggiornato _SWITCH_IP_)
+        if (!empty($data['host']) && $data['host'] !== _SWITCH_IP_) return null;
+        $age = time() - (int) (isset($data['ts']) ? $data['ts'] : 0);
+        if ($age > self::GAMBIT_CACHE_TTL) {
+            // Cache scaduto: logout best-effort per liberare la slot prima di
+            // farne una nuova (evita "Maximum sessions reached" su click rapidi).
+            self::logout($data['gambit']);
+            return null;
+        }
+        return $data['gambit'];
+    }
+
+    /**
+     * Invalida il cache (in-memory + file) e tenta logout dello switch.
+     * Da chiamare quando una richiesta riceve HTML di "Login timeout":
+     * il Gambit cached non e' piu' valido.
+     */
+    private static function invalidateGambit()
+    {
+        $g = self::$gambit;
+        self::$gambit = null;
+        self::$speedStatus = null;
+        @unlink(self::gambitCachePath());
+        if ($g) self::logout($g);
     }
 
     /**
@@ -150,13 +240,17 @@ class SwitchHttpClientLogic
         $json = json_decode($resp, true);
         if (!is_array($json) || empty($json['Content'][0])) {
             // Se la response e' HTML significa che la sessione e' scaduta o il
-            // login e' fallito: invalido il Gambit cache per evitare di riusarlo.
+            // login e' fallito: invalido il Gambit cache (con logout esplicito)
+            // per liberare la slot prima di farne una nuova.
             if (stripos($resp, '<html') !== false) {
-                self::$gambit = null;
-                self::$speedStatus = null;
+                $errMsg = 'Sessione switch scaduta o login rifiutato (ricevuto HTML).';
+                if (stripos($resp, 'Maximum number of sessions') !== false) {
+                    $errMsg = 'Switch ha esaurito le sessioni concorrenti (max 4 su DGS-1210). Aspetta 1-3 minuti che le sessioni stale scadano, o riduci "Web Session Timeout" nello switch.';
+                }
+                self::invalidateGambit();
                 return array(
                     'ok'    => false,
-                    'error' => 'Sessione switch scaduta o login rifiutato (ricevuto HTML).',
+                    'error' => $errMsg,
                 );
             }
             return array(
@@ -230,8 +324,8 @@ class SwitchHttpClientLogic
             $body = self::httpGet($url, "http://$host/");
             if (!is_string($body) || $body === '') continue;
             if (stripos($body, 'Login') !== false && stripos($body, 'timeout') !== false) {
-                // Sessione scaduta -> reset e abbandono
-                self::$gambit = null;
+                // Sessione scaduta -> invalida (con logout) e abbandono
+                self::invalidateGambit();
                 return null;
             }
             // Pattern 1: JS con variabili (firmware nuovo)
@@ -296,8 +390,9 @@ class SwitchHttpClientLogic
             if (stripos($ps, '<html') !== false) $hint = ' (sembra HTML: sessione scaduta o login rifiutato)';
             elseif (stripos($ps, 'Login') !== false && stripos($ps, 'timeout') !== false) $hint = ' (pagina di login timeout)';
             error_log("[SwitchHttpClient] getSpeedStatus: Port_Setting non trovato (" . strlen($ps) . " bytes)$hint; head=$head");
-            // Invalida il Gambit cache: alla prossima richiesta rifara' il login.
-            self::$gambit = null;
+            // Invalida il Gambit cache (+ logout): alla prossima richiesta rifa
+            // login pulito e libera la slot di sessione corrente.
+            self::invalidateGambit();
             return null;
         }
         $bits = array();
