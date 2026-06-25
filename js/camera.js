@@ -12,6 +12,14 @@ $(document).ready(function () {
     // Bottone "esplora MIB cable diag" (creato dinamicamente dal render): event delegation.
     $(document).on('click', '#btn-explore-cablediag', exploreSwitchCableDiag);
 
+    // Bottoni "Test cavo" per ciascuna riga porta della tabella switch.
+    // Anche questi vivono in HTML rigenerato ad ogni run di diagnostica.
+    $(document).on('click', '.js-cable-diag', function () {
+        var $btn = $(this);
+        var port = parseInt($btn.data('port'), 10);
+        if (port > 0) runCableDiag(port, $btn);
+    });
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -871,7 +879,7 @@ function renderSwitchSection(sw) {
     }
 
     // Tabella porte
-    html += '<table class="table table-condensed table-striped" style="margin-bottom:8px;">' +
+    html += '<table id="switch-ports-table" class="table table-condensed table-striped" style="margin-bottom:8px;">' +
             '<thead><tr>' +
                 '<th>#</th>' +
                 '<th>' + _('Nome') + '</th>' +
@@ -883,6 +891,7 @@ function renderSwitchSection(sw) {
                 '<th>' + _('CRC') + '</th>' +
                 '<th>' + _('Discards') + '</th>' +
                 '<th>' + _('Note') + '</th>' +
+                '<th>' + _('Test cavo') + '</th>' +
             '</tr></thead><tbody>';
 
     var intruderIfx = {};
@@ -925,7 +934,16 @@ function renderSwitchSection(sw) {
             ? '<span style="color:#1d7a44;"><i class="fa fa-check"></i> up</span>'
             : '<span class="text-muted"><i class="fa fa-circle-o"></i> down</span>';
 
-        html += '<tr ' + rowClass + '>' +
+        // Bottone "Test cavo" per la porta. Il TDR funziona anche su porta
+        // DOWN ma il risultato e' meno utile (non vede negoziazione); abilito
+        // sempre, l'utente decide. Click -> runCableDiag() che mostra il
+        // risultato in una riga espandibile sotto la porta.
+        var cableBtn = '<button type="button" class="btn btn-default btn-xs js-cable-diag" ' +
+            'data-port="' + p.ifIndex + '" title="' + _('Avvia Cable Diagnostic (~3s)') + '">' +
+            '<i class="fa fa-bolt"></i> ' + _('Test') +
+        '</button>';
+
+        html += '<tr ' + rowClass + ' data-port-row="' + p.ifIndex + '">' +
             '<td>' + p.ifIndex + '</td>' +
             '<td><code>' + _escDeep(p.name) + '</code></td>' +
             '<td>' + statusHtml + '</td>' +
@@ -936,10 +954,105 @@ function renderSwitchSection(sw) {
             '<td' + ((p.fcsErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.fcsErrors === null ? '&mdash;' : p.fcsErrors) + '</td>' +
             '<td' + ((p.inDiscards > 0) ? ' style="color:#b07d00;font-weight:600;"' : '') + '>' + (p.inDiscards || 0) + '</td>' +
             '<td>' + note + '</td>' +
+            '<td>' + cableBtn + '</td>' +
         '</tr>';
     });
 
     html += '</tbody></table>';
+    return html;
+}
+
+// Click "Test cavo" su una riga porta: triggera TDR scraping della GUI dello
+// switch e mostra il risultato in una riga aggiuntiva subito sotto. Una seconda
+// pressione richiude/rilancia. Il test impiega ~3s a porta.
+function runCableDiag(port, $btn) {
+    var $row = $btn.closest('tr');
+    var colspan = $row.children('td').length;
+    var $next = $row.next('tr.cable-diag-row');
+
+    // Se gia' aperta sotto: la chiudo.
+    if ($next.length) {
+        $next.remove();
+        return;
+    }
+
+    $btn.prop('disabled', true);
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> ' + _('Test...'));
+
+    var $resultRow = $('<tr class="cable-diag-row"><td colspan="' + colspan + '" style="background:#f7f9fc;">' +
+        '<div class="alert alert-info" style="margin:0;">' +
+        '<i class="fa fa-spinner fa-spin"></i> ' +
+        _('TDR in corso sulla Port') + ' ' + port + '...' +
+        '</div></td></tr>');
+    $row.after($resultRow);
+
+    $.ajax({
+        url: '/lib/camera/V1/camera/diag/switch/cable',
+        method: 'GET',
+        data: { port: port },
+        dataType: 'json',
+        cache: false
+    }).done(function (resp) {
+        var $cell = $resultRow.find('td').first();
+        if (!resp || !resp.result) {
+            var msg = (resp && resp.data) ? resp.data : _('Errore sconosciuto');
+            $cell.html('<div class="alert alert-danger" style="margin:0;">' +
+                '<b>' + _('Test cavo Port') + ' ' + port + '</b>: ' + _escDeep(msg) +
+            '</div>');
+            return;
+        }
+        $cell.html(renderCableDiagResult(resp.data));
+    }).fail(function (xhr) {
+        $resultRow.find('td').first().html(
+            '<div class="alert alert-danger" style="margin:0;">' +
+            _('Errore HTTP') + ' (' + (xhr && xhr.status) + ') ' +
+            _('contattando lo switch') +
+        '</div>');
+    }).always(function () {
+        $btn.prop('disabled', false);
+        $btn.html('<i class="fa fa-bolt"></i> ' + _('Test'));
+    });
+}
+
+// Renderizza il risultato di Cable Diagnostic (4 coppie + lunghezza media).
+function renderCableDiagResult(d) {
+    if (!d || !d.pairs) {
+        return '<div class="alert alert-warning" style="margin:0;">' + _('Risposta vuota dallo switch.') + '</div>';
+    }
+    var alertCls = d.allOk ? 'alert-success' : 'alert-warning';
+    var iconCls  = d.allOk ? 'fa-check-circle' : 'fa-exclamation-triangle';
+
+    var html = '<div class="alert ' + alertCls + '" style="margin:0;">' +
+        '<i class="fa ' + iconCls + '"></i> ' +
+        '<b>' + _('Test cavo Port') + ' ' + d.port + '</b> &mdash; ' +
+        (d.allOk
+            ? _('tutte le 4 coppie OK')
+            : _('rilevate anomalie su una o piu\' coppie')) +
+        ' &middot; <b>' + _('lunghezza media') + '</b>: ' + _escDeep(d.averageLength || '-') + ' m' +
+    '<table class="table table-condensed" style="margin:8px 0 0 0; background:transparent; font-size:12px;">' +
+        '<thead><tr>' +
+            '<th>' + _('Coppia') + '</th>' +
+            '<th>' + _('Stato') + '</th>' +
+            '<th>' + _('Lunghezza') + '</th>' +
+        '</tr></thead><tbody>';
+
+    d.pairs.forEach(function (p) {
+        var stateCls = '';
+        if (p.state === 'OK') {
+            stateCls = 'style="color:#1d7a44;font-weight:600;"';
+        } else if (/open|short|mismatch|crosstalk/i.test(p.state)) {
+            stateCls = 'style="color:#b52c1d;font-weight:600;"';
+        } else if (p.state !== '') {
+            stateCls = 'style="color:#b07d00;font-weight:600;"';
+        }
+        html += '<tr>' +
+            '<td>' + p.index + '</td>' +
+            '<td ' + stateCls + '>' + _escDeep(p.state || '-') + '</td>' +
+            '<td>' + _escDeep(p.length || '-') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
     return html;
 }
 

@@ -576,6 +576,27 @@ class CameraLogic
      * al chiamante (o a noi nella prossima iterazione) il compito di interpretare
      * la struttura. Utile per non dover indovinare a freddo gli OID.
      */
+    /**
+     * Triggera Cable Diagnostic (TDR) sulla porta indicata via scraping della
+     * web GUI dello switch. Il firmware DGS-1210 6.30.x non espone il test cavo
+     * via SNMP, quindi questo e' l'unico modo di ottenere stato + lunghezza per
+     * ciascuna delle 4 coppie senza far loggare l'utente nella GUI dello switch.
+     */
+    public static function SwitchCableDiag($port) {
+        $port = (int) $port;
+        if ($port <= 0) {
+            return array('res' => false, 'data' => 'Porta non valida.');
+        }
+        if (!SwitchHttpClientLogic::isConfigured()) {
+            return array('res' => false, 'data' => 'Switch HTTP non configurato (_SWITCH_IP_ / _SWITCH_HTTP_PASSWORD_).');
+        }
+        $diag = SwitchHttpClientLogic::cableDiag($port);
+        if (empty($diag['ok'])) {
+            return array('res' => false, 'data' => isset($diag['error']) ? $diag['error'] : 'Errore sconosciuto.');
+        }
+        return array('res' => true, 'data' => $diag);
+    }
+
     public static function ExploreSwitchCableDiag() {
         $r = array(
             'configured' => false,

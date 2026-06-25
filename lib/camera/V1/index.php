@@ -108,6 +108,16 @@ $app->GET('/camera/diag/switch/explore', function (Application $app, Request $re
     return $resp;
 });
 
+// Triggera Cable Diagnostic (TDR) sulla porta indicata via scraping della GUI
+// web del DGS-1210 e ritorna stato + lunghezza per le 4 coppie del cavo.
+$app->GET('/camera/diag/switch/cable', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::SwitchCableDiag($request->query);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 // Diagnostica rete nodo<->camera: ethtool/sys, ping, ARP. Non tocca la camera.
 $app->GET('/camera/diag', function (Application $app, Request $request) {
 
