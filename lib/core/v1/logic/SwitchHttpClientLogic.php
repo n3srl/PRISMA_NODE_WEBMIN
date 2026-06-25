@@ -443,6 +443,69 @@ class SwitchHttpClientLogic
     }
 
     /**
+     * Probe esplorativo delle pagine PoE della GUI: prova un elenco di URL
+     * candidati noti per il DGS-1210, fa GET di ciascuno e ritorna:
+     *   array(
+     *     'url'         => '...',
+     *     'httpCode'    => 200,
+     *     'size'        => 1234,
+     *     'head'        => 'primi 400 char della response',
+     *     'looksLikePoE'=> true,  // contiene 'POWER ON'/'POWER OFF' o pattern Watt
+     *   )
+     * Cosi' l'utente identifica con un colpo d'occhio quale URL ritorna i
+     * dati della tabella PoE Port Settings.
+     */
+    public static function exploreHttpPoEPaths()
+    {
+        $out = array();
+        if (!self::isConfigured()) return $out;
+        $g = self::login();
+        if (!$g) return $out;
+        $host = _SWITCH_IP_;
+
+        // Lista larga di URL candidati. Pattern noti del DGS-1210 6.30:
+        //   /iss/<PageName>.htm           = pagina HTML
+        //   /iss/specific/<PageName>.js   = file JS con i dati come array JavaScript
+        $candidates = array(
+            "http://$host/iss/PoE_Port_Settings.htm?Gambit=$g",
+            "http://$host/iss/PoE_PortSetting.htm?Gambit=$g",
+            "http://$host/iss/PoE_Setting.htm?Gambit=$g",
+            "http://$host/iss/PoE_Status.htm?Gambit=$g",
+            "http://$host/iss/PoE.htm?Gambit=$g",
+            "http://$host/iss/specific/PoE_Port_Settings.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_PortSetting.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_Setting.js?Gambit=$g",
+            "http://$host/iss/specific/PoE_Status.js?Gambit=$g",
+            "http://$host/iss/specific/PoEPortInfo.js?Gambit=$g",
+            "http://$host/iss/specific/PoESetting.js?Gambit=$g",
+            "http://$host/iss/specific/PoE.js?Gambit=$g",
+            "http://$host/iss/specific/PoEPortSetting_Ajax_Data.js?Gambit=$g",
+        );
+        foreach ($candidates as $url) {
+            $body = self::httpGet($url, "http://$host/");
+            $isStr = is_string($body);
+            $size  = $isStr ? strlen($body) : 0;
+            $head  = $isStr ? preg_replace('/\\s+/', ' ', substr($body, 0, 400)) : '';
+            // Euristica: la pagina e' utile se contiene "POWER ON" / "POWER OFF"
+            // o "Class 1..4" o "PoE_Setting"/"PoE_Status" come variabile JS.
+            $looks = false;
+            if ($isStr) {
+                if (preg_match('/POWER\\s*O[NF]/i', $body)) $looks = true;
+                elseif (preg_match('/(?:PoE|Poe|POE)[_ ](Setting|Status|Port)/', $body)) $looks = true;
+                elseif (preg_match('/Class\\s*[1-4]/', $body) && preg_match('/[0-9]+\\.[0-9]+/', $body)) $looks = true;
+            }
+            $out[] = array(
+                'url'          => $url,
+                'httpCode'     => $isStr ? 200 : 0, // cURL ritorna false su errore
+                'size'         => $size,
+                'looksLikePoE' => $looks,
+                'head'         => $head,
+            );
+        }
+        return $out;
+    }
+
+    /**
      * Scrape della pagina "PoE Port Settings" della GUI dello switch per
      * ottenere il consumo realtime in Watt + Voltage + Current + Class +
      * Status per ogni porta. Il MIB SNMP standard NON espone i Watt realtime,

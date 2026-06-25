@@ -1544,6 +1544,35 @@ function exploreSwitchPoE() {
             html += '</details>';
         });
 
+        // Sezione "Probe HTTP pagine PoE": tentiamo URL candidati per identificare
+        // quale ritorna i Watt realtime della tabella PoE Port Settings.
+        if (d.httpProbes && d.httpProbes.length) {
+            var hits = d.httpProbes.filter(function (p) { return p.looksLikePoE; });
+            html += '<hr style="margin:14px 0;">';
+            html += '<h5 style="margin-top:0;">' + _('Probe HTTP pagine PoE') + ' ' +
+                '<small class="text-muted">(' + d.httpProbes.length + ' ' + _('URL testati') +
+                ', <b>' + hits.length + '</b> ' + _('candidati validi') + ')</small></h5>';
+            if (hits.length === 0) {
+                html += '<div class="alert alert-warning" style="margin:6px 0;">' +
+                    _('Nessun URL candidato ha ritornato dati che assomigliano alla pagina PoE Port Settings (cerco "POWER ON"/"POWER OFF" o "Class 1..4" nel body). Apri la GUI dello switch, F12 -> Network tab, click su PoE -> Port Settings, e dimmi l\'URL del file .js o .htm che porta i dati della tabella.') +
+                '</div>';
+            }
+            d.httpProbes.forEach(function (p) {
+                var labelCls = p.looksLikePoE ? 'success' : (p.size > 0 ? 'default' : 'danger');
+                var labelTxt = p.looksLikePoE ? 'PoE!' : (p.size > 0 ? p.size + ' bytes' : 'fail');
+                html += '<details style="margin-bottom:6px;" ' + (p.looksLikePoE ? 'open' : '') + '>' +
+                    '<summary style="cursor:pointer;">' +
+                    '<span class="label label-' + labelCls + '">' + labelTxt + '</span> ' +
+                    '<code style="font-size:11px;">' + _escDeep(p.url.replace(/Gambit=[0-9A-Fa-f]+/, 'Gambit=...')) + '</code>' +
+                    '</summary>';
+                if (p.head) {
+                    html += '<pre style="font-size:11px; margin:6px 0 0 0; max-height:200px; overflow:auto; background:#fff; padding:6px;">' +
+                        _escDeep(p.head) + '</pre>';
+                }
+                html += '</details>';
+            });
+        }
+
         $out.html(html);
     }).fail(function (xhr) {
         $out.html('<div class="alert alert-danger">' +

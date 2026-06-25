@@ -1050,6 +1050,16 @@ class CameraLogic
                 'sample'  => $entries,
             );
         }
+
+        // PROBE HTTP delle pagine PoE Port Settings della GUI: il MIB privato
+        // del DGS-1210 6.30 non espone i Watt realtime, quindi servono dal
+        // scrape HTTP. Provo diversi URL candidati e ritorno status/size/head
+        // di ciascuno cosi' l'utente identifica subito quale e' quello giusto.
+        $r['httpProbes'] = array();
+        if (SwitchHttpClientLogic::isConfigured()) {
+            $r['httpProbes'] = SwitchHttpClientLogic::exploreHttpPoEPaths();
+        }
+
         return array('res' => true, 'data' => $r);
     }
 
