@@ -145,6 +145,20 @@ class CameraApiLogic {
         return CoreLogic::GenerateResponse($res["res"], $res["data"]);
     }
 
+    public static function SwitchPortAdmin($request)
+    {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
+            $port   = $request->get("port");
+            $action = $request->get("action");
+            $res = CameraLogic::SwitchPortAdmin($port, $action);
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse($res["res"], $res["data"]);
+    }
+
     public static function NetDiag($request)
     {
         try {

@@ -122,6 +122,16 @@ $app->GET('/camera/diag/switch/cable', function (Application $app, Request $requ
     return $resp;
 });
 
+// Abilita/disabilita una porta dello switch. Azione disruptiva (la sessione
+// CSRF e' richiesta lato client + confirm dialog).
+$app->POST('/camera/diag/switch/port', function (Application $app, Request $request) {
+
+    $result = CameraApiLogic::SwitchPortAdmin($request->request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode(200);
+    return $resp;
+});
+
 // Diagnostica rete nodo<->camera: ethtool/sys, ping, ARP. Non tocca la camera.
 $app->GET('/camera/diag', function (Application $app, Request $request) {
 

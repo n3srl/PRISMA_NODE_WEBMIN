@@ -332,6 +332,117 @@ class SwitchHttpClientLogic
     }
 
     /**
+     * Abilita/disabilita una porta dello switch via scraping del form Port
+     * Setting. Riusa la sessione del cable diag (Gambit cached).
+     *
+     * Il form Port_Setting sul DGS-1210 prende speed=6 per "Disable" e speed=5
+     * per "Auto" (ricavato da port_speed_option = ['1000M Full','100M Full',
+     * '100M Half','10M Full','10M Half','Auto','Disable']).
+     *
+     * Best-effort: nessuna garanzia sull'URL esatto del form perche' varia con
+     * il firmware. Proviamo i pattern noti, e in caso di errore ritorniamo il
+     * trace con cosa ogni endpoint ha risposto.
+     *
+     * @param int  $port    1..N
+     * @param bool $enabled true = abilita (Auto), false = disabilita
+     * @return array { ok, error?, trace }
+     */
+    public static function setPortAdmin($port, $enabled)
+    {
+        self::$debugTrace = array();
+        $port = (int) $port;
+        if ($port <= 0) {
+            return array('ok' => false, 'error' => "Porta non valida ($port).", 'trace' => self::flushTrace());
+        }
+        if (!self::isConfigured()) {
+            return array('ok' => false, 'error' => 'Switch HTTP non configurato.', 'trace' => self::flushTrace());
+        }
+
+        self::trace("setPortAdmin start port=$port enabled=" . ($enabled ? '1' : '0'));
+
+        $g = self::login();
+        if (!$g) {
+            return array('ok' => false, 'error' => 'Login allo switch fallito.', 'trace' => self::flushTrace());
+        }
+
+        $host = _SWITCH_IP_;
+        // Pre-touch della pagina Port Settings: alcuni firmware vincolano la
+        // POST allo stesso path che ha caricato il form.
+        foreach (array('Port_Settings.htm', 'PortSetting.htm', 'specific/Port_Setting.htm') as $page) {
+            $u = "http://$host/iss/$page?Gambit=$g";
+            $b = self::httpGet($u, "http://$host/");
+            if (is_string($b) && stripos($b, 'Port_Setting') !== false) {
+                self::trace("setPortAdmin pre-touch OK: $u (" . strlen($b) . " bytes)");
+                break;
+            }
+        }
+
+        // speed: 5 = Auto, 6 = Disable (vedi port_speed_option DGS-1210)
+        $speed = $enabled ? 5 : 6;
+        // Endpoint candidati: il primo che ritorna non-HTML e non-timeout vince.
+        // I parametri standard DGS-1210 (6.30) sono: Gambit, port_from/to, speed,
+        // flow, mdix. Mando defaults safe ricavabili da Port_Setting.
+        $referer = "http://$host/iss/Port_Settings.htm?Gambit=$g";
+        $candidates = array(
+            // (URL, fields)
+            array("http://$host/form/formPortSetting", array(
+                'Gambit'    => $g,
+                'PortFrom'  => $port, 'PortTo' => $port,
+                'Speed'     => $speed,
+                'FlowState' => 0, 'MdixState' => 0, 'CapState' => 0,
+            )),
+            array("http://$host/iss/specific/Port_Setting.htm", array(
+                'Gambit'    => $g,
+                'PortFrom'  => $port, 'PortTo' => $port,
+                'Speed'     => $speed,
+                'FlowState' => 0, 'MdixState' => 0,
+            )),
+            array("http://$host/iss/Port_Settings.htm", array(
+                'Gambit'  => $g,
+                'fmportfm' => $port, 'fmportto' => $port,
+                'fmspeed'  => $speed,
+            )),
+        );
+
+        $lastBody = '';
+        foreach ($candidates as $cand) {
+            list($url, $fields) = $cand;
+            $resp = self::httpPost($url, $fields);
+            $lastBody = is_string($resp) ? $resp : '';
+            $head = preg_replace('/\\s+/', ' ', substr($lastBody, 0, 200));
+            self::trace("setPortAdmin POST $url -> " . strlen($lastBody) . " bytes, head=$head");
+
+            if (!is_string($resp) || $resp === '') continue;
+            if (stripos($resp, 'Login') !== false && stripos($resp, 'timeout') !== false) {
+                self::invalidateGambit();
+                return array('ok' => false, 'error' => 'Sessione switch scaduta durante il cambio porta.', 'trace' => self::flushTrace());
+            }
+            // Heuristica successo: il DGS-1210 di solito ritorna la stessa pagina
+            // Port_Settings con i nuovi valori applicati, quindi contiene di
+            // nuovo "Port_Setting".
+            if (stripos($resp, 'Port_Setting') !== false || stripos($resp, 'Apply') !== false || stripos($resp, 'Success') !== false) {
+                self::trace("setPortAdmin probabilmente OK (response coerente)");
+                // Invalido la cache Port_Setting in-memory cosi' al prossimo
+                // getSpeedStatus rilegge il valore nuovo.
+                self::$speedStatus = null;
+                return array(
+                    'ok'    => true,
+                    'port'  => $port,
+                    'state' => $enabled ? 'enabled' : 'disabled',
+                    'trace' => self::flushTrace(),
+                );
+            }
+        }
+
+        return array(
+            'ok'    => false,
+            'error' => "Nessuno degli endpoint candidati ha accettato la modifica della porta. Probabilmente il path del form e' diverso su questo firmware: apri la GUI switch, vai in Port Settings, cambia una porta, e nella Network tab del browser leggi URL+parametri della POST.",
+            'raw'   => substr($lastBody, 0, 500),
+            'trace' => self::flushTrace(),
+        );
+    }
+
+    /**
      * Legge lo status Jumbo Frame dalla web GUI dello switch. Sul DGS-1210 e'
      * un singolo flag switch-wide. Best-effort: prova diversi endpoint candidati
      * perche' l'URL varia con la versione di firmware. Ritorna:

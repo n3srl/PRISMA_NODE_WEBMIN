@@ -749,6 +749,35 @@ class CameraLogic
         return array('res' => true, 'data' => $diag);
     }
 
+    /**
+     * Abilita o disabilita una porta dello switch via scraping HTTP.
+     * $action: 'enable' / 'disable'. Spegnere-poi-riaccendere e' un modo
+     * rapido per forzare la rinegoziazione del link (utile quando una
+     * camera resta su 100 Mb/s).
+     */
+    public static function SwitchPortAdmin($port, $action) {
+        $port = (int) $port;
+        if ($port <= 0) {
+            return array('res' => false, 'data' => array('error' => 'Porta non valida.'));
+        }
+        $action = strtolower(trim((string) $action));
+        if ($action !== 'enable' && $action !== 'disable') {
+            return array('res' => false, 'data' => array('error' => "Action non valida: '$action'. Usa 'enable' o 'disable'."));
+        }
+        if (!SwitchHttpClientLogic::isConfigured()) {
+            return array('res' => false, 'data' => array('error' => 'Switch HTTP non configurato.'));
+        }
+        $result = SwitchHttpClientLogic::setPortAdmin($port, $action === 'enable');
+        if (empty($result['ok'])) {
+            return array('res' => false, 'data' => array(
+                'error' => isset($result['error']) ? $result['error'] : 'Errore sconosciuto.',
+                'trace' => isset($result['trace']) ? $result['trace'] : null,
+                'raw'   => isset($result['raw'])   ? $result['raw']   : null,
+            ));
+        }
+        return array('res' => true, 'data' => $result);
+    }
+
     public static function ExploreSwitchCableDiag() {
         $r = array(
             'configured' => false,

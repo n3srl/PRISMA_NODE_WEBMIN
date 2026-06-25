@@ -20,6 +20,16 @@ $(document).ready(function () {
         if (port > 0) runCableDiag(port, $btn);
     });
 
+    // Bottoni "Bounce porta" (spegni + riaccendi): forza la rinegoziazione
+    // del link senza tirare giu' il cavo. Utile quando una porta resta a
+    // 100 Mb/s anche con cavo gigabit. Azione DISRUPTIVA - confirm in JS.
+    $(document).on('click', '.js-port-bounce', function () {
+        var $btn = $(this);
+        var port = parseInt($btn.data('port'), 10);
+        var roleHint = $btn.data('roles') || '';
+        if (port > 0) runPortBounce(port, roleHint, $btn);
+    });
+
     var consoleOutput = $("#camera-control-out");
     var consoleInput = $("#camera-control-in");
 
@@ -992,7 +1002,7 @@ function renderSwitchSection(sw) {
                 '<th>' + _('CRC') + '</th>' +
                 '<th>' + _('Discards') + '</th>' +
                 '<th>' + _('Note') + '</th>' +
-                '<th>' + _('Test cavo') + '</th>' +
+                '<th>' + _('Azioni') + '</th>' +
             '</tr></thead><tbody>';
 
     var intruderIfx = {};
@@ -1044,6 +1054,23 @@ function renderSwitchSection(sw) {
             '<i class="fa fa-bolt"></i> ' + _('Test') +
         '</button>';
 
+        // Bottone "Bounce" (spegni e riaccendi) per forzare rinegoziazione del
+        // link. Solo se la porta e' UP (su porta gia' DOWN non ha senso).
+        // Tag data-roles serve a passare contesto per il confirm dialog.
+        var roleStr = '';
+        if (sw.cameraPort && p.ifIndex === sw.cameraPort) roleStr += 'camera ';
+        if (sw.nodePort   && p.ifIndex === sw.nodePort)   roleStr += 'nodo ';
+        if (sw.uplinkPort && p.ifIndex === sw.uplinkPort) roleStr += 'uplink ';
+        roleStr = roleStr.trim();
+        var bounceBtn = '';
+        if (p.up) {
+            bounceBtn = ' <button type="button" class="btn btn-warning btn-xs js-port-bounce" ' +
+                'data-port="' + p.ifIndex + '" data-roles="' + roleStr + '" ' +
+                'title="' + _('Spegni e riaccendi la porta (forza rinegoziazione link, ~5s)') + '">' +
+                '<i class="fa fa-power-off"></i> ' + _('Bounce') +
+            '</button>';
+        }
+
         html += '<tr ' + rowClass + ' data-port-row="' + p.ifIndex + '">' +
             '<td>' + p.ifIndex + '</td>' +
             '<td><code>' + _escDeep(p.name) + '</code></td>' +
@@ -1055,7 +1082,7 @@ function renderSwitchSection(sw) {
             '<td' + ((p.fcsErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.fcsErrors === null ? '&mdash;' : p.fcsErrors) + '</td>' +
             '<td' + ((p.inDiscards > 0) ? ' style="color:#b07d00;font-weight:600;"' : '') + '>' + (p.inDiscards || 0) + '</td>' +
             '<td>' + note + '</td>' +
-            '<td>' + cableBtn + '</td>' +
+            '<td>' + cableBtn + bounceBtn + '</td>' +
         '</tr>';
     });
 
@@ -1148,6 +1175,127 @@ function runCableDiag(port, $btn) {
     }).always(function () {
         $btn.prop('disabled', false);
         $btn.html('<i class="fa fa-bolt"></i> ' + _('Test'));
+    });
+}
+
+// Token CSRF per le POST destructive verso lo switch.
+function _csrfTokenForCamera() {
+    return $.ajax({
+        url: '/lib/core/v1/csfr',
+        method: 'GET',
+        dataType: 'json'
+    }).then(function (resp) {
+        if (resp && resp.result && resp.data && resp.data.token) {
+            return resp.data.token;
+        }
+        return $.Deferred().reject('CSRF token missing');
+    });
+}
+
+// Bounce della porta: disable -> wait 3s -> enable. Forza la rinegoziazione
+// del link (utile quando una porta resta a 100 Mb/s con cavo gigabit).
+function runPortBounce(port, roleHint, $btn) {
+    var $row = $btn.closest('tr');
+    var colspan = $row.children('td').length;
+
+    // Confirm con avviso specifico se la porta serve uplink/nodo (perdita
+    // connessione webmin durante il bounce).
+    var msg = _('Spegni e riaccendi la Port') + ' ' + port + '?\n\n' +
+              _('Il link va giu\' per ~3 secondi, poi torna su forzando la rinegoziazione.');
+    if (/uplink|nodo/i.test(roleHint || '')) {
+        msg += '\n\n⚠ ' + _('ATTENZIONE') + ': ' +
+               _('questa porta serve') + ' "' + roleHint + '". ' +
+               _('Perderai temporaneamente la connessione al webmin (~5-10s).') + ' ' +
+               _('Continua solo se sei sicuro.');
+    }
+    if (!confirm(msg)) return;
+
+    // Rimuovi eventuale riga risultato esistente per non confondere.
+    $row.next('tr.cable-diag-row,tr.port-bounce-row').remove();
+
+    $btn.prop('disabled', true);
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> ' + _('Bounce...'));
+
+    var $resultRow = $('<tr class="port-bounce-row"><td colspan="' + colspan + '" style="background:#fff8e1;">' +
+        '<div class="alert alert-info" style="margin:0;">' +
+        '<i class="fa fa-spinner fa-spin"></i> ' +
+        _('Spegnimento Port') + ' ' + port + '...' +
+        '</div></td></tr>');
+    $row.after($resultRow);
+
+    function callPortApi(action) {
+        return _csrfTokenForCamera().then(function (token) {
+            return $.ajax({
+                url: '/lib/camera/V1/camera/diag/switch/port',
+                method: 'POST',
+                data: { token: token, port: port, action: action },
+                dataType: 'json',
+                cache: false
+            });
+        });
+    }
+
+    function renderError(stage, resp) {
+        var data = (resp && resp.data) ? resp.data : {};
+        var errText = (typeof data === 'object' && data !== null) ? (data.error || _('Errore sconosciuto')) : String(data);
+        var trace = (typeof data === 'object' && data !== null) ? data.trace : null;
+        var raw   = (typeof data === 'object' && data !== null) ? data.raw   : null;
+        var html = '<div class="alert alert-danger" style="margin:0;">' +
+            '<b>' + _('Bounce Port') + ' ' + port + ' &mdash; ' + stage + '</b>: ' + _escDeep(errText);
+        if (trace && trace.length) {
+            html += '<details style="margin-top:6px;"><summary style="cursor:pointer;"><small>' +
+                _('Dettagli diagnostici') + '</small></summary><pre style="font-size:11px; margin:6px 0 0 0; max-height:300px; overflow:auto; background:#fff; padding:6px;">' +
+                _escDeep(trace.join('\n')) + '</pre></details>';
+        }
+        if (raw) {
+            html += '<details style="margin-top:4px;"><summary style="cursor:pointer;"><small>' +
+                _('Response grezza switch') + '</small></summary><pre style="font-size:11px; margin:6px 0 0 0; max-height:200px; overflow:auto; background:#fff; padding:6px;">' +
+                _escDeep(raw) + '</pre></details>';
+        }
+        html += '</div>';
+        $resultRow.find('td').first().html(html);
+    }
+
+    // Step 1: disable
+    callPortApi('disable').done(function (respOff) {
+        if (!respOff || !respOff.result) {
+            renderError(_('spegnimento'), respOff);
+            return;
+        }
+        $resultRow.find('td').first().html(
+            '<div class="alert alert-warning" style="margin:0;">' +
+            '<i class="fa fa-power-off"></i> ' +
+            _('Port') + ' ' + port + ' ' + _('spenta, attendo 3s prima di riaccendere...') +
+            '</div>'
+        );
+        // Step 2: wait 3s then re-enable. NB il DGS-1210 applica l'enable
+        // riportando la porta in Auto.
+        setTimeout(function () {
+            callPortApi('enable').done(function (respOn) {
+                if (!respOn || !respOn.result) {
+                    renderError(_('riaccensione'), respOn);
+                    return;
+                }
+                $resultRow.find('td').first().html(
+                    '<div class="alert alert-success" style="margin:0;">' +
+                    '<i class="fa fa-check-circle"></i> ' +
+                    '<b>' + _('Bounce Port') + ' ' + port + ' ' + _('completato') + '</b>. ' +
+                    _('Aspetta qualche secondo per il link-up, poi rilancia la diagnostica per vedere la nuova speed negoziata.') +
+                    '</div>'
+                );
+            }).fail(function (xhr) {
+                renderError(_('riaccensione'), xhr && xhr.responseJSON);
+            });
+        }, 3000);
+    }).fail(function (xhr) {
+        renderError(_('spegnimento'), xhr && xhr.responseJSON);
+    }).always(function () {
+        // Riabilito il bottone solo alla fine dello step 2 (always non basta);
+        // lo faccio qui in safety per i casi di error fast-fail dello step 1.
+        setTimeout(function () {
+            $btn.prop('disabled', false);
+            $btn.html('<i class="fa fa-power-off"></i> ' + _('Bounce'));
+        }, 5000);
     });
 }
 
