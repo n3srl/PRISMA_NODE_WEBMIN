@@ -916,6 +916,32 @@ function renderSwitchSection(sw) {
         html += '</ul></div>';
     }
 
+    // Banner PoE: severita' danger -> stesso peso visivo della topologia violata.
+    var poeWarnings = sw.poeWarnings || [];
+    var poeDanger   = poeWarnings.filter(function (w) { return w.severity === 'danger'; });
+    var poeAttention = poeWarnings.filter(function (w) { return w.severity !== 'danger'; });
+    if (poeDanger.length > 0) {
+        html += '<div class="alert alert-danger" style="margin-bottom:10px; border-width:2px; font-size:14px;">' +
+            '<i class="fa fa-bolt fa-lg"></i> ' +
+            '<b>' + _('ALIMENTAZIONE CAMERA NON DAL POE') + '</b>: ' +
+            _('la camera dipende da una sorgente di alimentazione esterna allo switch') + '.' +
+            '<ul style="margin:6px 0 0 0; padding-left:20px;">';
+        poeDanger.forEach(function (w) {
+            html += '<li>' + _escDeep(w.message) + '</li>';
+        });
+        html += '</ul></div>';
+    }
+    if (poeAttention.length > 0) {
+        html += '<div class="alert alert-warning" style="margin-bottom:10px;">' +
+            '<i class="fa fa-bolt"></i> ' +
+            '<b>' + _('PoE camera: attenzione') + '</b>:' +
+            '<ul style="margin:6px 0 0 0; padding-left:20px;">';
+        poeAttention.forEach(function (w) {
+            html += '<li>' + _escDeep(w.message) + '</li>';
+        });
+        html += '</ul></div>';
+    }
+
     if (intruders.length > 0) {
         html += '<div class="alert alert-danger" style="margin-bottom:10px;">' +
             '<i class="fa fa-exclamation-triangle"></i> ' +
@@ -1001,6 +1027,7 @@ function renderSwitchSection(sw) {
                 '<th>' + _('RX errors') + '</th>' +
                 '<th>' + _('CRC') + '</th>' +
                 '<th>' + _('Discards') + '</th>' +
+                (sw.poeAvailable ? '<th>' + _('PoE') + '</th>' : '') +
                 '<th>' + _('Note') + '</th>' +
                 '<th>' + _('Azioni') + '</th>' +
             '</tr></thead><tbody>';
@@ -1071,6 +1098,38 @@ function renderSwitchSection(sw) {
             '</button>';
         }
 
+        // PoE cell: visibile solo se almeno una porta dello switch espone info
+        // PoE. Per porte non-PoE (es. uplink 9-10 del DGS-1210-10P) o quando
+        // i dati non sono in MIB, mostro "—".
+        var poeCell = '';
+        if (sw.poeAvailable) {
+            var poe = p.poe;
+            if (!poe) {
+                poeCell = '<td><span class="text-muted">&mdash;</span></td>';
+            } else {
+                var watts = (poe.powerW !== null && poe.powerW !== undefined) ? poe.powerW : null;
+                var deliv = !!poe.delivering;
+                var adminOff = (poe.adminEnable === false);
+                var col, txt;
+                if (adminOff) {
+                    col = '#b52c1d'; txt = 'OFF';
+                } else if (watts !== null) {
+                    txt = watts.toFixed(1) + ' W';
+                    if (watts < 0.5)       col = '#b52c1d';
+                    else if (watts < 1.0)  col = '#b07d00';
+                    else                   col = '#1d7a44';
+                } else if (deliv) {
+                    col = '#1d7a44'; txt = _('on');
+                } else {
+                    col = '#777';   txt = poe.statusLabel || '?';
+                }
+                var classLbl = (poe.class !== null && poe.class !== undefined)
+                    ? ' <small style="color:#777;">cl.' + poe.class + '</small>'
+                    : '';
+                poeCell = '<td><span style="color:' + col + ';font-weight:600;">' + txt + '</span>' + classLbl + '</td>';
+            }
+        }
+
         html += '<tr ' + rowClass + ' data-port-row="' + p.ifIndex + '">' +
             '<td>' + p.ifIndex + '</td>' +
             '<td><code>' + _escDeep(p.name) + '</code></td>' +
@@ -1081,6 +1140,7 @@ function renderSwitchSection(sw) {
             '<td' + ((p.inErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.inErrors || 0) + '</td>' +
             '<td' + ((p.fcsErrors > 0) ? ' style="color:#b52c1d;font-weight:600;"' : '') + '>' + (p.fcsErrors === null ? '&mdash;' : p.fcsErrors) + '</td>' +
             '<td' + ((p.inDiscards > 0) ? ' style="color:#b07d00;font-weight:600;"' : '') + '>' + (p.inDiscards || 0) + '</td>' +
+            poeCell +
             '<td>' + note + '</td>' +
             '<td>' + cableBtn + bounceBtn + '</td>' +
         '</tr>';

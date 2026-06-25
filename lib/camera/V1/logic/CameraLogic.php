@@ -391,6 +391,11 @@ class CameraLogic
         $dot3Fcs   = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.10.7.2.1.3');
         $dot3Align = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.10.7.2.1.2');
 
+        // PoE: stato e consumo per porta. Standard POWER-ETHERNET-MIB (RFC 3621)
+        // espone admin/detect/class/limit, NON il consumo realtime: per quello
+        // serve la private MIB D-Link. probePoEViaSnmp() tenta entrambi.
+        $poeByPort = self::probePoEViaSnmp($ip, $community);
+
         foreach ($ifDescr as $idx => $name) {
             // Solo porte ethernet fisiche (ifType=6 ethernetCsmacd).
             if (isset($ifType[$idx]) && (int) $ifType[$idx] !== 6) continue;
@@ -407,8 +412,11 @@ class CameraLogic
                 'inDiscards'  => isset($ifInDiscards[$idx]) ? (int) $ifInDiscards[$idx] : 0,
                 'fcsErrors'   => isset($dot3Fcs[$idx])   ? (int) $dot3Fcs[$idx]   : null,
                 'alignErrors' => isset($dot3Align[$idx]) ? (int) $dot3Align[$idx] : null,
+                'poe'         => isset($poeByPort[(int) $idx]) ? $poeByPort[(int) $idx] : null,
             );
         }
+        // Indica alla UI se la branch PoE e' disponibile per QUALCHE porta.
+        $r['poeAvailable'] = !empty($poeByPort);
         // Ordina per ifIndex
         usort($r['ports'], function ($a, $b) { return $a['ifIndex'] - $b['ifIndex']; });
 
@@ -561,7 +569,142 @@ class CameraLogic
             }
         }
 
+        // PoE: warning prominente se la camera e' UP via cavo ma NON sta tirando
+        // alimentazione (0 W). Significa che la camera ha una sorgente esterna
+        // di alimentazione: se l'alimentatore esterno salta, la camera si spegne
+        // senza che lo switch possa avvertire.
+        $r['poeWarnings'] = array();
+        if (!empty($poeByPort) && $r['cameraPort']) {
+            $cIdx = (int) $r['cameraPort'];
+            $cameraPortRec = null;
+            foreach ($r['ports'] as $p) {
+                if ($p['ifIndex'] === $cIdx) { $cameraPortRec = $p; break; }
+            }
+            $cameraPoe = isset($poeByPort[$cIdx]) ? $poeByPort[$cIdx] : null;
+            if ($cameraPortRec && $cameraPortRec['up'] && $cameraPoe !== null) {
+                $powerW     = isset($cameraPoe['powerW'])      ? (float) $cameraPoe['powerW']      : null;
+                $adminEna   = isset($cameraPoe['adminEnable']) ? (bool)  $cameraPoe['adminEnable'] : true;
+                $delivering = isset($cameraPoe['delivering'])  ? (bool)  $cameraPoe['delivering']  : false;
+
+                if (!$adminEna) {
+                    $r['poeWarnings'][] = array(
+                        'severity' => 'danger',
+                        'port'     => $cIdx,
+                        'reason'   => 'admin-disabled',
+                        'message'  => "La camera e' collegata alla Port $cIdx ma il PoE su quella porta e' DISABILITATO nello switch. La camera sta usando un alimentatore esterno; se viene staccato la camera si spegne. Abilita PoE su questa porta dalla GUI dello switch.",
+                    );
+                } elseif ($powerW !== null && $powerW < 0.5) {
+                    $r['poeWarnings'][] = array(
+                        'severity' => 'danger',
+                        'port'     => $cIdx,
+                        'reason'   => 'zero-watt',
+                        'message'  => "La camera e' UP via dati ma il PoE eroga 0 W sulla Port $cIdx: la camera e' alimentata da una sorgente esterna (alimentatore), NON dal cavo. Se l'alimentatore esterno salta, la camera si spegne.",
+                    );
+                } elseif (!$delivering && $powerW === null) {
+                    $r['poeWarnings'][] = array(
+                        'severity' => 'warning',
+                        'port'     => $cIdx,
+                        'reason'   => 'not-delivering',
+                        'message'  => "Il PoE sulla Port $cIdx della camera non e' in stato 'delivering' (stato: " . (isset($cameraPoe['statusLabel']) ? $cameraPoe['statusLabel'] : '?') . "). Verifica che la camera sia un dispositivo PoE-powered.",
+                    );
+                }
+            }
+        }
+
         return $r;
+    }
+
+    /**
+     * Sonda lo stato PoE delle porte dello switch. Combina:
+     *  - POWER-ETHERNET-MIB (RFC 3621, standard): admin enable, class, status, limit
+     *  - private MIB D-Link (DGS-1210 family): consumo realtime in Watt (non
+     *    presente nello standard MIB)
+     *
+     * Ritorna map: ifIndex => array(
+     *   'adminEnable' => bool|null
+     *   'status'      => int|null
+     *   'statusLabel' => 'disabled'|'searching'|'delivering'|'fault'|'test'|'other'|null
+     *   'delivering'  => bool
+     *   'class'       => 0..4|null
+     *   'powerLimitW' => float|null
+     *   'powerW'      => float|null
+     *   'powerSource' => string|null
+     * )
+     */
+    private static function probePoEViaSnmp($ip, $community) {
+        $statusLabels = array(
+            1 => 'disabled', 2 => 'searching', 3 => 'delivering',
+            4 => 'fault', 5 => 'test', 6 => 'other',
+        );
+
+        // POWER-ETHERNET-MIB (RFC 3621)
+        $stdAdmin  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.3');   // adminEnable
+        $stdStatus = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.6');   // detectStatus
+        $stdClass  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.10');  // class (0..4)
+        $stdLimit  = self::snmpWalkViaSsh($ip, $community, '1.3.6.1.2.1.105.1.1.1.11');  // powerLimit (mW)
+
+        // Private MIB D-Link per consumo realtime. Lo standard NON espone il
+        // consumo in Watt, solo il limite. Provo branch candidate dei DGS-1210.
+        $consumeCandidates = array(
+            '1.3.6.1.4.1.171.10.76.10.10.1.1.4',
+            '1.3.6.1.4.1.171.10.76.11.10.1.1.4',
+            '1.3.6.1.4.1.171.10.76.12.10.1.1.4',
+            '1.3.6.1.4.1.171.11.153.1000.10.1.1.4',
+            '1.3.6.1.4.1.171.11.153.1010.10.1.1.4',
+        );
+        $consumeMap    = array();
+        $consumeBranch = null;
+        foreach ($consumeCandidates as $branch) {
+            $walk = self::snmpWalkViaSsh($ip, $community, $branch);
+            if (!empty($walk)) {
+                $consumeMap    = $walk;
+                $consumeBranch = $branch;
+                break;
+            }
+        }
+
+        // Unita': i DGS-1210 espongono il consumo in centesimi (es. 1234 = 12.34 W)
+        // o in decimi (es. 56 = 5.6 W). Euristica: se max value > 100 -> centesimi.
+        $maxConsume = 0;
+        foreach ($consumeMap as $v) { if ((int) $v > $maxConsume) $maxConsume = (int) $v; }
+        $divisor = ($maxConsume > 100) ? 100.0 : 10.0;
+
+        // suffix groupIndex.portIndex -> ifIndex. Su DGS-1210 portIndex == ifIndex
+        // (porte 1..8 PoE, 9..10 uplink non-PoE).
+        $suffixToIf = function ($suffix) {
+            $parts = explode('.', $suffix);
+            if (count($parts) >= 2) return (int) end($parts);
+            return (int) $parts[0];
+        };
+
+        $result = array();
+        $allSuffix = array();
+        foreach (array($stdAdmin, $stdStatus, $stdClass, $stdLimit, $consumeMap) as $arr) {
+            foreach ($arr as $s => $_) $allSuffix[$s] = true;
+        }
+        foreach (array_keys($allSuffix) as $suffix) {
+            $ifIdx = $suffixToIf($suffix);
+            if ($ifIdx <= 0) continue;
+            $admin  = isset($stdAdmin[$suffix])  ? ((int) $stdAdmin[$suffix] === 1)   : null;
+            $status = isset($stdStatus[$suffix]) ? (int) $stdStatus[$suffix]          : null;
+            $class  = isset($stdClass[$suffix])  ? (int) $stdClass[$suffix]           : null;
+            $limMw  = isset($stdLimit[$suffix])  ? (int) $stdLimit[$suffix]           : null;
+            $powerW = null;
+            if (isset($consumeMap[$suffix])) {
+                $powerW = round(((int) $consumeMap[$suffix]) / $divisor, 2);
+            }
+            $result[$ifIdx] = array(
+                'adminEnable' => $admin,
+                'status'      => $status,
+                'statusLabel' => ($status !== null && isset($statusLabels[$status])) ? $statusLabels[$status] : null,
+                'delivering'  => $status === 3,
+                'class'       => $class,
+                'powerLimitW' => $limMw !== null ? round($limMw / 1000.0, 2) : null,
+                'powerW'      => $powerW,
+                'powerSource' => $powerW !== null ? ('private-mib:' . $consumeBranch) : null,
+            );
+        }
+        return $result;
     }
 
     // Wrapper sul client SNMP pure-PHP. Ritorna null se l'OID non e' presente o
