@@ -910,10 +910,10 @@ class FreetureFinalApiLogic {
         return $isMaskEnabled;
     }
 
-    // Restart freeture container in ssh
-    // Riavvia il container freeture via SSH usando stop + start (piu' affidabile di
-    // `docker restart` su one-shot ssh2_exec) e leggendo gli stream a EOF per garantire
-    // che i comandi terminino davvero prima della chiusura della sessione SSH.
+    // Restart freeture container in ssh.
+    // Controlla lo stato precedente del container: se era running esegue stop+start,
+    // se era gia' fermo esegue solo stop (no-op) e NON lo riavvia, preservando lo
+    // stato intenzionale impostato dall'operatore.
     public static function restartFreeture() {
         $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
         if (!$session) {
@@ -921,15 +921,26 @@ class FreetureFinalApiLogic {
         }
         $ok = false;
         if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
-            $stopStream = ssh2_exec($session, "docker stop freeture");
-            if ($stopStream) {
-                stream_set_blocking($stopStream, true);
-                stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+            // Verifica se il container era in esecuzione prima di agire.
+            $inspectStream = ssh2_exec($session, "docker inspect --format='{{.State.Running}}' freeture 2>/dev/null");
+            $wasRunning = false;
+            if ($inspectStream) {
+                stream_set_blocking($inspectStream, true);
+                $inspectOut = trim(stream_get_contents(ssh2_fetch_stream($inspectStream, SSH2_STREAM_STDIO)));
+                $wasRunning = ($inspectOut === 'true');
             }
-            $startStream = ssh2_exec($session, "docker start freeture");
-            if ($startStream) {
-                stream_set_blocking($startStream, true);
-                stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+
+            if ($wasRunning) {
+                $stopStream = ssh2_exec($session, "docker stop freeture");
+                if ($stopStream) {
+                    stream_set_blocking($stopStream, true);
+                    stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+                }
+                $startStream = ssh2_exec($session, "docker start freeture");
+                if ($startStream) {
+                    stream_set_blocking($startStream, true);
+                    stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+                }
             }
             $ok = true;
         }

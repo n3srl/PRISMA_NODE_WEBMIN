@@ -56,9 +56,6 @@ function saveStation() {
             case "DATA_PATH":
                 ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/";
                 break;
-            case "LOG_PATH":
-                ft.value = "/freeture/" + $('#station-code').val().toUpperCase() + "/log/";
-                break;
             case "ACQ_REGULAR_PRFX":
                 ft.value = $('#station-code').val().toUpperCase();
                 break;   
