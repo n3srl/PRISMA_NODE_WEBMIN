@@ -16,7 +16,7 @@
                         <div class='clearfix'></div>
                     </div>
                     <div class='x_content'>
-                        <form id='addKeyForm' class='form-horizontal'>
+                        <form id='addKeyForm' class='form-horizontal file-upload'>
                             <div class='form-group'>
                                 <label class='control-label col-md-3 col-sm-3 col-xs-12'><?= _('Chiave pubblica') ?> *</label>
                                 <div class='col-md-7 col-sm-7 col-xs-12'>
@@ -107,7 +107,9 @@
             } else {
                 alertError('<?= _('Errore') ?>', data ? data.content : '<?= _('Errore') ?>');
             }
-        }, 'json');
+        }, 'json').fail(function (xhr) {
+            alertError('<?= _('Errore') ?>', 'HTTP ' + xhr.status + ': ' + xhr.responseText.substring(0, 200));
+        });
     }
 
     $('#addKeyForm').on('submit', function (e) {
@@ -123,7 +125,9 @@
             } else {
                 alertError('<?= _('Errore') ?>', data ? data.content : '<?= _('Errore') ?>');
             }
-        }, 'json').always(function () {
+        }, 'json').fail(function (xhr) {
+            alertError('<?= _('Errore') ?>', 'HTTP ' + xhr.status + ': ' + xhr.responseText.substring(0, 200));
+        }).always(function () {
             $('#addKeyBtn').prop('disabled', false);
         });
     });
