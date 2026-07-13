@@ -75,29 +75,33 @@
 (function () {
 
     function loadKeys() {
-        $.get('/service/sshkeys/list', function (data) {
-            var keys = [];
-            try {
-                var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
-                keys = JSON.parse(parsed.content || '[]');
-            } catch(e) {}
-            var tbody = $('#keysTbody');
-            tbody.empty();
-            if (!keys.length) {
-                tbody.append('<tr><td colspan="4" class="text-muted text-center"><?= _('Nessuna chiave presente') ?></td></tr>');
-                return;
+        $.ajax({
+            url: '/service/sshkeys/list',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                var keys = Array.isArray(data) ? data : [];
+                var tbody = $('#keysTbody');
+                tbody.empty();
+                if (!keys.length) {
+                    tbody.append('<tr><td colspan="4" class="text-muted text-center"><?= _('Nessuna chiave presente') ?></td></tr>');
+                    return;
+                }
+                keys.forEach(function (k) {
+                    var shortBlob = k.blob ? k.blob.substring(0, 20) + '...' : '';
+                    var row = $('<tr>');
+                    row.append($('<td>').text(k.type));
+                    row.append($('<td>').text(k.comment || '—'));
+                    row.append($('<td>').html('<code>' + escHtml(shortBlob) + '</code>'));
+                    var del = $('<button class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> <?= _('Rimuovi') ?></button>');
+                    del.on('click', function () { deleteKey(k.blob, k.comment); });
+                    row.append($('<td>').append(del));
+                    tbody.append(row);
+                });
+            },
+            error: function (xhr) {
+                $('#keysTbody').html('<tr><td colspan="4" class="text-danger">Errore caricamento: ' + xhr.status + '</td></tr>');
             }
-            keys.forEach(function (k) {
-                var shortBlob = k.blob ? k.blob.substring(0, 20) + '...' : '';
-                var row = $('<tr>');
-                row.append($('<td>').text(k.type));
-                row.append($('<td>').text(k.comment || '—'));
-                row.append($('<td>').html('<code>' + escHtml(shortBlob) + '</code>'));
-                var del = $('<button class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> <?= _('Rimuovi') ?></button>');
-                del.on('click', function () { deleteKey(k.blob, k.comment); });
-                row.append($('<td>').append(del));
-                tbody.append(row);
-            });
         });
     }
 

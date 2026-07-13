@@ -6,8 +6,7 @@ class SshkeysController extends Controller {
 
     public function editOperation() {
         parent::securityCheck(1); // Admin
-        global $SshKeys;
-        $SshKeys = $this->readKeys();
+        echo '<script>var ObjID = 0;</script>';
     }
 
     public function addOperation() {
@@ -99,7 +98,6 @@ class SshkeysController extends Controller {
 
     public function listOperation() {
         parent::securityCheck(1);
-        $resp = new Response();
         $keys = $this->readKeys();
         $result = array_map(function($line) {
             $parts = explode(' ', $line, 3);
@@ -107,11 +105,11 @@ class SshkeysController extends Controller {
                 'type'    => $parts[0] ?? '',
                 'blob'    => $parts[1] ?? '',
                 'comment' => $parts[2] ?? '',
-                'full'    => $line,
             ];
         }, $keys);
-        $resp->content = json_encode($result);
-        return $resp;
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        exit;
     }
 
     // ---- helpers ----
