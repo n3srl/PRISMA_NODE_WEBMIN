@@ -3,14 +3,15 @@
 class SshkeysController extends Controller {
 
     const AUTHORIZED_KEYS_PATH = '/keys/authorized_keys';
+    const SSH_CONTAINER_NAME   = 'prisma-ssh';
 
     public function editOperation() {
-        parent::securityCheck(1); // Admin
-        echo '<script>var ObjID = 0;</script>';
+        parent::securityCheck(0);
+        echo '<script>var ObjID = 0; var sshContainerRunning = ' . (self::isSshContainerRunning() ? 'true' : 'false') . ';</script>';
     }
 
     public function addOperation() {
-        parent::securityCheck(1);
+        parent::securityCheck(0);
         $resp = new Response();
 
         $key = isset($_POST['pubkey']) ? trim($_POST['pubkey']) : '';
@@ -62,7 +63,7 @@ class SshkeysController extends Controller {
     }
 
     public function deleteOperation() {
-        parent::securityCheck(1);
+        parent::securityCheck(0);
         $resp = new Response();
 
         $blob = isset($_POST['blob']) ? trim($_POST['blob']) : '';
@@ -96,8 +97,25 @@ class SshkeysController extends Controller {
         return $resp;
     }
 
+    public static function isSshContainerRunning(): bool {
+        try {
+            $session = @ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+            if (!$session) return false;
+            @ssh2_fingerprint($session);
+            if (!@ssh2_auth_pubkey_file($session, 'prisma', _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, 'uu4KYDAk')) return false;
+            $stream = ssh2_exec($session, 'docker container ls --filter name=' . self::SSH_CONTAINER_NAME . ' --format "{{.Names}}"');
+            stream_set_blocking($stream, true);
+            $out = ssh2_fetch_stream($stream, SSH2_STREAM_STDIO);
+            $text = trim(stream_get_contents($out));
+            unset($session);
+            return $text === self::SSH_CONTAINER_NAME;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     public function listOperation() {
-        parent::securityCheck(1);
+        parent::securityCheck(0);
         $keys = $this->readKeys();
         $result = array_map(function($line) {
             $parts = explode(' ', $line, 3);
