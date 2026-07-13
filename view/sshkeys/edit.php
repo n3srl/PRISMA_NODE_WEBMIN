@@ -8,6 +8,21 @@
         <div class='clearfix'></div>
         <div class='row'>
 
+            <!-- Info box -->
+            <div class='col-md-12 col-sm-12 col-xs-12'>
+                <div class='alert alert-info' style='border-left: 4px solid #31708f; padding: 15px;'>
+                    <h4><i class='fa fa-info-circle'></i> <?= _('Come accedere ai dati del nodo') ?></h4>
+                    <p><?= _('Il nodo espone un servizio <strong>SFTP</strong> sulla porta <strong>2026</strong> per il trasferimento file.') ?></p>
+                    <p><strong><?= _('Importante:') ?></strong> <?= _('non si tratta di un accesso SSH con console interattiva — è possibile solo trasferire file (upload/download).') ?></p>
+                    <hr style='border-color:#bce8f1'>
+                    <p style='margin-bottom:4px'><strong><?= _('Comando di connessione:') ?></strong></p>
+                    <pre style='background:#d9edf7; border:none; padding:8px; border-radius:4px; margin-bottom:8px'>sftp -i ~/.ssh/id_rsa -P 2026 prisma@&lt;IP_NODO&gt;</pre>
+                    <p style='margin-bottom:4px'><strong><?= _('Trasferimento file (esempio):') ?></strong></p>
+                    <pre style='background:#d9edf7; border:none; padding:8px; border-radius:4px; margin-bottom:0'>put file_locale.fits /prismadata/</pre>
+                    <p class='text-muted' style='margin-top:8px; margin-bottom:0'><small><?= _('Aggiungere la propria chiave pubblica SSH (file .pub) nel pannello sottostante per ottenere l\'accesso.') ?></small></p>
+                </div>
+            </div>
+
             <!-- Aggiunta chiave -->
             <div class='col-md-12 col-sm-12 col-xs-12'>
                 <div class='x_panel'>
