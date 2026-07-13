@@ -77,7 +77,10 @@
     function loadKeys() {
         $.get('/service/sshkeys/list', function (data) {
             var keys = [];
-            try { keys = JSON.parse(data.content || '[]'); } catch(e) {}
+            try {
+                var parsed = (typeof data === 'string') ? JSON.parse(data) : data;
+                keys = JSON.parse(parsed.content || '[]');
+            } catch(e) {}
             var tbody = $('#keysTbody');
             tbody.empty();
             if (!keys.length) {
