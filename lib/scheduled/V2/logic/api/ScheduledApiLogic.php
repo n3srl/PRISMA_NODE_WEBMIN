@@ -263,7 +263,7 @@ class ScheduledApiLogic {
         $file_info = explode("_", $file);
         $day = $file_info[0] . "_" . $file_info[1];
         $fit_name = $file_info[2] . "_" . $file_info[3] . "_" . $file_info[4];
-        $path = $data_dir . $day . "/scheduled/" . $fit_name;
+        $path = $data_dir . $day . "/schedules/" . $fit_name;
         return $path;
     }
 
@@ -288,7 +288,7 @@ class ScheduledApiLogic {
                     if ('.' === $folder || '..' === $folder) {
                         continue;
                     }
-                    $scheduled_dir = $base_dir . $folder . "/scheduled";
+                    $scheduled_dir = $base_dir . $folder . "/schedules";
                     if (!is_dir($scheduled_dir)) {
                         continue;
                     }
@@ -442,7 +442,7 @@ class ScheduledApiLogic {
 
             $file = $row['file'];
             $folder = $row['folder'];
-            $scheduled_dir = $base_dir . $folder . "/scheduled";
+            $scheduled_dir = $base_dir . $folder . "/schedules";
 
             preg_match($datePattern, $file, $matches);
             $datetime = date_create_from_format('YmdHis', $matches[1] . $matches[2]);
@@ -486,7 +486,7 @@ class ScheduledApiLogic {
         $datePattern = '/(\d{8})T(\d{6})/';
         $scheduled_files = array();
         foreach ($folders as $folder) {
-            $scheduled_dir = $base_dir . $folder . "/scheduled";
+            $scheduled_dir = $base_dir . $folder . "/schedules";
             if (!is_dir($scheduled_dir)) {
                 continue;
             }
@@ -519,6 +519,7 @@ class ScheduledApiLogic {
     // the row's third column is the bare date key (YYYYMMDD).
     public static function getScheduledDays($start, $end) {
         $data_dir = self::getDataPath();
+        error_log("[scheduled/daylist] data_dir='$data_dir' exists=" . (is_dir($data_dir) ? 'yes' : 'no'));
         if (!is_dir($data_dir)) {
             return array();
         }
@@ -533,9 +534,13 @@ class ScheduledApiLogic {
                 continue;
             }
             if (!preg_match('/\d{8}/', $day_dir, $matches)) {
+                error_log("[scheduled/daylist] skip '$day_dir': nessuna data YYYYMMDD nel nome");
                 continue;
             }
-            $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/scheduled/*.fit");
+            $n_day_files = self::getDirectoryFilesCount($data_dir . "/" . $day_dir . "/schedules/*.fit");
+            error_log("[scheduled/daylist] '$day_dir': scheduled dir " .
+                (is_dir($data_dir . "/" . $day_dir . "/schedules") ? 'presente' : 'ASSENTE') .
+                ", fit=" . $n_day_files);
             if ($n_day_files == 0) {
                 continue;
             }
@@ -570,7 +575,7 @@ class ScheduledApiLogic {
         $n_files = 0;
         if ($handle = opendir($path)) {
             while (false !== ($day = readdir($handle))) {
-                $n_files += self::getDirectoryFilesCount($path . $day . "/scheduled/*.fit");
+                $n_files += self::getDirectoryFilesCount($path . $day . "/schedules/*.fit");
             }
             closedir($handle);
         }
