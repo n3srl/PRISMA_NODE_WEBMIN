@@ -45,6 +45,7 @@
                     <li><a href="/sshkeys/edit"><i class="fa fa-key"></i><?= _('Chiavi SSH') ?></a></li>
                     <?php } ?>
                     <li><a href="/stack/edit"><i class="fa fa-cubes"></i><?= _('Stack') ?></a></li>
+                    <li><a href="/scheduled/edit"><i class="fa fa-clock-o"></i><?= _('Acquisizioni Schedulate') ?></a></li>
                     <li><a href="/detection/edit"><i class="fa fa-star"></i><?= _('Detections') ?></a></li>
 
                 </ul>
