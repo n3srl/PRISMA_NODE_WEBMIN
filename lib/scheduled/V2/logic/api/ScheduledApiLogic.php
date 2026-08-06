@@ -266,9 +266,11 @@ class ScheduledApiLogic {
     }
 
     // Parsa la stringa ACQ_SCHEDULE (token separati da virgola, formato
-    // "HHhMMmSSs<exp>e<gain>g<format>f<rep>n"). Il formato puo' mancare nel
-    // token (es. "5gf1n"): in quel caso vale 1. Gli errori vengono accumulati
-    // in $errors senza bloccare il parsing dei token validi.
+    // "HHhMMmSSs[MMMms]<exp>e<gain>g<format>f<rep>n"). La parte millisecondi
+    // (es. "050ms") e' opzionale: supportata dalle build FreeTure modificate,
+    // assente nel formato storico. Il formato puo' mancare nel token
+    // (es. "5gf1n"): in quel caso vale 1. Gli errori vengono accumulati in
+    // $errors senza bloccare il parsing dei token validi.
     private static function parseScheduleString($raw, &$errors) {
         $errors = array();
         $entries = array();
@@ -282,15 +284,17 @@ class ScheduledApiLogic {
             if ($token === '') {
                 continue;
             }
-            if (!preg_match('/^(\d{1,2})h(\d{1,2})m(\d{1,2})s(\d+)e(\d+)g(\d*)f(\d+)n$/i', $token, $m)) {
+            if (!preg_match('/^(\d{1,2})h(\d{1,2})m(\d{1,2})s(?:(\d{1,3})ms)?(\d+)e(\d+)g(\d*)f(\d+)n$/i', $token, $m)) {
                 $errors[] = "token #" . ($idx + 1) . " '" . $token . "' non riconosciuto";
                 continue;
             }
             $h = (int) $m[1];
             $mn = (int) $m[2];
             $s = (int) $m[3];
-            $n = (int) $m[7];
-            if ($h > 23 || $mn > 59 || $s > 59) {
+            $hasMs = ($m[4] !== '');
+            $ms = $hasMs ? (int) $m[4] : 0;
+            $n = (int) $m[8];
+            if ($h > 23 || $mn > 59 || $s > 59 || $ms > 999) {
                 $errors[] = "token #" . ($idx + 1) . " '" . $token . "' orario fuori range";
                 continue;
             }
@@ -302,28 +306,37 @@ class ScheduledApiLogic {
                 'h' => $h,
                 'm' => $mn,
                 's' => $s,
-                'e' => (int) $m[4],
-                'g' => (int) $m[5],
-                'f' => ($m[6] === '') ? 1 : (int) $m[6],
+                'ms' => $ms,
+                'hasMs' => $hasMs,
+                'e' => (int) $m[5],
+                'g' => (int) $m[6],
+                'f' => ($m[7] === '') ? 1 : (int) $m[7],
                 'n' => $n,
             );
         }
-        // Ordino per orario UT: freeture li esegue in ordine temporale e la
-        // preview risulta piu' leggibile.
+        // Ordino per orario UT (risoluzione ms): freeture li esegue in ordine
+        // temporale e la preview risulta piu' leggibile.
         usort($entries, function ($a, $b) {
-            $sa = $a['h'] * 3600 + $a['m'] * 60 + $a['s'];
-            $sb = $b['h'] * 3600 + $b['m'] * 60 + $b['s'];
+            $sa = (($a['h'] * 3600 + $a['m'] * 60 + $a['s']) * 1000) + $a['ms'];
+            $sb = (($b['h'] * 3600 + $b['m'] * 60 + $b['s']) * 1000) + $b['ms'];
             return $sa - $sb;
         });
         return $entries;
     }
 
-    // Serializza l'elenco entries nel formato ACQ_SCHEDULE.
+    // Serializza l'elenco entries nel formato ACQ_SCHEDULE. I token generati
+    // con i millisecondi (hasMs) mantengono la parte "MMMms", gli altri
+    // restano nel formato storico.
     private static function serializeScheduleEntries($entries) {
         $tokens = array();
         foreach ($entries as $e) {
-            $tokens[] = sprintf('%02dh%02dm%02ds%de%dg%df%dn',
-                $e['h'], $e['m'], $e['s'], $e['e'], $e['g'], $e['f'], $e['n']);
+            if (!empty($e['hasMs'])) {
+                $tokens[] = sprintf('%02dh%02dm%02ds%03dms%de%dg%df%dn',
+                    $e['h'], $e['m'], $e['s'], $e['ms'], $e['e'], $e['g'], $e['f'], $e['n']);
+            } else {
+                $tokens[] = sprintf('%02dh%02dm%02ds%de%dg%df%dn',
+                    $e['h'], $e['m'], $e['s'], $e['e'], $e['g'], $e['f'], $e['n']);
+            }
         }
         return implode(",", $tokens);
     }

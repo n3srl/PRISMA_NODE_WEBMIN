@@ -321,12 +321,20 @@ function pad2(v) {
     return (v < 10 ? '0' : '') + v;
 }
 
-function entryUtcSeconds(e) {
-    return e.h * 3600 + e.m * 60 + e.s;
+function pad3(v) {
+    return (v < 10 ? '00' : (v < 100 ? '0' : '')) + v;
 }
 
+// Orario UT dell'entry in millisecondi dalla mezzanotte.
+function entryUtcMillis(e) {
+    return ((e.h * 3600 + e.m * 60 + e.s) * 1000) + (e.ms || 0);
+}
+
+// Serializza un'entry: i token con hasMs usano il nuovo formato FreeTure
+// con la parte "MMMms", gli altri il formato storico.
 function serializeEntry(e) {
-    return pad2(e.h) + 'h' + pad2(e.m) + 'm' + pad2(e.s) + 's' + e.e + 'e' + e.g + 'g' + e.f + 'f' + e.n + 'n';
+    var msPart = e.hasMs ? pad3(e.ms || 0) + 'ms' : '';
+    return pad2(e.h) + 'h' + pad2(e.m) + 'm' + pad2(e.s) + 's' + msPart + e.e + 'e' + e.g + 'g' + e.f + 'f' + e.n + 'n';
 }
 
 function serializeEntries() {
@@ -334,12 +342,17 @@ function serializeEntries() {
 }
 
 function parseScheduleToken(tok) {
-    var m = tok.trim().match(/^(\d{1,2})h(\d{1,2})m(\d{1,2})s(\d+)e(\d+)g(\d*)f(\d+)n$/i);
+    var m = tok.trim().match(/^(\d{1,2})h(\d{1,2})m(\d{1,2})s(?:(\d{1,3})ms)?(\d+)e(\d+)g(\d*)f(\d+)n$/i);
     if (!m) {
         return null;
     }
-    var e = {h: +m[1], m: +m[2], s: +m[3], e: +m[4], g: +m[5], f: (m[6] === '' ? 1 : +m[6]), n: +m[7], bracket: null};
-    if (e.h > 23 || e.m > 59 || e.s > 59 || e.n < 1) {
+    var hasMs = (m[4] !== undefined && m[4] !== '');
+    var e = {
+        h: +m[1], m: +m[2], s: +m[3],
+        ms: hasMs ? +m[4] : 0, hasMs: hasMs,
+        e: +m[5], g: +m[6], f: (m[7] === '' ? 1 : +m[7]), n: +m[8], bracket: null
+    };
+    if (e.h > 23 || e.m > 59 || e.s > 59 || e.ms > 999 || e.n < 1) {
         return null;
     }
     return e;
@@ -369,44 +382,57 @@ function parseScheduleString(raw) {
 // Data odierna (UTC) con l'orario UT dell'entry: serve per convertire in locale.
 function entryLocalDate(e) {
     var now = new Date();
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), e.h, e.m, e.s));
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), e.h, e.m, e.s, e.ms || 0));
 }
 
 function entryUtcHMS(e) {
-    return pad2(e.h) + ':' + pad2(e.m) + ':' + pad2(e.s);
+    return pad2(e.h) + ':' + pad2(e.m) + ':' + pad2(e.s) + (e.hasMs ? '.' + pad3(e.ms || 0) : '');
 }
 
 function entryLocalHMS(e) {
     var d = entryLocalDate(e);
-    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) +
+            (e.hasMs ? '.' + pad3(d.getMilliseconds()) : '');
 }
 
-function formatLocalDateTime(d) {
+function formatLocalDateTime(d, withMs) {
     return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' +
-            pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+            pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) +
+            (withMs ? '.' + pad3(d.getMilliseconds()) : '');
 }
 
 // Crea una entry a partire da una Date locale (l'orario viene salvato in UTC).
-function entryFromDate(d, exposure, gain, format, reps, bracket) {
+// Con msEnabled il token mantiene i millisecondi (nuovo formato FreeTure).
+function entryFromDate(d, exposure, gain, format, reps, bracket, msEnabled) {
     return {
         h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds(),
+        ms: msEnabled ? d.getUTCMilliseconds() : 0, hasMs: !!msEnabled,
         e: exposure, g: gain, f: format, n: reps, bracket: bracket
     };
 }
 
 // Genera gli scatti dal form (evento ripetuto + bracketing opzionale) e li
 // aggiunge alla working list. Il bracketing espande ogni scatto in step
-// CONSECUTIVI: ogni sub-scatto parte quando il precedente e' finito
-// (durata = esposizione arrotondata al secondo + margine).
+// CONSECUTIVI: ogni sub-scatto parte quando il precedente e' finito.
+// Con la flag millisecondi (nuovo formato FreeTure) la risoluzione e' il ms:
+// durata sub-scatto = esposizione in ms + margine in ms, quindi un bracket
+// intero puo' stare dentro un secondo (vero HDR). Senza flag la risoluzione
+// resta il secondo (formato storico): durata = esposizione arrotondata al
+// secondo (min 1 s) + margine in secondi.
 function generateShots() {
+    var msEnabled = $('#gen-ms-enabled').is(':checked');
+
     var start = ($('#gen-start').val() || '').trim();
-    var mm = start.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+    var mm = start.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2})(?:\.(\d{1,3}))?)?$/);
     if (!mm) {
-        defaultError(_('Ora inizio non valida, usa il formato HH:MM:SS'));
+        defaultError(_('Ora inizio non valida, usa il formato HH:MM:SS') + (msEnabled ? ' (' + _('opzionale') + ' .mmm)' : ''));
         return;
     }
+    var startMs = (msEnabled && mm[4] !== undefined) ? +((mm[4] + '00').substring(0, 3)) : 0;
+
     var count = parseInt($('#gen-count').val(), 10);
-    var interval = parseInt($('#gen-interval').val(), 10);
+    // Con i ms attivi l'intervallo tra scatti accetta decimali (es. 0.5 s).
+    var interval = msEnabled ? parseFloat($('#gen-interval').val()) : parseInt($('#gen-interval').val(), 10);
     var exposure = parseInt($('#gen-exposure').val(), 10);
     var gain = parseInt($('#gen-gain').val(), 10);
     var format = parseInt($('#gen-format').val(), 10);
@@ -414,11 +440,13 @@ function generateShots() {
         defaultError(_('Controlla i campi del generatore: valori mancanti o non validi'));
         return;
     }
+    var intervalMs = Math.round(interval * 1000);
 
     var bracketing = $('#gen-bracketing').is(':checked');
     var bracketType = $('#gen-bracket-type').val();
     var bracketStep = parseInt($('#gen-bracket-step').val(), 10);
     var bracketSteps = parseInt($('#gen-bracket-steps').val(), 10);
+    // Margine tra sub-scatti: in secondi nel formato storico, in ms col nuovo.
     var bracketMargin = parseInt($('#gen-bracket-margin').val(), 10);
     if (bracketing && (!(bracketStep >= 1) || !(bracketSteps >= 2) || !(bracketMargin >= 0))) {
         defaultError(_('Controlla i campi del bracketing: passo, numero step e margine'));
@@ -426,17 +454,17 @@ function generateShots() {
     }
 
     var base = new Date();
-    base.setHours(+mm[1], +mm[2], +(mm[3] || 0), 0);
+    base.setHours(+mm[1], +mm[2], +(mm[3] || 0), startMs);
 
     var warnings = [];
     var added = [];
 
-    if (!bracketing && interval === 0 && count > 1) {
+    if (!bracketing && intervalMs === 0 && count > 1) {
         // Scatti consecutivi identici: freeture li esprime con il campo n.
-        added.push(entryFromDate(base, exposure, gain, format, count, null));
+        added.push(entryFromDate(base, exposure, gain, format, count, null, msEnabled));
     } else {
         for (var i = 0; i < count; i++) {
-            var shotStart = new Date(base.getTime() + i * interval * 1000);
+            var shotStart = new Date(base.getTime() + i * intervalMs);
             if (bracketing) {
                 bracketGroupCounter++;
                 var group = {group: bracketGroupCounter, type: bracketType};
@@ -444,19 +472,24 @@ function generateShots() {
                 for (var j = 0; j < bracketSteps; j++) {
                     var exp = (bracketType === 'exposure') ? exposure + j * bracketStep : exposure;
                     var gn = (bracketType === 'gain') ? gain + j * bracketStep : gain;
-                    added.push(entryFromDate(cursor, exp, gn, format, 1, group));
+                    added.push(entryFromDate(cursor, exp, gn, format, 1, group, msEnabled));
                     // Il sub-scatto successivo parte a esposizione conclusa + margine.
-                    var durSec = Math.max(1, Math.ceil(exp / 1000000)) + bracketMargin;
-                    cursor = new Date(cursor.getTime() + durSec * 1000);
+                    var durMs;
+                    if (msEnabled) {
+                        durMs = Math.max(1, Math.ceil(exp / 1000)) + bracketMargin;
+                    } else {
+                        durMs = (Math.max(1, Math.ceil(exp / 1000000)) + bracketMargin) * 1000;
+                    }
+                    cursor = new Date(cursor.getTime() + durMs);
                 }
                 var bracketSpanMs = cursor.getTime() - shotStart.getTime();
-                if (i < count - 1 && bracketSpanMs > interval * 1000) {
+                if (i < count - 1 && bracketSpanMs > intervalMs) {
                     warnings.push(_('Il bracketing dello scatto') + ' ' + (i + 1) + ' ' +
-                            _('dura') + ' ' + Math.ceil(bracketSpanMs / 1000) + ' s, ' +
+                            _('dura') + ' ' + (bracketSpanMs / 1000) + ' s, ' +
                             _('più dell\'intervallo tra gli scatti') + ' (' + interval + ' s): gli scatti si sovrappongono.');
                 }
             } else {
-                added.push(entryFromDate(shotStart, exposure, gain, format, 1, null));
+                added.push(entryFromDate(shotStart, exposure, gain, format, 1, null, msEnabled));
             }
         }
     }
@@ -464,9 +497,9 @@ function generateShots() {
     // Avviso se la sequenza attraversa la mezzanotte UTC: la schedulazione
     // freeture e' giornaliera, quindi quei token scattano "prima" nel giorno.
     if (added.length > 1) {
-        var firstSec = entryUtcSeconds(added[0]);
+        var firstMs = entryUtcMillis(added[0]);
         var wrapped = added.some(function (e) {
-            return entryUtcSeconds(e) < firstSec;
+            return entryUtcMillis(e) < firstMs;
         });
         if (wrapped) {
             warnings.push(_('La sequenza supera la mezzanotte UTC: i token oltre la mezzanotte verranno eseguiti nelle prime ore del giorno (la schedulazione è giornaliera).'));
@@ -485,24 +518,24 @@ function renderScheduleEditor(extraWarnings) {
     }
 
     scheduleEntries.sort(function (a, b) {
-        return entryUtcSeconds(a) - entryUtcSeconds(b);
+        return entryUtcMillis(a) - entryUtcMillis(b);
     });
 
     $('#schedule-raw').val(serializeEntries());
     $('#schedule-count-badge').text(scheduleEntries.length + ' ' + _('schedulazioni'));
 
-    // Orari duplicati: freeture identifica lo scatto per orario, due token con
-    // lo stesso hh:mm:ss sono quasi certamente un errore.
+    // Orari duplicati: freeture identifica lo scatto per orario, due token
+    // sullo stesso istante (risoluzione ms) sono quasi certamente un errore.
     var timesCount = {};
     scheduleEntries.forEach(function (e) {
-        var k = entryUtcHMS(e);
+        var k = entryUtcMillis(e);
         timesCount[k] = (timesCount[k] || 0) + 1;
     });
 
     var rows = '';
     scheduleEntries.forEach(function (e, idx) {
         var t = entryUtcHMS(e);
-        var dup = timesCount[t] > 1;
+        var dup = timesCount[entryUtcMillis(e)] > 1;
         var bracketLabel = '&mdash;';
         if (e.bracket) {
             bracketLabel = '<span class="label label-info">' + _('Gruppo') + ' ' + e.bracket.group + ' &middot; ' +
@@ -526,9 +559,14 @@ function renderScheduleEditor(extraWarnings) {
     $body.html(rows);
 
     var warnHtml = '';
-    var dupTimes = Object.keys(timesCount).filter(function (k) {
-        return timesCount[k] > 1;
+    var dupLabels = {};
+    scheduleEntries.forEach(function (e) {
+        var k = entryUtcMillis(e);
+        if (timesCount[k] > 1) {
+            dupLabels[entryUtcHMS(e)] = true;
+        }
     });
+    var dupTimes = Object.keys(dupLabels);
     if (dupTimes.length) {
         warnHtml += '<div class="alert alert-danger" style="margin: 5px 0;">' +
                 '<i class="fa fa-exclamation-triangle"></i> ' + _('Orari UTC duplicati') + ': ' +
@@ -549,7 +587,19 @@ function loadRawIntoEditor() {
         defaultError(_('Token non riconosciuti') + ': ' + parsed.errors.join(', '));
     }
     scheduleEntries = parsed.entries;
+    syncMsFlagFromEntries();
     renderScheduleEditor();
+}
+
+// Se la lista contiene token col nuovo formato a millisecondi, attiva la
+// flag ms del generatore (l'utente puo' comunque disattivarla).
+function syncMsFlagFromEntries() {
+    var hasMs = scheduleEntries.some(function (e) {
+        return e.hasMs;
+    });
+    if (hasMs && !$('#gen-ms-enabled').is(':checked')) {
+        $('#gen-ms-enabled').prop('checked', true).trigger('change');
+    }
 }
 
 // Banner stato schedulazione (verde attiva / arancio non attiva).
@@ -606,7 +656,7 @@ function renderNextShots(d) {
     }
     var now = new Date();
     var shots = entries.map(function (e) {
-        var occ = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), e.h, e.m, e.s));
+        var occ = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), e.h, e.m, e.s, e.ms || 0));
         if (occ <= now) {
             occ = new Date(occ.getTime() + 86400000);
         }
@@ -618,7 +668,7 @@ function renderNextShots(d) {
     var rows = '';
     shots.forEach(function (s) {
         rows += '<tr>' +
-                '<td><b>' + formatLocalDateTime(s.when) + '</b></td>' +
+                '<td><b>' + formatLocalDateTime(s.when, s.e.hasMs) + '</b></td>' +
                 '<td><code>' + entryUtcHMS(s.e) + '</code></td>' +
                 '<td>' + s.e.e + '</td>' +
                 '<td>' + s.e.g + '</td>' +
@@ -651,8 +701,11 @@ function loadSchedule(applyToEditor) {
         if (applyToEditor && $('#schedule-preview-body').length) {
             scheduleEntries = (d.entries || []).map(function (e) {
                 e.bracket = null;
+                e.ms = e.ms || 0;
+                e.hasMs = !!e.hasMs;
                 return e;
             });
+            syncMsFlagFromEntries();
             $('#schedule-enabled').prop('checked', d.enabled === true);
             var warnings = [];
             if (d.invalidTokens && d.invalidTokens.length) {
@@ -692,6 +745,15 @@ $(document).ready(function () {
     if ($('#gen-add').length) {
         $('#gen-bracketing').on('change', function () {
             $('.bracketing-options').toggle($(this).is(':checked'));
+        });
+        // Flag millisecondi: adegua placeholder e unita' del margine.
+        $('#gen-ms-enabled').on('change', function () {
+            var on = $(this).is(':checked');
+            $('#gen-start').attr('placeholder', on ? 'HH:MM:SS.mmm' : 'HH:MM:SS');
+            $('#gen-interval').attr('step', on ? '0.001' : '1');
+            $('#gen-bracket-margin-label').text(on
+                ? _('Margine tra scatti consecutivi (ms)')
+                : _('Margine tra scatti consecutivi (s)'));
         });
         $('#gen-add').on('click', function (e) {
             e.preventDefault();

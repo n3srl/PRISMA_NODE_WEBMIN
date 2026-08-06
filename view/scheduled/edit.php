@@ -80,6 +80,13 @@
                             <input type='text' class='form-control' id='gen-start' placeholder='HH:MM:SS'>
                         </div>
                         <div class='form-group col-md-2 col-sm-4 col-xs-6'>
+                            <small class='text-muted'><?= _('Millisecondi (nuovo formato FreeTure)') ?></small><br>
+                            <label class='switch'>
+                                <input type='checkbox' id='gen-ms-enabled'>
+                                <span class='slider round'></span>
+                            </label>
+                        </div>
+                        <div class='form-group col-md-2 col-sm-4 col-xs-6'>
                             <small class='text-muted'><?= _('Numero scatti') ?></small>
                             <input type='number' class='form-control' id='gen-count' value='1' min='1'>
                         </div>
@@ -126,7 +133,7 @@
                                 <input type='number' class='form-control' id='gen-bracket-steps' value='3' min='2'>
                             </div>
                             <div class='form-group col-md-2 col-sm-4 col-xs-6'>
-                                <small class='text-muted'><?= _('Margine tra scatti consecutivi (s)') ?></small>
+                                <small class='text-muted' id='gen-bracket-margin-label'><?= _('Margine tra scatti consecutivi (s)') ?></small>
                                 <input type='number' class='form-control' id='gen-bracket-margin' value='1' min='0'>
                             </div>
                         </div>
@@ -139,7 +146,7 @@
 
                         <!-- Stringa manuale, lunghezza illimitata -->
                         <div class='col-md-12 col-sm-12 col-xs-12'>
-                            <h5><b><?= _('Stringa schedulazioni (formato freeture)') ?></b> <small><?= _('lunghezza illimitata, token separati da virgola: HHhMMmSSs&lt;esp&gt;e&lt;gain&gt;g&lt;formato&gt;f&lt;rip&gt;n (orari UTC)') ?></small></h5>
+                            <h5><b><?= _('Stringa schedulazioni (formato freeture)') ?></b> <small><?= _('lunghezza illimitata, token separati da virgola: HHhMMmSSs[MMMms]&lt;esp&gt;e&lt;gain&gt;g&lt;formato&gt;f&lt;rip&gt;n (orari UTC, millisecondi opzionali)') ?></small></h5>
                             <textarea class='form-control' id='schedule-raw' rows='4' style='font-family: monospace; resize: vertical;'></textarea>
                             <div style='margin-top: 6px;'>
                                 <button class='btn btn-default' id='raw-load'><i class='fa fa-arrow-down'></i> <?= _('Carica stringa nella preview') ?></button>
