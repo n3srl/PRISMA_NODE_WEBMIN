@@ -6,13 +6,20 @@ class SshkeysController extends Controller {
     const SSH_CONTAINER_NAME   = 'prisma-ssh';
 
     public function editOperation() {
-        parent::securityCheck(0);
+        if (!parent::securityCheck(1)) {
+            @include "./view/user/login.php";
+            exit;
+        }
         echo '<script>var ObjID = 0; var sshContainerRunning = ' . (self::isSshContainerRunning() ? 'true' : 'false') . ';</script>';
     }
 
     public function addOperation() {
-        parent::securityCheck(0);
         $resp = new Response();
+        if (!parent::securityCheck(1)) {
+            $resp->success = false;
+            $resp->content = _('Autorizzazione negata');
+            return $resp;
+        }
 
         $key = isset($_POST['pubkey']) ? trim($_POST['pubkey']) : '';
         $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
@@ -63,8 +70,12 @@ class SshkeysController extends Controller {
     }
 
     public function deleteOperation() {
-        parent::securityCheck(0);
         $resp = new Response();
+        if (!parent::securityCheck(1)) {
+            $resp->success = false;
+            $resp->content = _('Autorizzazione negata');
+            return $resp;
+        }
 
         $blob = isset($_POST['blob']) ? trim($_POST['blob']) : '';
         if (empty($blob)) {
@@ -115,7 +126,12 @@ class SshkeysController extends Controller {
     }
 
     public function listOperation() {
-        parent::securityCheck(0);
+        if (!parent::securityCheck(1)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(array());
+            exit;
+        }
         $keys = $this->readKeys();
         $result = array_map(function($line) {
             $parts = explode(' ', $line, 3);

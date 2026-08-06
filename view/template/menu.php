@@ -38,14 +38,14 @@
                         <li><a href="/station/edit"><i class="fa fa-building"></i><?= _('Configurazione Freeture')?></a></li>
                         <li><a href="/network/edit"><i class="fa fa-sitemap"></i><?= _('Configurazione IP') ?></a></li>
                         <li><a href="/manutenzione/edit"><i class="fa fa-wrench"></i><?= _('Manutenzione') ?></a></li>
-                    <?php } 
+                        <?php if (SshkeysController::isSshContainerRunning()) { ?>
+                        <li><a href="/sshkeys/edit"><i class="fa fa-key"></i><?= _('Chiavi SSH') ?></a></li>
+                        <?php } ?>
+                        <li><a href="/scheduled/edit"><i class="fa fa-clock-o"></i><?= _('Acquisizioni Schedulate') ?></a></li>
+                    <?php }
                           //Guest?>
                     <li><a href="/capture/edit"><i class="fa fa-camera"></i><?= _('Calibrazioni') ?></a></li>
-                    <?php if (SshkeysController::isSshContainerRunning()) { ?>
-                    <li><a href="/sshkeys/edit"><i class="fa fa-key"></i><?= _('Chiavi SSH') ?></a></li>
-                    <?php } ?>
                     <li><a href="/stack/edit"><i class="fa fa-cubes"></i><?= _('Stack') ?></a></li>
-                    <li><a href="/scheduled/edit"><i class="fa fa-clock-o"></i><?= _('Acquisizioni Schedulate') ?></a></li>
                     <li><a href="/detection/edit"><i class="fa fa-star"></i><?= _('Detections') ?></a></li>
 
                 </ul>
