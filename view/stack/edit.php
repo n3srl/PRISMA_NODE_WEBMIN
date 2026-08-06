@@ -90,6 +90,7 @@
                         </div>
                     </div>-->
                     <div class='x_content'>
+                        <div class='col-md-12 col-sm-12 col-xs-12' id='stack-active-status' style='margin-bottom: 10px;'></div>
                         <div class='col-md-3 col-sm-3 col-xs-12'>
                             <table id='StackDayList' class='table table-striped table-bordered noclick' style='width: 100%; '>
                                 <thead>

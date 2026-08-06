@@ -127,6 +127,21 @@ $app->PATCH('/detection', function (Application $app, Request $request) {
  * GET
  *
  * */
+/**
+ *
+ * GET STATUS (abilitazione detection)
+ *
+ * NB: questa route deve stare prima di /detection/{detectionId}.
+ *
+ * */
+$app->GET('/detection/status', function (Application $app, Request $request) {
+
+    $result = DetectionApiLogic::GetStatus();
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 $app->GET('/detection/{detectionId}', function (Application $app, Request $request, $detectionId) {
 
     $result = DetectionApiLogic::Get($detectionId);

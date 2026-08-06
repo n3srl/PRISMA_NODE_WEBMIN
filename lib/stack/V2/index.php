@@ -120,6 +120,21 @@ $app->GET('/stack/completeness', function (Application $app, Request $request) {
  * GET
  *
  * */
+/**
+ *
+ * GET STATUS (abilitazione stack)
+ *
+ * NB: anche questa route deve stare prima di /stack/{stackId}.
+ *
+ * */
+$app->GET('/stack/status', function (Application $app, Request $request) {
+
+    $result = StackApiLogic::GetStatus();
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
 $app->GET('/stack/{stackId}', function (Application $app, Request $request, $stackId) {
 
     $result = StackApiLogic::Get($stackId);

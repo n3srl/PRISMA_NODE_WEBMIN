@@ -158,6 +158,246 @@ class ScheduledApiLogic {
         return $data;
     }
 
+    /* SCHEDULE (ACQ_SCHEDULE) CONFIGURATION */
+
+    /**
+     * GET /scheduled/schedule
+     * Ritorna lo stato della schedulazione letto da configuration.cfg:
+     *   { enabled, regularEnabled, raw, entries: [{h,m,s,e,g,f,n}], invalidTokens }
+     */
+    public static function GetSchedule() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $data = self::readScheduleConfig();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $data);
+    }
+
+    /**
+     * POST /scheduled/schedule  body: {token, data:{raw, enabled}}
+     * Valida la stringa ACQ_SCHEDULE (lunghezza illimitata), la normalizza e la
+     * scrive in configuration.cfg. Se enabled=true disabilita ACQ_REGULAR_ENABLED
+     * (vincolo freeture: le due modalita' sono mutuamente esclusive) e riavvia
+     * il container freeture per applicare la nuova configurazione.
+     */
+    public static function SaveSchedule($request) {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            CoreLogic::CheckCSRF($request->get("token"));
+            if (CoreLogic::VerifyPermission() < 1) {
+                throw new ApiException("Permessi insufficienti per modificare la schedulazione.");
+            }
+
+            $tmp = $request->get("data");
+            $raw = isset($tmp["raw"]) ? trim((string) $tmp["raw"]) : '';
+            $enabled = !empty($tmp["enabled"]);
+
+            $errors = array();
+            $entries = self::parseScheduleString($raw, $errors);
+            if (!empty($errors)) {
+                throw new ApiException("Stringa schedulazione non valida: " . implode("; ", $errors));
+            }
+            if ($enabled && empty($entries)) {
+                throw new ApiException("Impossibile abilitare la schedulazione con un elenco vuoto.");
+            }
+            $normalized = self::serializeScheduleEntries($entries);
+
+            $values = array(
+                "ACQ_SCHEDULE" => $normalized,
+                "ACQ_SCHEDULE_ENABLED" => $enabled ? "true" : "false",
+            );
+            if ($enabled) {
+                // Vincolo freeture: schedulata e regolare non possono coesistere.
+                $values["ACQ_REGULAR_ENABLED"] = "false";
+            }
+            $missing = self::setConfigValues($values);
+            if (!empty($missing)) {
+                throw new ApiException("Chiavi non trovate in configuration.cfg: " . implode(", ", $missing));
+            }
+
+            self::restartFreeture();
+            $data = self::readScheduleConfig();
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        } catch (\Throwable $t) {
+            error_log("[SaveSchedule] EXCEPTION " . get_class($t) . ": " . $t->getMessage());
+            return CoreLogic::GenerateErrorResponse("Errore interno: " . $t->getMessage());
+        }
+        return CoreLogic::GenerateResponse(true, $data);
+    }
+
+    // Legge da configuration.cfg lo stato completo della schedulazione.
+    private static function readScheduleConfig() {
+        $raw = '';
+        $enabled = null;
+        $regularEnabled = null;
+
+        $freetureConf = _FREETURE_;
+        if (file_exists($freetureConf) && is_file($freetureConf)) {
+            foreach (file($freetureConf) as $line) {
+                if (!isset($line) || $line === '' || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                    continue;
+                }
+                if ((strlen($line) - 1) === substr_count($line, " ")) {
+                    continue;
+                }
+                $key = self::getKey($line);
+                if ($key === "ACQ_SCHEDULE") {
+                    $raw = self::getValue($line);
+                } elseif ($key === "ACQ_SCHEDULE_ENABLED") {
+                    $enabled = (strtolower(self::getValue($line)) === 'true');
+                } elseif ($key === "ACQ_REGULAR_ENABLED") {
+                    $regularEnabled = (strtolower(self::getValue($line)) === 'true');
+                }
+            }
+        }
+
+        $errors = array();
+        $entries = self::parseScheduleString($raw, $errors);
+        return array(
+            'enabled'        => $enabled,
+            'regularEnabled' => $regularEnabled,
+            'raw'            => $raw,
+            'entries'        => $entries,
+            'invalidTokens'  => $errors,
+        );
+    }
+
+    // Parsa la stringa ACQ_SCHEDULE (token separati da virgola, formato
+    // "HHhMMmSSs<exp>e<gain>g<format>f<rep>n"). Il formato puo' mancare nel
+    // token (es. "5gf1n"): in quel caso vale 1. Gli errori vengono accumulati
+    // in $errors senza bloccare il parsing dei token validi.
+    private static function parseScheduleString($raw, &$errors) {
+        $errors = array();
+        $entries = array();
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return $entries;
+        }
+        $tokens = explode(",", $raw);
+        foreach ($tokens as $idx => $token) {
+            $token = trim($token);
+            if ($token === '') {
+                continue;
+            }
+            if (!preg_match('/^(\d{1,2})h(\d{1,2})m(\d{1,2})s(\d+)e(\d+)g(\d*)f(\d+)n$/i', $token, $m)) {
+                $errors[] = "token #" . ($idx + 1) . " '" . $token . "' non riconosciuto";
+                continue;
+            }
+            $h = (int) $m[1];
+            $mn = (int) $m[2];
+            $s = (int) $m[3];
+            $n = (int) $m[7];
+            if ($h > 23 || $mn > 59 || $s > 59) {
+                $errors[] = "token #" . ($idx + 1) . " '" . $token . "' orario fuori range";
+                continue;
+            }
+            if ($n < 1) {
+                $errors[] = "token #" . ($idx + 1) . " '" . $token . "' ripetizioni < 1";
+                continue;
+            }
+            $entries[] = array(
+                'h' => $h,
+                'm' => $mn,
+                's' => $s,
+                'e' => (int) $m[4],
+                'g' => (int) $m[5],
+                'f' => ($m[6] === '') ? 1 : (int) $m[6],
+                'n' => $n,
+            );
+        }
+        // Ordino per orario UT: freeture li esegue in ordine temporale e la
+        // preview risulta piu' leggibile.
+        usort($entries, function ($a, $b) {
+            $sa = $a['h'] * 3600 + $a['m'] * 60 + $a['s'];
+            $sb = $b['h'] * 3600 + $b['m'] * 60 + $b['s'];
+            return $sa - $sb;
+        });
+        return $entries;
+    }
+
+    // Serializza l'elenco entries nel formato ACQ_SCHEDULE.
+    private static function serializeScheduleEntries($entries) {
+        $tokens = array();
+        foreach ($entries as $e) {
+            $tokens[] = sprintf('%02dh%02dm%02ds%de%dg%df%dn',
+                $e['h'], $e['m'], $e['s'], $e['e'], $e['g'], $e['f'], $e['n']);
+        }
+        return implode(",", $tokens);
+    }
+
+    // Sostituisce in configuration.cfg il valore delle chiavi passate (riga
+    // "KEY = value"), preservando commenti e tutte le altre righe. La riga
+    // riscritta non ha alcun limite di lunghezza. Ritorna l'elenco delle
+    // chiavi NON trovate nel file.
+    private static function setConfigValues(array $values) {
+        $freetureConf = _FREETURE_;
+        $missing = array_keys($values);
+        if (!file_exists($freetureConf) || !is_file($freetureConf)) {
+            return $missing;
+        }
+        $reply = "";
+        foreach (file($freetureConf) as $line) {
+            $isParam = isset($line) && $line !== "" && $line[0] !== "#" && $line[0] !== "\n" && $line[0] !== "\t" &&
+                    (strlen($line) - 1) !== substr_count($line, " ");
+            if ($isParam) {
+                $key = self::getKey($line);
+                if (array_key_exists($key, $values)) {
+                    $reply .= $key . " = " . $values[$key] . "\n";
+                    $missing = array_diff($missing, array($key));
+                    continue;
+                }
+            }
+            $reply .= $line;
+        }
+        if (empty($missing)) {
+            $myfile = fopen($freetureConf, "w");
+            fwrite($myfile, $reply);
+            fclose($myfile);
+        }
+        return array_values($missing);
+    }
+
+    // Restart freeture container via ssh (duplicato da FreetureFinalApiLogic per
+    // non accoppiare i moduli). Se il container era fermo lo lascia fermo.
+    private static function restartFreeture() {
+        if (!function_exists('ssh2_connect')) {
+            error_log("[SaveSchedule] ssh2 non disponibile: restart freeture saltato");
+            return false;
+        }
+        $session = ssh2_connect(_DOCKER_IP_, _DOCKER_PORT_);
+        if (!$session) {
+            return false;
+        }
+        $ok = false;
+        if (ssh2_auth_pubkey_file($session, "prisma", _DOCKER_SSH_PUB_, _DOCKER_SSH_PRI_, "uu4KYDAk")) {
+            $inspectStream = ssh2_exec($session, "docker inspect --format='{{.State.Running}}' freeture 2>/dev/null");
+            $wasRunning = false;
+            if ($inspectStream) {
+                stream_set_blocking($inspectStream, true);
+                $inspectOut = trim(stream_get_contents(ssh2_fetch_stream($inspectStream, SSH2_STREAM_STDIO)));
+                $wasRunning = ($inspectOut === 'true');
+            }
+            if ($wasRunning) {
+                $stopStream = ssh2_exec($session, "docker stop freeture");
+                if ($stopStream) {
+                    stream_set_blocking($stopStream, true);
+                    stream_get_contents(ssh2_fetch_stream($stopStream, SSH2_STREAM_STDIO));
+                }
+                $startStream = ssh2_exec($session, "docker start freeture");
+                if ($startStream) {
+                    stream_set_blocking($startStream, true);
+                    stream_get_contents(ssh2_fetch_stream($startStream, SSH2_STREAM_STDIO));
+                }
+            }
+            $ok = true;
+        }
+        unset($session);
+        return $ok;
+    }
+
     /* FILESYSTEM OPERATIONS */
 
     // Get list of all scheduled acquisitions in a day

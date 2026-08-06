@@ -196,6 +196,35 @@ $app->GET('/scheduled/download/{fileName}', function (Application $app, Request 
 
 /**
  *
+ * GET SCHEDULE CONFIGURATION (stato + entries ACQ_SCHEDULE)
+ *
+ * NB: questa route DEVE stare prima di /scheduled/{scheduledId}, altrimenti il
+ *     placeholder cattura "schedule" come id.
+ *
+ * */
+$app->GET('/scheduled/schedule', function (Application $app, Request $request) {
+
+    $result = ScheduledApiLogic::GetSchedule();
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
+ * SAVE SCHEDULE CONFIGURATION
+ *
+ * */
+$app->POST('/scheduled/schedule', function (Application $app, Request $request) {
+
+    $result = ScheduledApiLogic::SaveSchedule($request->request);
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
  * GET
  *
  * */

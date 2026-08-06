@@ -50,6 +50,7 @@
 
                     <div class="x_content">
                         <div class="row">
+                            <div class="col-md-12" id="detection-active-status" style="margin-bottom: 10px;"></div>
                             <!-- Detection Day List -->
                             <div class="col-md-3">
                                 <table id="DetectionDayList" class="table table-striped table-bordered noclick">

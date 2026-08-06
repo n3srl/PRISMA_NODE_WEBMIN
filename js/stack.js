@@ -183,9 +183,23 @@ $(document).ready(function () {
         }
     });
 
-    // Set toggle switch unchecked 
+    // Set toggle switch unchecked
     $("#enable-stack-preview").attr("checked", false);
+
+    loadStackActiveStatus();
 });
+
+// Banner di stato: avvisa se gli stack non sono attivi, oppure se sono
+// attivi ma sospesi dalla policy temperatura.
+function loadStackActiveStatus() {
+    renderAcquisitionStatusBanner(
+        '#stack-active-status',
+        '/lib/stack/V2/stack/status',
+        _('Gli stack NON sono attivi'),
+        _('Gli stack dovrebbero essere attivi ma sono SOSPESI dal controllo temperatura'),
+        _('Impossibile determinare lo stato degli stack (STACK_ENABLED assente in configurazione).')
+    );
+}
 
 // Create datatable with captures of selected day
 function initStacksDatatable() {

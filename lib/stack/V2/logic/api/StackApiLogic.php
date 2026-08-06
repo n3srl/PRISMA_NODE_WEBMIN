@@ -158,6 +158,44 @@ class StackApiLogic {
         return $data;
     }
 
+    /**
+     * GET /stack/status
+     * Stato di abilitazione degli stack (STACK_ENABLED).
+     * Ritorna { enabled: true|false|null, key } (null = chiave non trovata).
+     */
+    public static function GetStatus() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $data = array(
+                'enabled' => self::getConfigFlag('STACK_ENABLED'),
+                'key'     => 'STACK_ENABLED',
+            );
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $data);
+    }
+
+    // Legge un flag booleano da configuration.cfg (null se assente).
+    private static function getConfigFlag($key) {
+        $freetureConf = _FREETURE_;
+        if (!file_exists($freetureConf) || !is_file($freetureConf)) {
+            return null;
+        }
+        foreach (file($freetureConf) as $line) {
+            if (!isset($line) || $line === '' || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                continue;
+            }
+            if ((strlen($line) - 1) === substr_count($line, " ")) {
+                continue;
+            }
+            if (self::getKey($line) === $key) {
+                return strtolower(self::getValue($line)) === 'true';
+            }
+        }
+        return null;
+    }
+
     /* FILESYSTEM OPERATIONS */
 
     // Get list of all stacks in a day

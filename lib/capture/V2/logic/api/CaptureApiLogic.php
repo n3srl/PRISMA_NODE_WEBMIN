@@ -158,8 +158,46 @@ class CaptureApiLogic {
         return $data;
     }
 
+    /**
+     * GET /capture/status
+     * Stato di abilitazione dell'acquisizione regolare (ACQ_REGULAR_ENABLED).
+     * Ritorna { enabled: true|false|null, key } (null = chiave non trovata).
+     */
+    public static function GetStatus() {
+        try {
+            $Person = CoreLogic::VerifyPerson();
+            $data = array(
+                'enabled' => self::getConfigFlag('ACQ_REGULAR_ENABLED'),
+                'key'     => 'ACQ_REGULAR_ENABLED',
+            );
+        } catch (ApiException $a) {
+            return CoreLogic::GenerateErrorResponse($a->message);
+        }
+        return CoreLogic::GenerateResponse(true, $data);
+    }
+
+    // Legge un flag booleano da configuration.cfg (null se assente).
+    private static function getConfigFlag($key) {
+        $freetureConf = _FREETURE_;
+        if (!file_exists($freetureConf) || !is_file($freetureConf)) {
+            return null;
+        }
+        foreach (file($freetureConf) as $line) {
+            if (!isset($line) || $line === '' || $line[0] === '#' || $line[0] === "\n" || $line[0] === "\t") {
+                continue;
+            }
+            if ((strlen($line) - 1) === substr_count($line, " ")) {
+                continue;
+            }
+            if (self::getKey($line) === $key) {
+                return strtolower(self::getValue($line)) === 'true';
+            }
+        }
+        return null;
+    }
+
     /* FILESYSTEM OPERATIONS */
-    
+
     // Get list of all captures in a day
     public static function GetFilesListDatatable($request) {
         $reply = array();

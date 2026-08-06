@@ -117,6 +117,21 @@ $app->GET('/capture/completeness', function (Application $app, Request $request)
 
 /**
  *
+ * GET STATUS (abilitazione acquisizione regolare)
+ *
+ * NB: anche questa route deve stare prima di /capture/{captureId}.
+ *
+ * */
+$app->GET('/capture/status', function (Application $app, Request $request) {
+
+    $result = CaptureApiLogic::GetStatus();
+    $resp = new Response(json_encode($result));
+    $resp->setStatusCode($result->result ? 200 : 403);
+    return $resp;
+});
+
+/**
+ *
  * GET
  *
  * */

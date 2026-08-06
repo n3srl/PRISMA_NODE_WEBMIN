@@ -329,9 +329,23 @@ $(document).ready(function () {
         }
     });
 
-    // Set toggle switch unchecked 
+    // Set toggle switch unchecked
     $("#enable-detection-preview").attr("checked", false);
+
+    loadDetectionActiveStatus();
 });
+
+// Banner di stato: avvisa se le detection non sono attive, oppure se sono
+// attive ma sospese dalla policy temperatura.
+function loadDetectionActiveStatus() {
+    renderAcquisitionStatusBanner(
+        '#detection-active-status',
+        '/lib/detection/V2/detection/status',
+        _('Le detection NON sono attive'),
+        _('Le detection dovrebbero essere attive ma sono SOSPESE dal controllo temperatura'),
+        _('Impossibile determinare lo stato delle detection (DET_ENABLED assente in configurazione).')
+    );
+}
 
 // Create datatable with detections of selected day
 function initDetectionsDatatable() {

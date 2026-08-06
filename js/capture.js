@@ -180,10 +180,24 @@ $(document).ready(function () {
         }
     });
 
-    // Set toggle switch unchecked 
+    // Set toggle switch unchecked
     $("#enable-capture-preview").attr("checked", false);
 
+    loadCaptureActiveStatus();
+
 });
+
+// Banner di stato: avvisa se l'acquisizione regolare (calibrazioni) non e'
+// attiva, oppure se e' attiva ma sospesa dalla policy temperatura.
+function loadCaptureActiveStatus() {
+    renderAcquisitionStatusBanner(
+        '#capture-active-status',
+        '/lib/capture/V2/capture/status',
+        _('Le acquisizioni regolari (calibrazioni) NON sono attive'),
+        _('Le acquisizioni regolari (calibrazioni) dovrebbero essere attive ma sono SOSPESE dal controllo temperatura'),
+        _('Impossibile determinare lo stato delle acquisizioni regolari (ACQ_REGULAR_ENABLED assente in configurazione).')
+    );
+}
 
 // Create datatable with captures of selected day
 function initCapturesDatatable() {
