@@ -2,4 +2,4 @@ keys/*
 ./keys/*
 keys
 logs
-.claude
+.claude/*
