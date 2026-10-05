@@ -1,5 +1,3 @@
-keys/*
-./keys/*
-keys
-logs
-.claude/*
+keys/
+logs/
+.claude/
